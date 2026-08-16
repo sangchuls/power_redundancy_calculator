@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>전력계통 이중화 변압기 대수 계산기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" />
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <h1>전력계통 이중화 방식별 변압기 대수 계산기</h1>
+  <p class="subtitle">수전용량·IT용량부터 데이터홀 분할, 데이터홀별 이중화 방식까지 한번에 계획하세요.</p>
+
+  <div class="card">
+    <h2>⓪ 전체 용량 계획 <span class="desc">수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할(하이브리드 가능)</span></h2>
+    <div class="field-row">
+      <div class="field">
+        <label for="utilityCapacity">수전용량 (MW)</label>
+        <input type="number" id="utilityCapacity" value="120" step="1" min="0">
+      </div>
+      <div class="field">
+        <label for="itCapacityInput">IT용량 (MW)</label>
+        <input type="number" id="itCapacityInput" value="90.2" step="0.1" min="0">
+      </div>
+      <div class="field">
+        <label>PUE (수전 ÷ IT, 자동계산)</label>
+        <input type="text" id="pueDisplay" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:16px;">
+      <div class="field">
+        <label for="hallCountInput">데이터홀 개수</label>
+        <input type="number" id="hallCountInput" value="10" step="1" min="1">
+      </div>
+      <div class="field">
+        <label>홀당 용량 (IT ÷ 개수, 자동계산)</label>
+        <input type="text" id="hallCapacityDisplay" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+      </div>
+      <div class="field">
+        <label for="maxSetCapacity">권장 최대용량 (MW, 경고용)</label>
+        <input type="number" id="maxSetCapacity" value="9" step="0.5" min="1">
+        <div class="hint">변압기 정격×안전율×3(N) 기준 — ①번 값에 따라 자동 재계산, 초과 시 표에 경고만 표시</div>
+      </div>
+    </div>
+    <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+      <button id="autoSplitBtn" class="quick-btn">데이터홀 개수로 균등 자동 분할</button>
+      <button id="addSetBtn" class="quick-btn" style="border-color:var(--border); color:var(--text-muted);">+ 데이터홀 수동 추가</button>
+    </div>
+
+    <div class="sets-table-wrap">
+      <table class="sets-table" id="setsTable">
+        <thead>
+          <tr>
+            <th>데이터홀</th>
+            <th>IT용량 (MW)</th>
+            <th>이중화 방식</th>
+            <th>전기실당 변압기</th>
+            <th>총 모듈수</th>
+            <th>총 변압기</th>
+            <th>평상시</th>
+            <th>비상시</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="setsTbody"></tbody>
+      </table>
+    </div>
+
+    <div class="sets-summary" id="setsSummary"></div>
+  </div>
+
+  <div class="card">
+    <h2>① 부하 · 설비 입력값</h2>
+    <div class="field-row">
+      <div class="field">
+        <label for="load">데이터홀 총부하 (MW)</label>
+        <input type="number" id="load" value="22.8" step="0.1" min="0" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="loadSyncCheckbox" checked style="width:13px; height:13px; margin:0;"> ⓪번 홀당 용량과 연동
+          </label>
+          <span> — 개별 데이터홀을 직접 분석하려면 체크 해제 후 값 입력, 또는 아래 데이터홀 표의 "상세보기" 사용.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="rating">변압기 정격용량 (kVA)</label>
+        <input type="number" id="rating" value="4000" step="100" min="1" max="4000">
+        <select id="ratingPreset" style="margin-top:8px;">
+          <option value="">기성 용량 빠른선택 ▾</option>
+        </select>
+        <div class="hint" id="ratingRecommend">-</div>
+        <div class="hint" id="ratingCapWarn" style="display:none; color:var(--warn); font-weight:700;">⚠ 상한 4,000kVA 초과 — 표준 사양을 벗어난 값입니다 (회색 표시)</div>
+      </div>
+    </div>
+    <div class="field-row" style="margin-top:14px;">
+      <div class="field">
+        <label for="pf">역률 (PF, cosθ)</label>
+        <input type="number" id="pf" value="0.99" step="0.01" min="0.5" max="1">
+        <div class="hint">P(kW) = S(kVA) × PF — 고역률 UPS 기준 0.99~1.0</div>
+      </div>
+      <div class="field">
+        <label for="upsEfficiency">UPS 효율</label>
+        <input type="number" id="upsEfficiency" value="0.96" step="0.01" min="0.5" max="1">
+        <div class="hint">AC-DC-AC 변환 손실 반영</div>
+      </div>
+      <div class="field">
+        <label for="safety">안전율 (설계 부하율)</label>
+        <input type="number" id="safety" value="0.9" step="0.05" min="0.01" max="1">
+        <div class="safety-preset">
+          <button class="preset-btn active" data-val="0.9">×0.9</button>
+          <button class="preset-btn" data-val="0.85">×0.85</button>
+          <button class="preset-btn" data-val="0.8">×0.8</button>
+          <button class="preset-btn" data-val="0.75">×0.75</button>
+        </div>
+      </div>
+    </div>
+    <p class="footnote" style="margin-top:14px; text-align:left;" id="effectiveFormulaNote"></p>
+  </div>
+
+  <div class="card">
+    <h2>② 이중화 방식 선택</h2>
+    <div class="redundancy-grid" id="redundancyGrid">
+      <div class="redundancy-opt" data-topo="distributed" data-n="2" data-c="1">
+        <div class="name">2oo3</div>
+        <div class="tag">분산이중화</div>
+      </div>
+      <div class="redundancy-opt active" data-topo="distributed" data-n="3" data-c="1">
+        <div class="name">3oo4</div>
+        <div class="tag">분산이중화</div>
+      </div>
+      <div class="redundancy-opt" data-topo="distributed" data-n="4" data-c="1">
+        <div class="name">4oo5</div>
+        <div class="tag">분산이중화</div>
+      </div>
+      <div class="redundancy-opt" data-topo="standby" data-n="3" data-c="1">
+        <div class="name">N+1</div>
+        <div class="tag">대기(캐쳐)</div>
+      </div>
+      <div class="redundancy-opt" data-topo="standby" data-n="3" data-c="2">
+        <div class="name">N+2C</div>
+        <div class="tag">대기(캐쳐)</div>
+      </div>
+      <div class="redundancy-opt" data-topo="full" data-n="1" data-c="1">
+        <div class="name">2N</div>
+        <div class="tag">완전이중화</div>
+      </div>
+      <div class="redundancy-opt" data-topo="full" data-n="1" data-c="2">
+        <div class="name">2N+1</div>
+        <div class="tag">완전이중화</div>
+      </div>
+    </div>
+
+    <div class="topo-explain" id="topoExplain"></div>
+
+    <span class="custom-toggle" id="customToggle">▸ 직접 N / C 값 입력 (커스텀)</span>
+    <div class="custom-panel" id="customPanel">
+      <div class="field-row">
+        <div class="field">
+          <label id="labelN">N</label>
+          <input type="number" id="nInput" value="3" step="1" min="1">
+        </div>
+        <div class="field">
+          <label id="labelC">C</label>
+          <input type="number" id="cInput" value="1" step="1" min="0">
+        </div>
+        <div class="field">
+          <label>총 모듈(전기실) 수 (N + C)</label>
+          <input type="text" id="totalModules" value="4" disabled style="background:var(--primary-bg); font-weight:700; color:var(--primary);">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>③ 계산 결과 <span class="desc" id="flowDesc"></span></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-label" id="step1Label">① 모듈당 설계부하</div>
+        <div class="step-formula" id="step1Formula">총부하 ÷ N</div>
+        <div class="step-value" id="step1">-</div>
+      </div>
+      <div class="step">
+        <div class="step-label">유효용량</div>
+        <div class="step-formula">정격 × 안전율</div>
+        <div class="step-value" id="stepCap">-</div>
+      </div>
+      <div class="step">
+        <div class="step-label" id="step2Label">② 모듈당 변압기</div>
+        <div class="step-formula" id="step2Formula">① ÷ 유효용량 (올림)</div>
+        <div class="step-value" id="step2">-</div>
+      </div>
+    </div>
+
+    <div class="result-box">
+      <div class="result-label" id="resultLabel">③ 총 변압기 대수</div>
+      <div class="result-value" id="resultTotal">-</div>
+      <div class="result-sub" id="resultSub">-</div>
+    </div>
+    <div class="warn-box" id="warnBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>④ 구성 다이어그램 <span class="desc" id="diagramDesc"></span></h2>
+    <div class="mode-toggle">
+      <button class="mode-btn active normal" id="modeNormalBtn" data-mode="normal">평상시</button>
+      <button class="mode-btn" id="modeEmergencyBtn" data-mode="emergency">비상시</button>
+    </div>
+    <div class="diagram-wrap">
+      <div class="zoom-controls">
+        <span class="hint" style="margin:4px 8px 0 0;">휠로 확대/축소 · 드래그로 이동 · 블럭 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀</span>
+        <button class="zoom-btn" id="diagramZoomOut">－</button>
+        <button class="zoom-btn" id="diagramZoomReset">리셋</button>
+        <button class="zoom-btn" id="diagramZoomIn">＋</button>
+      </div>
+      <svg id="diagramSvg" width="760" height="360"></svg>
+    </div>
+    <div class="diagram-legend" id="diagramLegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>⑤ 조합형 분배 배치도 <span class="desc">전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개</span></h2>
+    <div class="topo-explain">
+      <b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="combM">전기실 개수 (M)</label>
+        <input type="number" id="combM" value="4" step="1" min="3" max="6">
+        <div class="hint">3~6 지원 (조합 수 = M×(M-1)÷2)</div>
+      </div>
+      <div class="field">
+        <label for="combLoad">이 배치도에 적용할 총 IT부하 (MW)</label>
+        <input type="number" id="combLoad" value="8.4" step="0.1" min="0" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="combSyncLoad" checked style="width:13px; height:13px; margin:0;"> ①번 데이터홀 IT부하와 연동
+          </label>
+          <span id="combSyncNote"> — 이 배치도가 데이터홀 전체를 대표할 때 사용(⓪번 홀당 용량 → ①번 총부하 → 이 값까지 자동 연계). 층/동 단위 일부만 담당하면 체크 해제 후 직접 입력.</span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="combFailRoom">비상시 상실 전기실</label>
+        <select id="combFailRoom"></select>
+      </div>
+    </div>
+    <div class="mode-toggle">
+      <button class="mode-btn active normal" id="combModeNormalBtn" data-mode="normal">평상시</button>
+      <button class="mode-btn" id="combModeEmergencyBtn" data-mode="emergency">비상시</button>
+    </div>
+    <div class="diagram-wrap">
+      <div class="zoom-controls">
+        <span class="hint" style="margin:4px 8px 0 0;">휠로 확대/축소 · 드래그로 이동 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀</span>
+        <button class="zoom-btn" id="combZoomOut">－</button>
+        <button class="zoom-btn" id="combZoomReset">리셋</button>
+        <button class="zoom-btn" id="combZoomIn">＋</button>
+      </div>
+      <svg id="combSvg" width="760" height="360"></svg>
+    </div>
+    <div class="diagram-legend" id="combLegend"></div>
+    <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <button id="combApplyBtn" class="quick-btn" style="border-style:solid;">↑ 선택 전기실 부하를 ①~④ 계산기 총부하에 적용</button>
+      <span class="hint" id="combApplyHint" style="margin:0;"></span>
+    </div>
+    <p class="footnote" style="margin-top:10px; text-align:left;">
+      전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>참고 예시 (정격 4,000kW · 안전율 0.75 기준)</h2>
+    <table id="refTable">
+      <thead>
+        <tr><th>방식</th><th>총부하</th><th>①모듈당 설계부하</th><th>②모듈당 변압기</th><th>③총 대수</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>2oo3 (분산)</td><td>22.8 MW</td><td>11.4 MW</td><td>4대</td><td class="accent">12대</td></tr>
+        <tr><td>3oo4 (분산)</td><td>22.8 MW</td><td>7.6 MW</td><td>3대</td><td class="accent">12대</td></tr>
+        <tr><td>N+1 (대기, N=3)</td><td>22.8 MW</td><td>7.6 MW</td><td>3대</td><td class="accent">12대</td></tr>
+        <tr><td>N+2C (대기, N=3)</td><td>22.8 MW</td><td>7.6 MW</td><td>3대</td><td class="accent">15대</td></tr>
+        <tr><td>2N (완전이중화)</td><td>22.8 MW</td><td>22.8 MW</td><td>8대</td><td class="accent">16대</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="footnote">
+    총 변압기 대수 = ⌈ (①모듈당 설계부하) ÷ (변압기 정격 × 안전율) ⌉ × (N + C) &nbsp;|&nbsp;
+    분산이중화: ①=총부하÷N (전 모듈 동시가동, C개 모듈 상실까지 무스위칭 대응) &nbsp;|&nbsp;
+    대기이중화: ①=총부하÷N (duty N개가 분담, C개는 평상시 idle 대기) &nbsp;|&nbsp;
+    완전이중화: ①=총부하 (각 트레인이 단독으로 전체부하 100% 커버)
+  </p>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
