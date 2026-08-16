@@ -24,7 +24,7 @@
   }
 
   .wrap {
-    max-width: 860px;
+    max-width: 1040px;
     margin: 0 auto;
     background: var(--bg-color);
     border: 2.5px solid var(--ink);
