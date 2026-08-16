@@ -19,7 +19,7 @@
     font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
     background: linear-gradient(165deg, #EFE9FB 0%, #F6F1E4 55%, #F3EEE0 100%);
     color: var(--text-main);
-    padding: 40px 20px 80px;
+    padding: 24px 7px 50px;
     line-height: 1.6;
   }
 
@@ -28,18 +28,18 @@
     margin: 0 auto;
     background: var(--bg-color);
     border: 2.5px solid var(--ink);
-    border-radius: 32px;
-    padding: 40px 40px 48px;
+    border-radius: 28px;
+    padding: 24px 18px 30px;
     box-shadow: 0 14px 0 rgba(46,36,25,0.05), 0 26px 48px rgba(46,36,25,0.10);
   }
-  body:has(.layout-grid) .wrap { max-width: 1360px; }
+  body:has(.layout-grid) .wrap { max-width: 98vw; width: 1800px; }
 
   /* Desktop: left = input/calc cards (scrolls normally), right = both diagrams
      pinned in a sticky rail split top/bottom so they stay visible while you edit inputs. */
   .layout-grid {
     display: grid;
     grid-template-columns: minmax(360px, 1fr) minmax(420px, 1fr);
-    gap: 24px;
+    gap: 20px;
     align-items: start;
   }
   .left-col { min-width: 0; }
@@ -56,7 +56,7 @@
   .right-col .card { margin-bottom: 0; }
 
   @media (max-width: 1100px) {
-    body:has(.layout-grid) .wrap { max-width: 1040px; }
+    body:has(.layout-grid) .wrap { max-width: 1040px; width: auto; }
     .layout-grid { display: block; }
     .right-col {
       position: static;
@@ -291,14 +291,14 @@
   .result-box {
     background: var(--primary);
     color: var(--bg-color);
-    border-radius: 18px;
-    padding: 16px 20px;
+    border-radius: 14px;
+    padding: 12px;
     text-align: center;
-    margin-top: 12px;
+    margin-top: 10px;
   }
-  .result-box .result-label { font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.75); margin-bottom: 4px; }
-  .result-box .result-value { font-family: "Jua", "Pretendard Variable", sans-serif; font-size: 32px; font-weight: 400; color: var(--bg-color); line-height: 1.2; }
-  .result-box .result-sub { font-size: 12px; color: rgba(255,255,255,0.9); margin-top: 6px; font-weight: 300; }
+  .result-box .result-label { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.75); margin-bottom: 3px; }
+  .result-box .result-value { font-family: "Jua", "Pretendard Variable", sans-serif; font-size: 22px; font-weight: 400; color: var(--bg-color); line-height: 1.15; }
+  .result-box .result-sub { font-size: 10.5px; color: rgba(255,255,255,0.9); margin-top: 4px; font-weight: 300; }
 
   .warn-box {
     margin-top: 10px;
@@ -329,7 +329,7 @@
     background: var(--bg-color);
     position: relative;
   }
-  .diagram-wrap svg { cursor: grab; touch-action: none; display: block; }
+  .diagram-wrap svg { max-width: 100%; height: auto; cursor: grab; touch-action: none; display: block; }
   .diagram-wrap svg:active { cursor: grabbing; }
 
   .zoom-controls {

@@ -483,7 +483,7 @@
   }
 
   // Shared color palette for rooms/modules (distinct hues so cross-connections read intuitively)
-  const ROOM_COLORS = ['#5B4FA6', '#7A6BCB', '#9683DC', '#B29CE8', '#453A85', '#6759B0', '#8776D4', '#AC9EE3'];
+  const ROOM_COLORS = ['#6F5FBF', '#0F6E56', '#993C1D', '#185FA5', '#993556', '#3B6D11', '#854F0B', '#A32D2D'];
   function roomColor(i) { return ROOM_COLORS[i % ROOM_COLORS.length]; }
   function hexToRgba(hex, alpha) {
     const h = hex.replace('#', '');
