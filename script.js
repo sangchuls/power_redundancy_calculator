@@ -1,3 +1,245 @@
+  // ===== i18n =====
+  let currentLang = localStorage.getItem('prc_lang') || 'ko';
+
+  const I18N = {
+    ko: {
+      pageTitle: '전력계통 이중화 방식별 변압기 대수 계산기',
+      subtitle: '수전용량·IT용량부터 데이터홀 분할, 데이터홀별 이중화 방식까지 한번에 계획하세요.',
+      h0_title: '전체 용량 계획', h0_desc: '수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할(하이브리드 가능)',
+      label_utility: '수전용량 (MW)', label_it: 'IT용량 (MW)', label_pue: 'PUE (수전 ÷ IT, 자동계산)',
+      label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
+      label_maxSetCapacity: '권장 최대용량 (MW, 경고용)',
+      hint_maxSetCapacity: '변압기 정격×안전율×3(N) 기준 — ①번 값에 따라 자동 재계산, 초과 시 표에 경고만 표시',
+      btn_autoSplit: '데이터홀 개수로 균등 자동 분할', btn_addSet: '+ 데이터홀 수동 추가',
+      th_hall: '데이터홀', th_itCap: 'IT용량 (MW)', th_topo: '이중화 방식', th_perRoomTx: '전기실당 변압기',
+      th_totalModules: '총 모듈수', th_totalTx: '총 변압기', th_normal: '평상시', th_emergency: '비상시',
+      h1_title: '부하 · 설비 입력값', label_load: '데이터홀 총부하 (MW)', label_loadSync: '⓪번 홀당 용량과 연동',
+      hint_loadSync: ' — 개별 데이터홀을 직접 분석하려면 체크 해제 후 값 입력, 또는 아래 데이터홀 표의 "상세보기" 사용.',
+      label_rating: '변압기 정격용량 (kVA)', option_ratingPresetDefault: '기성 용량 빠른선택 ▾',
+      warn_ratingCap: '⚠ 상한 4,000kVA 초과 — 표준 사양을 벗어난 값입니다 (회색 표시)',
+      label_pf: '역률 (PF, cosθ)', hint_pf: 'P(kW) = S(kVA) × PF — 고역률 UPS 기준 0.99~1.0',
+      label_upsEff: 'UPS 효율', hint_upsEff: 'AC-DC-AC 변환 손실 반영', label_safety: '안전율 (설계 부하율)',
+      h2_title: '이중화 방식 선택', tag_distributed: '분산이중화', tag_standby: '대기(캐쳐)', tag_full: '완전이중화',
+      custom_toggle: '▸ 직접 N / C 값 입력 (커스텀)', custom_toggle_open: '▾ 직접 N / C 값 입력 (커스텀)',
+      label_totalModules: '총 모듈(전기실) 수 (N + C)',
+      h3_title: '계산 결과', step_effCap_label: '유효용량', step_effCap_formula: '정격 × 안전율',
+      h4_title: '구성 다이어그램', mode_normal: '평상시', mode_emergency: '비상시',
+      hint_diagram4: '휠로 확대/축소 · 드래그로 이동 · 블럭 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
+      btn_zoomReset: '리셋',
+      h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
+      h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
+      label_combM: '전기실 개수 (M)', hint_combM: '3~6 지원 (조합 수 = M×(M-1)÷2)',
+      label_combLoad: '이 배치도에 적용할 총 IT부하 (MW)', label_combSync: '①번 데이터홀 IT부하와 연동',
+      hint_combSync: ' — 이 배치도가 데이터홀 전체를 대표할 때 사용(⓪번 홀당 용량 → ①번 총부하 → 이 값까지 자동 연계). 층/동 단위 일부만 담당하면 체크 해제 후 직접 입력.',
+      label_combFailRoom: '비상시 상실 전기실',
+      hint_diagram5: '휠로 확대/축소 · 드래그로 이동 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
+      btn_combApply: '↑ 선택 전기실 부하를 ①~④ 계산기 총부하에 적용',
+      footnote_comb: '전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.',
+      refTable_title: '참고 예시 (정격 4,000kW · 안전율 0.75 기준)',
+      refTable_th_topo: '방식', refTable_th_load: '총부하', refTable_th_step1: '①모듈당 설계부하',
+      refTable_th_step2: '②모듈당 변압기', refTable_th_step3: '③총 대수',
+      refTable_row1: '2oo3 (분산)', refTable_row2: '3oo4 (분산)', refTable_row3: 'N+1 (대기, N=3)',
+      refTable_row4: 'N+2C (대기, N=3)', refTable_row5: '2N (완전이중화)',
+      unit_3units: '3대', unit_4units: '4대', unit_8units: '8대', unit_12units: '12대', unit_15units: '15대', unit_16units: '16대',
+      globalFootnote: '총 변압기 대수 = ⌈ (①모듈당 설계부하) ÷ (변압기 정격 × 안전율) ⌉ × (N + C) &nbsp;|&nbsp; 분산이중화: ①=총부하÷N (전 모듈 동시가동, C개 모듈 상실까지 무스위칭 대응) &nbsp;|&nbsp; 대기이중화: ①=총부하÷N (duty N개가 분담, C개는 평상시 idle 대기) &nbsp;|&nbsp; 완전이중화: ①=총부하 (각 트레인이 단독으로 전체부하 100% 커버)',
+      export_title: '저장', export_desc: '현재 입력값·계산결과·다이어그램을 문서로 저장합니다.',
+      export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
+      export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
+
+      effFormula_bold: '최종 가용 유효전력(kW) = 변압기용량(kVA) × 역률 × 안전율 × UPS효율',
+      effFormula_line: '= {rating} kVA × {pf} × {safety} × {ups} = {eff} kW (종합 계수 {pct}%)',
+      kva_common: ' (많이 사용)', kva_overcap: ' (상한 초과)',
+      ratingRecommend: '적정 정격용량 추천: {rec} kVA (변압기 1대당 부하 {load}kW → 종합계수(역률×안전율×UPS효율) 대비 부하율 {pct}%, 목표 100%에 근접)',
+
+      topo_distributed_explain: '<b>N out of N+C (분산이중화)</b> — 총 N+C개 모듈이 상시 병렬로 부하를 나눠 분담(평상시 부하율 낮음). C개 모듈이 동시에 상실되어도 별도 스위칭 없이 나머지 N개가 즉시 전체 부하를 흡수. (예: 2oo3, 3oo4, 4oo5)',
+      topo_distributed_labelN: 'N (상실 후에도 전체부하를 커버해야 하는 모듈 수)', topo_distributed_labelC: 'C (동시 상실을 견뎌야 하는 모듈 수)',
+      topo_distributed_step1Label: '① 모듈당 설계부하', topo_distributed_step1Formula: '총부하 ÷ N',
+      topo_distributed_step2Label: '② 모듈당 변압기', topo_distributed_resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
+      topo_distributed_flowDesc: '(전 모듈 상시가동·부하분산)',
+      topo_standby_explain: '<b>N + C (대기/캐쳐 이중화)</b> — N개 모듈이 평상시 부하를 100% 분담해 가동하고, C개 모듈은 평상시 idle 상태로 대기하다가 duty 모듈 고장 시 투입(스위칭 발생).',
+      topo_standby_labelN: 'N (평상시 가동하는 duty 모듈 수)', topo_standby_labelC: 'C (평상시 대기하는 캐쳐/예비 모듈 수)',
+      topo_standby_step1Label: '① duty 모듈당 부하', topo_standby_step1Formula: '총부하 ÷ N',
+      topo_standby_step2Label: '② 모듈당 변압기', topo_standby_resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
+      topo_standby_flowDesc: '(duty N개 100% 가동 + 캐쳐 C개 대기)',
+      topo_full_explain: '<b>2N / 2N+1 (완전이중화)</b> — 각 트레인(전원 계통 전체)이 독립적으로 총부하 100%를 커버할 수 있도록 설계. N=기준 트레인(통상 1), C=추가 독립 트레인 수. (예: 2N=N1,C1 / 2N+1=N1,C2)',
+      topo_full_labelN: 'N (기준 트레인 수, 통상 1)', topo_full_labelC: 'C (추가 독립 트레인 수)',
+      topo_full_step1Label: '① 트레인당 설계부하', topo_full_step1Formula: '총부하 (트레인 1개가 100% 단독 커버)',
+      topo_full_step2Label: '② 트레인당 변압기', topo_full_resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
+      topo_full_flowDesc: '(트레인마다 총부하 100% 독립 커버)',
+
+      input_check_msg: '입력값을 확인해주세요',
+      sub_distributed: '모듈당 {units}대 × 전체 {M}개 모듈(상시가동) · 평상시 부하율 {normal}% / {C}개 모듈 동시상실 시 {emergency}%',
+      warn_distributed: '⚠ 상실 시 부하율이 {pct}%로 100%를 초과합니다 — 대수를 늘리거나 안전율을 재검토하세요.',
+      sub_standby: 'duty 모듈당 {units}대 × duty {N}개(가동) + 캐쳐 {C}개(대기) = 총 {M}개 모듈 · duty 부하율 {pct}% / 캐쳐 평상시 0%(대기)',
+      warn_standby: '⚠ duty 모듈 부하율이 {pct}%로 100%를 초과합니다 — 대수를 늘리세요.',
+      sub_full: '트레인당 {units}대 × 트레인 {M}개(모두 100% 커버 가능) · 트레인당 부하율 {pct}%',
+
+      design_caption: '설계기준 — ① 모듈당 설계부하 {mw}MW · 유효용량(대당) {eff}kW · ② 필요대수 {units}대/모듈',
+      hall_label: '데이터홀', hall_emergency_suffix: ' (전체 부하 유지)',
+      module_label_train: '트레인 {n}', module_label_catcher: '캐쳐 {n}', module_label_duty: 'Duty {n}', module_label_room: '전기실 {n}',
+      state_offline: '⨯ 상실(OFFLINE)', state_idle: '평상시 대기(idle)', state_engaged: '투입(가동중)', state_active: '가동중',
+      count_offline: '변압기 {n}대 (정지)', count_active: '{n}대 · {kw}kW',
+      design_ref_line: '설계 {mw}MW · 유효 {eff}kW',
+      total_normal: '총 {m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대  (정격 {rating}kW, 유효 {eff}kW)',
+      total_emergency: '모듈 {m}개 중 {active}개 가동으로 전체부하 대응 · 변압기 총 {total}대 중 {activeTx}대 가동',
+      overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
+      legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
+      diagramDesc: '({topo} · {mode} 구성)',
+      topoLabel_distributed: '분산이중화', topoLabel_standby: '대기이중화', topoLabel_full: '완전이중화',
+
+      room_label: '전기실 {letter}', room_offline: '⨯ 상실', zone_it_label: 'IT {mw}MW',
+      comb_legend_room: '전기실 {letter}{suffix}', comb_legend_offline_suffix: ' (상실)',
+      comb_summary_normal: '전기실 {m}개 × 평상시 부하 {perRoom}MW = 총 IT부하 {total}MW (IT존 {zones}개 × {zoneLoad}MW)',
+      comb_summary_emergency: '전기실 {room} 상실 시 나머지 {rest}개 전기실이 각 {newLoad}MW로 상승 (평상시 {oldLoad}MW 대비 +{diff}MW)',
+      combApplyHint: '전기실 1개 부하 {mw}MW를 ①번 총부하에 적용했습니다. 이제 ②번에서 전기실 내부 이중화 방식(권장: 대기이중화, C=0)을 선택하세요.',
+
+      hall_row: '데이터홀 {n}', overcap_row: '최대({max}MW) 초과', btn_detail: '상세보기', btn_delete: '삭제',
+      summary_hallCount: '데이터홀 수', summary_sumLoad: '데이터홀 IT용량 합계', summary_target: '목표 IT용량',
+      summary_diff: '차이', summary_sumUnits: '전체 변압기 합계',
+      unit_gae: '{n}개', unit_dae: '{n}대',
+      preset_2oo3: '2oo3 분산', preset_3oo4: '3oo4 분산', preset_4oo5: '4oo5 분산',
+      preset_n1: 'N+1 대기', preset_n2c: 'N+2C 대기', preset_2n: '2N 완전', preset_2n1: '2N+1 완전',
+    },
+    en: {
+      pageTitle: 'Transformer Redundancy Sizing Calculator',
+      subtitle: 'Plan everything from utility/IT capacity to data hall splitting and per-hall redundancy in one place.',
+      h0_title: 'Overall capacity plan', h0_desc: 'Utility · IT capacity → auto PUE → data hall count split (hybrid supported)',
+      label_utility: 'Utility capacity (MW)', label_it: 'IT capacity (MW)', label_pue: 'PUE (utility ÷ IT, auto)',
+      label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
+      label_maxSetCapacity: 'Recommended max capacity (MW, warning)',
+      hint_maxSetCapacity: 'Based on transformer rating × safety factor × 3(N) — auto-recalculated from ①, table just warns when exceeded',
+      btn_autoSplit: 'Auto-split evenly by hall count', btn_addSet: '+ Add hall manually',
+      th_hall: 'Data hall', th_itCap: 'IT capacity (MW)', th_topo: 'Redundancy', th_perRoomTx: 'Tx per room',
+      th_totalModules: 'Total modules', th_totalTx: 'Total tx', th_normal: 'Normal', th_emergency: 'Emergency',
+      h1_title: 'Load & equipment inputs', label_load: 'Data hall total load (MW)', label_loadSync: 'Synced with ⓪ per-hall capacity',
+      hint_loadSync: ' — Uncheck to analyze one hall directly, or use "Details" in the table below.',
+      label_rating: 'Transformer rating (kVA)', option_ratingPresetDefault: 'Quick-select standard size ▾',
+      warn_ratingCap: '⚠ Exceeds the 4,000kVA cap — off-standard value (shown in gray)',
+      label_pf: 'Power factor (PF, cosθ)', hint_pf: 'P(kW) = S(kVA) × PF — 0.99~1.0 for high-PF UPS',
+      label_upsEff: 'UPS efficiency', hint_upsEff: 'Accounts for AC-DC-AC conversion loss', label_safety: 'Safety factor (design load ratio)',
+      h2_title: 'Redundancy topology', tag_distributed: 'Distributed', tag_standby: 'Standby (catcher)', tag_full: 'Full',
+      custom_toggle: '▸ Enter N / C directly (custom)', custom_toggle_open: '▾ Enter N / C directly (custom)',
+      label_totalModules: 'Total modules/rooms (N + C)',
+      h3_title: 'Calculation result', step_effCap_label: 'Effective capacity', step_effCap_formula: 'Rating × safety factor',
+      h4_title: 'Configuration diagram', mode_normal: 'Normal', mode_emergency: 'Emergency',
+      hint_diagram4: 'Wheel to zoom · drag to pan · double-click a block: mark lost / double-click empty space: back to normal',
+      btn_zoomReset: 'Reset',
+      h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
+      h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
+      label_combM: 'Room count (M)', hint_combM: 'Supports 3~6 (combinations = M×(M-1)÷2)',
+      label_combLoad: 'Total IT load applied to this layout (MW)', label_combSync: 'Synced with ① data hall IT load',
+      hint_combSync: ' — Use when this layout represents the whole data hall (⓪ per-hall capacity → ① total load → this value, auto-chained). Uncheck and enter directly if it only covers part of a floor/building.',
+      label_combFailRoom: 'Room lost in emergency',
+      hint_diagram5: 'Wheel to zoom · drag to pan · double-click a room: mark lost / double-click empty space: back to normal',
+      btn_combApply: '↑ Apply selected room load to the ①~④ calculator total load',
+      footnote_comb: 'The transformer count inside one room is sized in the ①~④ calculator, not this layout. When room-level redundancy is already secured by the combinatorial layout, rooms are typically sized as pure N (no catcher, C=0) to avoid over-design — set C≥1 if you also want redundancy inside each room.',
+      refTable_title: 'Reference examples (4,000kW rating · 0.75 safety factor)',
+      refTable_th_topo: 'Scheme', refTable_th_load: 'Total load', refTable_th_step1: '① Design load / module',
+      refTable_th_step2: '② Tx / module', refTable_th_step3: '③ Total units',
+      refTable_row1: '2oo3 (distributed)', refTable_row2: '3oo4 (distributed)', refTable_row3: 'N+1 (standby, N=3)',
+      refTable_row4: 'N+2C (standby, N=3)', refTable_row5: '2N (full redundancy)',
+      unit_3units: '3', unit_4units: '4', unit_8units: '8', unit_12units: '12', unit_15units: '15', unit_16units: '16',
+      globalFootnote: 'Total transformer units = ⌈ (① design load / module) ÷ (rating × safety factor) ⌉ × (N + C) &nbsp;|&nbsp; Distributed: ①=load÷N (all modules run simultaneously, absorbs up to C simultaneous losses without switching) &nbsp;|&nbsp; Standby: ①=load÷N (N duty modules share it, C stay idle) &nbsp;|&nbsp; Full: ①=load (each train independently covers 100%)',
+      export_title: 'Save', export_desc: 'Save the current inputs, results, and diagrams as a document.',
+      export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
+      export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
+
+      effFormula_bold: 'Final available effective power (kW) = transformer rating (kVA) × PF × safety factor × UPS efficiency',
+      effFormula_line: '= {rating} kVA × {pf} × {safety} × {ups} = {eff} kW (combined factor {pct}%)',
+      kva_common: ' (common)', kva_overcap: ' (exceeds cap)',
+      ratingRecommend: 'Suggested rating: {rec} kVA (load per transformer {load}kW → utilization vs. combined factor (PF×safety×UPS eff) {pct}%, close to the 100% target)',
+
+      topo_distributed_explain: '<b>N out of N+C (distributed)</b> — all N+C modules run in parallel at all times, sharing the load (low utilization in normal mode). If C modules fail simultaneously, the remaining N absorb the full load instantly with no switching. (e.g. 2oo3, 3oo4, 4oo5)',
+      topo_distributed_labelN: 'N (modules that must cover full load after a loss)', topo_distributed_labelC: 'C (simultaneous losses to tolerate)',
+      topo_distributed_step1Label: '① Design load / module', topo_distributed_step1Formula: 'Total load ÷ N',
+      topo_distributed_step2Label: '② Transformers / module', topo_distributed_resultLabel: '③ Total transformer units ( = ② × (N+C) )',
+      topo_distributed_flowDesc: '(all modules always on, load shared)',
+      topo_standby_explain: '<b>N + C (standby / catcher)</b> — N modules run at all times carrying 100% of the load; C modules stay idle in normal mode and engage on a duty-module failure (switching occurs).',
+      topo_standby_labelN: 'N (duty modules running in normal mode)', topo_standby_labelC: 'C (catcher/standby modules idle in normal mode)',
+      topo_standby_step1Label: '① Load / duty module', topo_standby_step1Formula: 'Total load ÷ N',
+      topo_standby_step2Label: '② Transformers / module', topo_standby_resultLabel: '③ Total transformer units ( = ② × (N+C) )',
+      topo_standby_flowDesc: '(N duty at 100% + C catchers standing by)',
+      topo_full_explain: '<b>2N / 2N+1 (full redundancy)</b> — each train (a whole independent power chain) is designed to independently cover 100% of the total load. N = baseline trains (usually 1), C = extra independent trains. (e.g. 2N = N1,C1 / 2N+1 = N1,C2)',
+      topo_full_labelN: 'N (baseline train count, usually 1)', topo_full_labelC: 'C (extra independent trains)',
+      topo_full_step1Label: '① Design load / train', topo_full_step1Formula: 'Total load (one train covers 100% alone)',
+      topo_full_step2Label: '② Transformers / train', topo_full_resultLabel: '③ Total transformer units ( = ② × (N+C) )',
+      topo_full_flowDesc: '(every train independently covers 100% of load)',
+
+      input_check_msg: 'Please check your inputs',
+      sub_distributed: '{units} tx/module × {M} modules total (always on) · normal utilization {normal}% / {emergency}% if {C} modules are lost simultaneously',
+      warn_distributed: '⚠ Utilization after loss is {pct}%, exceeding 100% — add more units or review the safety factor.',
+      sub_standby: '{units} tx/duty module × {N} duty (running) + {C} catcher (standby) = {M} modules total · duty utilization {pct}% / catchers 0% in normal mode (standby)',
+      warn_standby: '⚠ Duty module utilization is {pct}%, exceeding 100% — add more units.',
+      sub_full: '{units} tx/train × {M} trains (each can cover 100% alone) · per-train utilization {pct}%',
+
+      design_caption: 'Design basis — ① design load/module {mw}MW · effective capacity/unit {eff}kW · ② required {units}/module',
+      hall_label: 'Data hall', hall_emergency_suffix: ' (full load maintained)',
+      module_label_train: 'Train {n}', module_label_catcher: 'Catcher {n}', module_label_duty: 'Duty {n}', module_label_room: 'Room {n}',
+      state_offline: '⨯ Lost (OFFLINE)', state_idle: 'Standing by (idle)', state_engaged: 'Engaged (running)', state_active: 'Running',
+      count_offline: '{n} tx (stopped)', count_active: '{n} tx · {kw}kW',
+      design_ref_line: 'Design {mw}MW · effective {eff}kW',
+      total_normal: '{m} modules × {units} tx/module = {total} transformers total  (rating {rating}kW, effective {eff}kW)',
+      total_emergency: '{active} of {m} modules running to cover full load · {activeTx} of {total} transformers running',
+      overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
+      legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
+      diagramDesc: '({topo} · {mode})',
+      topoLabel_distributed: 'Distributed', topoLabel_standby: 'Standby', topoLabel_full: 'Full',
+
+      room_label: 'Room {letter}', room_offline: '⨯ Lost', zone_it_label: 'IT {mw}MW',
+      comb_legend_room: 'Room {letter}{suffix}', comb_legend_offline_suffix: ' (lost)',
+      comb_summary_normal: '{m} rooms × normal load {perRoom}MW = total IT load {total}MW ({zones} zones × {zoneLoad}MW)',
+      comb_summary_emergency: 'If room {room} is lost, the other {rest} rooms rise to {newLoad}MW each (+{diff}MW vs. {oldLoad}MW normal)',
+      combApplyHint: 'Applied the single-room load {mw}MW to the ① total load. Now pick a room-internal redundancy scheme in ② (recommended: standby, C=0).',
+
+      hall_row: 'Data hall {n}', overcap_row: 'Exceeds max ({max}MW)', btn_detail: 'Details', btn_delete: 'Delete',
+      summary_hallCount: 'Data halls', summary_sumLoad: 'Sum of hall IT capacity', summary_target: 'Target IT capacity',
+      summary_diff: 'Difference', summary_sumUnits: 'Total transformers',
+      unit_gae: '{n}', unit_dae: '{n}',
+      preset_2oo3: '2oo3 distributed', preset_3oo4: '3oo4 distributed', preset_4oo5: '4oo5 distributed',
+      preset_n1: 'N+1 standby', preset_n2c: 'N+2C standby', preset_2n: '2N full', preset_2n1: '2N+1 full',
+    },
+  };
+
+  function t(key, vars) {
+    let str = (I18N[currentLang] && I18N[currentLang][key] != null) ? I18N[currentLang][key] : (I18N.ko[key] != null ? I18N.ko[key] : key);
+    if (vars) Object.keys(vars).forEach(k => { str = str.split('{' + k + '}').join(vars[k]); });
+    return str;
+  }
+
+  function applyStaticTranslations() {
+    document.documentElement.lang = currentLang;
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const val = t(key);
+      if (el.tagName === 'TITLE' || (!val.includes('<') )) {
+        el.textContent = val;
+      } else {
+        el.innerHTML = val;
+      }
+    });
+  }
+
+  function setLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('prc_lang', lang);
+    document.getElementById('langKoBtn').classList.toggle('active', lang === 'ko');
+    document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
+    applyStaticTranslations();
+    applyTopoMeta();
+    refreshRatingPresetOptions();
+    updateRatingCapStyle();
+    refreshFailRoomOptions();
+    calculate();
+    renderCombDiagram();
+    renderSets();
+  }
+
+  document.getElementById('langKoBtn').addEventListener('click', () => setLang('ko'));
+  document.getElementById('langEnBtn').addEventListener('click', () => setLang('en'));
+  applyStaticTranslations();
+  document.getElementById('langKoBtn').classList.toggle('active', currentLang === 'ko');
+  document.getElementById('langEnBtn').classList.toggle('active', currentLang === 'en');
+
   const nInput = document.getElementById('nInput');
   const cInput = document.getElementById('cInput');
   const loadInput = document.getElementById('load');
@@ -30,8 +272,10 @@
     if (!note) return;
     if (!rating) { note.textContent = ''; return; }
     const eff = computeEffectiveCapacity(rating, pf, safety, upsEff);
-    note.innerHTML = `<b>최종 가용 유효전력(kW) = 변압기용량(kVA) × 역률 × 안전율 × UPS효율</b><br>` +
-      `= ${fmtN(rating)} kVA × ${pf} × ${safety} × ${upsEff} = <b style="color:var(--primary)">${fmtN(eff)} kW</b> (종합 계수 ${fmtN(combined * 100)}%)`;
+    const effTag = `<b style="color:var(--primary)">__EFF__</b>`;
+    const line = t('effFormula_line', { rating: fmtN(rating), pf, safety, ups: upsEff, eff: effTag, pct: fmtN(combined * 100) })
+      .replace('__EFF__', fmtN(eff));
+    note.innerHTML = `<b>${t('effFormula_bold')}</b><br>` + line;
   }
 
   // Standard commercial transformer capacities (kVA) — general reference list
@@ -43,17 +287,28 @@
 
   const ratingPresetSelect = document.getElementById('ratingPreset');
   const ratingCapWarn = document.getElementById('ratingCapWarn');
-  STANDARD_KW_SIZES.forEach(size => {
-    const opt = document.createElement('option');
-    opt.value = size;
-    const overCap = size > RATING_MAX_KVA;
-    opt.textContent = fmtN(size) + ' kVA' + (COMMON_KVA_SIZES.has(size) ? ' (많이 사용)' : '') + (overCap ? ' (상한 초과)' : '');
-    if (overCap) {
-      opt.disabled = true;
-      opt.style.color = '#B5B5B5';
-    }
-    ratingPresetSelect.appendChild(opt);
-  });
+  function refreshRatingPresetOptions() {
+    const prevValue = ratingPresetSelect.value;
+    ratingPresetSelect.innerHTML = '';
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.setAttribute('data-i18n', 'option_ratingPresetDefault');
+    defaultOpt.textContent = t('option_ratingPresetDefault');
+    ratingPresetSelect.appendChild(defaultOpt);
+    STANDARD_KW_SIZES.forEach(size => {
+      const opt = document.createElement('option');
+      opt.value = size;
+      const overCap = size > RATING_MAX_KVA;
+      opt.textContent = fmtN(size) + ' kVA' + (COMMON_KVA_SIZES.has(size) ? t('kva_common') : '') + (overCap ? t('kva_overcap') : '');
+      if (overCap) {
+        opt.disabled = true;
+        opt.style.color = '#B5B5B5';
+      }
+      ratingPresetSelect.appendChild(opt);
+    });
+    ratingPresetSelect.value = prevValue;
+  }
+  refreshRatingPresetOptions();
   ratingPresetSelect.addEventListener('change', () => {
     if (!ratingPresetSelect.value) return;
     ratingInput.value = ratingPresetSelect.value;
@@ -82,43 +337,23 @@
     let rec = STANDARD_KW_SIZES.find(s => s >= idealKVA);
     if (!rec) rec = STANDARD_KW_SIZES[STANDARD_KW_SIZES.length - 1];
     const utilPct = perTxLoadKW / (rec * targetRatio) * 100;
-    hint.textContent = `적정 정격용량 추천: ${fmtN(rec)} kVA (변압기 1대당 부하 ${fmtN(perTxLoadKW)}kW → 종합계수(역률×안전율×UPS효율) 대비 부하율 ${fmtN(utilPct)}%, 목표 100%에 근접)`;
+    hint.textContent = t('ratingRecommend', { rec: fmtN(rec), load: fmtN(perTxLoadKW), pct: fmtN(utilPct) });
   }
 
   let currentTopo = 'distributed';
 
-  const topoMeta = {
-    distributed: {
-      explain: '<b>N out of N+C (분산이중화)</b> — 총 N+C개 모듈이 상시 병렬로 부하를 나눠 분담(평상시 부하율 낮음). C개 모듈이 동시에 상실되어도 별도 스위칭 없이 나머지 N개가 즉시 전체 부하를 흡수. (예: 2oo3, 3oo4, 4oo5)',
-      labelN: 'N (상실 후에도 전체부하를 커버해야 하는 모듈 수)',
-      labelC: 'C (동시 상실을 견뎌야 하는 모듈 수)',
-      step1Label: '① 모듈당 설계부하',
-      step1Formula: '총부하 ÷ N',
-      step2Label: '② 모듈당 변압기',
-      resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
-      flowDesc: '(전 모듈 상시가동·부하분산)',
-    },
-    standby: {
-      explain: '<b>N + C (대기/캐쳐 이중화)</b> — N개 모듈이 평상시 부하를 100% 분담해 가동하고, C개 모듈은 평상시 idle 상태로 대기하다가 duty 모듈 고장 시 투입(스위칭 발생).',
-      labelN: 'N (평상시 가동하는 duty 모듈 수)',
-      labelC: 'C (평상시 대기하는 캐쳐/예비 모듈 수)',
-      step1Label: '① duty 모듈당 부하',
-      step1Formula: '총부하 ÷ N',
-      step2Label: '② 모듈당 변압기',
-      resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
-      flowDesc: '(duty N개 100% 가동 + 캐쳐 C개 대기)',
-    },
-    full: {
-      explain: '<b>2N / 2N+1 (완전이중화)</b> — 각 트레인(전원 계통 전체)이 독립적으로 총부하 100%를 커버할 수 있도록 설계. N=기준 트레인(통상 1), C=추가 독립 트레인 수. (예: 2N=N1,C1 / 2N+1=N1,C2)',
-      labelN: 'N (기준 트레인 수, 통상 1)',
-      labelC: 'C (추가 독립 트레인 수)',
-      step1Label: '① 트레인당 설계부하',
-      step1Formula: '총부하 (트레인 1개가 100% 단독 커버)',
-      step2Label: '② 트레인당 변압기',
-      resultLabel: '③ 총 변압기 대수 ( = ② × (N+C) )',
-      flowDesc: '(트레인마다 총부하 100% 독립 커버)',
-    },
-  };
+  function getTopoMeta(topo) {
+    return {
+      explain: t(`topo_${topo}_explain`),
+      labelN: t(`topo_${topo}_labelN`),
+      labelC: t(`topo_${topo}_labelC`),
+      step1Label: t(`topo_${topo}_step1Label`),
+      step1Formula: t(`topo_${topo}_step1Formula`),
+      step2Label: t(`topo_${topo}_step2Label`),
+      resultLabel: t(`topo_${topo}_resultLabel`),
+      flowDesc: t(`topo_${topo}_flowDesc`),
+    };
+  }
 
   function fmt(n, digits = 1) {
     if (!isFinite(n)) return '-';
@@ -126,7 +361,7 @@
   }
 
   function applyTopoMeta() {
-    const meta = topoMeta[currentTopo];
+    const meta = getTopoMeta(currentTopo);
     document.getElementById('topoExplain').innerHTML = meta.explain;
     document.getElementById('labelN').textContent = meta.labelN;
     document.getElementById('labelC').textContent = meta.labelC;
@@ -163,7 +398,7 @@
       document.getElementById('stepCap').textContent = '-';
       document.getElementById('step2').textContent = '-';
       document.getElementById('resultTotal').textContent = '-';
-      document.getElementById('resultSub').textContent = '입력값을 확인해주세요';
+      document.getElementById('resultSub').textContent = t('input_check_msg');
       return;
     }
 
@@ -184,28 +419,28 @@
 
     document.getElementById('step1').textContent = fmt(perModuleLoad / 1000, 2) + ' MW';
     document.getElementById('stepCap').textContent = fmt(effectiveCap) + ' kW';
-    document.getElementById('step2').textContent = perModuleUnits + '대';
-    document.getElementById('resultTotal').textContent = totalUnits + '대';
+    document.getElementById('step2').textContent = t('unit_dae', { n: perModuleUnits });
+    document.getElementById('resultTotal').textContent = t('unit_dae', { n: totalUnits });
 
     let sub = '';
     if (currentTopo === 'distributed') {
       const normalPct = (loadKW / M) / (perModuleUnits * effectiveCap) * 100;
       const emergencyPct = (loadKW / N) / (perModuleUnits * effectiveCap) * 100;
-      sub = `모듈당 ${perModuleUnits}대 × 전체 ${M}개 모듈(상시가동) · 평상시 부하율 ${fmt(normalPct)}% / ${C}개 모듈 동시상실 시 ${fmt(emergencyPct)}%`;
+      sub = t('sub_distributed', { units: perModuleUnits, M, normal: fmt(normalPct), C, emergency: fmt(emergencyPct) });
       if (emergencyPct > 100) {
-        warnBox.textContent = `⚠ 상실 시 부하율이 ${fmt(emergencyPct)}%로 100%를 초과합니다 — 대수를 늘리거나 안전율을 재검토하세요.`;
+        warnBox.textContent = t('warn_distributed', { pct: fmt(emergencyPct) });
         warnBox.style.display = 'block';
       }
     } else if (currentTopo === 'standby') {
       const dutyPct = (loadKW / N) / (perModuleUnits * effectiveCap) * 100;
-      sub = `duty 모듈당 ${perModuleUnits}대 × duty ${N}개(가동) + 캐쳐 ${C}개(대기) = 총 ${M}개 모듈 · duty 부하율 ${fmt(dutyPct)}% / 캐쳐 평상시 0%(대기)`;
+      sub = t('sub_standby', { units: perModuleUnits, N, C, M, pct: fmt(dutyPct) });
       if (dutyPct > 100) {
-        warnBox.textContent = `⚠ duty 모듈 부하율이 ${fmt(dutyPct)}%로 100%를 초과합니다 — 대수를 늘리세요.`;
+        warnBox.textContent = t('warn_standby', { pct: fmt(dutyPct) });
         warnBox.style.display = 'block';
       }
     } else if (currentTopo === 'full') {
       const pct = loadKW / (perModuleUnits * effectiveCap) * 100;
-      sub = `트레인당 ${perModuleUnits}대 × 트레인 ${M}개(모두 100% 커버 가능) · 트레인당 부하율 ${fmt(pct)}%`;
+      sub = t('sub_full', { units: perModuleUnits, M, pct: fmt(pct) });
     }
     document.getElementById('resultSub').textContent = sub;
 
@@ -381,7 +616,7 @@
           modules[N + i].loadKW = loadKW / N;
         }
         if (failedDutyIdx.length > C) {
-          overloadWarning = `⚠ 상실 ${failedDutyIdx.length}개 모듈에 비해 캐쳐가 ${C}개뿐이라 ${failedDutyIdx.length - C}개 모듈의 부하를 흡수하지 못합니다.`;
+          overloadWarning = t('overload_warn', { n: failedDutyIdx.length, c: C, diff: failedDutyIdx.length - C });
         }
       }
     } else {
@@ -429,17 +664,17 @@
     // which differs on purpose (see ÷M vs ÷N).
     const designLoadKW = currentTopo === 'full' ? loadKW : loadKW / N;
     const designCaption = svgEl('text', { x: svgW / 2, y: 16, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
-    designCaption.textContent = `설계기준 — ① 모듈당 설계부하 ${fmtN(designLoadKW / 1000)}MW · 유효용량(대당) ${fmtN(effectiveCap)}kW · ② 필요대수 ${perModuleUnits}대/모듈`;
+    designCaption.textContent = t('design_caption', { mw: fmtN(designLoadKW / 1000), eff: fmtN(effectiveCap), units: perModuleUnits });
     svgTarget.appendChild(designCaption);
 
     // Data hall box
     const hallRect = svgEl('rect', { x: hallX, y: hallY, width: hallW, height: hallH, rx: 10, fill: navy });
     svgTarget.appendChild(hallRect);
     const hallText = svgEl('text', { x: svgW / 2, y: hallY + 22, 'text-anchor': 'middle', fill: '#fff', 'font-size': 13, 'font-weight': 800, 'font-family': 'sans-serif' });
-    hallText.textContent = '데이터홀';
+    hallText.textContent = t('hall_label');
     svgTarget.appendChild(hallText);
     const hallText2 = svgEl('text', { x: svgW / 2, y: hallY + 39, 'text-anchor': 'middle', fill: 'rgba(255,255,255,0.75)', 'font-size': 12, 'font-weight': 700, 'font-family': 'sans-serif' });
-    hallText2.textContent = fmtN(load) + ' MW' + (diagramMode === 'emergency' ? ' (전체 부하 유지)' : '');
+    hallText2.textContent = fmtN(load) + ' MW' + (diagramMode === 'emergency' ? t('hall_emergency_suffix') : '');
     svgTarget.appendChild(hallText2);
 
     modules.forEach((mod, i) => {
@@ -489,11 +724,11 @@
       // module label
       let label;
       if (currentTopo === 'full') {
-        label = `트레인 ${i + 1}`;
+        label = t('module_label_train', { n: i + 1 });
       } else if (currentTopo === 'standby') {
-        label = mod.role === 'catcher' ? `캐쳐 ${i - N + 1}` : `Duty ${i + 1}`;
+        label = mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 });
       } else {
-        label = `전기실 ${i + 1}`;
+        label = t('module_label_room', { n: i + 1 });
       }
       const labelColor = isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor);
       const labelText = svgEl('text', { x: x + boxW / 2, y: moduleY + 25, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 800, fill: labelColor, 'font-family': 'sans-serif' });
@@ -501,10 +736,10 @@
       moduleGroup.appendChild(labelText);
 
       let stateLabel;
-      if (isOffline) stateLabel = '⨯ 상실(OFFLINE)';
-      else if (isIdle) stateLabel = '평상시 대기(idle)';
-      else if (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') stateLabel = '투입(가동중)';
-      else stateLabel = '가동중';
+      if (isOffline) stateLabel = t('state_offline');
+      else if (isIdle) stateLabel = t('state_idle');
+      else if (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') stateLabel = t('state_engaged');
+      else stateLabel = t('state_active');
       const stateColor = isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : '#8A8072');
       const stateText = svgEl('text', { x: x + boxW / 2, y: moduleY + 41, 'text-anchor': 'middle', 'font-size': 9.5, fill: stateColor, 'font-family': 'sans-serif' });
       stateText.textContent = stateLabel;
@@ -540,12 +775,12 @@
       // module summary caption
       const capY = startTxY + txRowsNeeded * (22 + 22) + 6;
       const countText = svgEl('text', { x: x + boxW / 2, y: capY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: labelColor, 'font-family': 'sans-serif' });
-      countText.textContent = isOffline ? `변압기 ${txCount}대 (정지)` : `${txCount}대 · ${fmtN(mod.loadKW)}kW`;
+      countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(mod.loadKW) });
       moduleGroup.appendChild(countText);
 
       // 설계기준 참고선 — 실제 평상시/비상시 부하(위 줄)와 바로 비교할 수 있도록 모듈마다 반복 표기
       const designText = svgEl('text', { x: x + boxW / 2, y: capY + 13, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#9A90BB', 'font-family': 'sans-serif' });
-      designText.textContent = `설계 ${fmtN(designLoadKW / 1000)}MW · 유효 ${fmtN(effectiveCap)}kW`;
+      designText.textContent = t('design_ref_line', { mw: fmtN(designLoadKW / 1000), eff: fmtN(effectiveCap) });
       moduleGroup.appendChild(designText);
 
       svgTarget.appendChild(moduleGroup);
@@ -555,8 +790,8 @@
     const activeModuleCount = modules.filter(m => m.state === 'active').length;
     const totalCaption = svgEl('text', { x: svgW / 2, y: svgH - 12, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
     totalCaption.textContent = diagramMode === 'normal'
-      ? `총 ${moduleCount}개 모듈 × 모듈당 ${perModuleUnits}대 = 총 변압기 ${moduleCount * perModuleUnits}대  (정격 ${fmtN(rating)}kW, 유효 ${fmtN(effectiveCap)}kW)`
-      : `모듈 ${moduleCount}개 중 ${activeModuleCount}개 가동으로 전체부하 대응 · 변압기 총 ${moduleCount * perModuleUnits}대 중 ${activeModuleCount * perModuleUnits}대 가동`;
+      ? t('total_normal', { m: moduleCount, units: perModuleUnits, total: moduleCount * perModuleUnits, rating: fmtN(rating), eff: fmtN(effectiveCap) })
+      : t('total_emergency', { m: moduleCount, active: activeModuleCount, total: moduleCount * perModuleUnits, activeTx: activeModuleCount * perModuleUnits });
     svgTarget.appendChild(totalCaption);
 
     if (overloadWarning) {
@@ -571,7 +806,7 @@
     const legendItems = [];
     for (let i = 0; i < moduleCount; i++) {
       const mod = modules[i];
-      const nm = currentTopo === 'full' ? `트레인${i + 1}` : (currentTopo === 'standby' ? (mod.role === 'catcher' ? `캐쳐${i - N + 1}` : `Duty${i + 1}`) : `전기실${i + 1}`);
+      const nm = currentTopo === 'full' ? t('module_label_train', { n: i + 1 }) : (currentTopo === 'standby' ? (mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 })) : t('module_label_room', { n: i + 1 }));
       legendItems.push({ color: mod.state === 'offline' ? '#FBEDE7' : roomColor(i), label: nm });
     }
     legendItems.forEach(it => {
@@ -584,11 +819,11 @@
     noteDiv.className = 'item';
     noteDiv.style.width = '100%';
     noteDiv.style.marginTop = '4px';
-    noteDiv.innerHTML = `<span class="swatch" style="background:#7A6BCB"></span>변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)`;
+    noteDiv.innerHTML = `<span class="swatch" style="background:#7A6BCB"></span>${t('legend_tx_note')}`;
     legend.appendChild(noteDiv);
 
-    const topoLabel = currentTopo === 'distributed' ? '분산이중화' : currentTopo === 'standby' ? '대기이중화' : '완전이중화';
-    document.getElementById('diagramDesc').textContent = `(${topoLabel} · ${diagramMode === 'normal' ? '평상시' : '비상시'} 구성)`;
+    const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
+    document.getElementById('diagramDesc').textContent = t('diagramDesc', { topo: topoLabel, mode: diagramMode === 'normal' ? t('mode_normal') : t('mode_emergency') });
     diagramZoom.reset();
   }
 
@@ -615,7 +850,7 @@
 
   customToggle.addEventListener('click', () => {
     const open = customPanel.classList.toggle('open');
-    customToggle.textContent = (open ? '▾' : '▸') + ' 직접 N / C 값 입력 (커스텀)';
+    customToggle.textContent = t(open ? 'custom_toggle_open' : 'custom_toggle');
   });
 
   presetBtns.forEach(btn => {
@@ -707,7 +942,7 @@
     for (let i = 0; i < M; i++) {
       const opt = document.createElement('option');
       opt.value = i;
-      opt.textContent = `전기실 ${ROOM_LETTERS[i]}`;
+      opt.textContent = t('room_label', { letter: ROOM_LETTERS[i] });
       combFailRoomSelect.appendChild(opt);
     }
     if (current !== '' && parseInt(current) < M) combFailRoomSelect.value = current;
@@ -793,10 +1028,10 @@
       });
       roomGroup.appendChild(rect);
       const label = svgEl('text', { x: roomCenterX(i), y: roomY + 19, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, fill: isOffline ? '#C8604F' : '#fff', 'font-family': 'sans-serif' });
-      label.textContent = `전기실 ${ROOM_LETTERS[i]}`;
+      label.textContent = t('room_label', { letter: ROOM_LETTERS[i] });
       roomGroup.appendChild(label);
       const sub = svgEl('text', { x: roomCenterX(i), y: roomY + 36, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: isOffline ? '#C8604F' : '#fff', 'font-family': 'sans-serif' });
-      sub.textContent = isOffline ? '⨯ 상실' : `${fmtN(roomLoads[i])} MW`;
+      sub.textContent = isOffline ? t('room_offline') : `${fmtN(roomLoads[i])} MW`;
       roomGroup.appendChild(sub);
       svgTarget.appendChild(roomGroup);
     }
@@ -884,7 +1119,7 @@
       svgTarget.appendChild(zLabel);
 
       const zLoadText = svgEl('text', { x: zCenterX, y: zy + 42, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
-      zLoadText.textContent = `IT ${fmtN(zoneLoad)}MW`;
+      zLoadText.textContent = t('zone_it_label', { mw: fmtN(zoneLoad) });
       svgTarget.appendChild(zLoadText);
 
     });
@@ -896,7 +1131,7 @@
       const isOffline = (i === failRoom);
       const div = document.createElement('div');
       div.className = 'item';
-      div.innerHTML = `<span class="swatch" style="background:${isOffline ? '#FBEDE7' : roomColor(i)}"></span>전기실 ${ROOM_LETTERS[i]}${isOffline ? ' (상실)' : ''}`;
+      div.innerHTML = `<span class="swatch" style="background:${isOffline ? '#FBEDE7' : roomColor(i)}"></span>${t('comb_legend_room', { letter: ROOM_LETTERS[i], suffix: isOffline ? t('comb_legend_offline_suffix') : '' })}`;
       legend.appendChild(div);
     }
     // summary line appended to legend
@@ -906,9 +1141,9 @@
     summary.style.fontWeight = '700';
     summary.style.color = navy;
     if (combMode === 'normal') {
-      summary.textContent = `전기실 ${M}개 × 평상시 부하 ${fmtN(totalLoad / M)}MW = 총 IT부하 ${fmtN(totalLoad)}MW (IT존 ${zoneCount}개 × ${fmtN(zoneLoad)}MW)`;
+      summary.textContent = t('comb_summary_normal', { m: M, perRoom: fmtN(totalLoad / M), total: fmtN(totalLoad), zones: zoneCount, zoneLoad: fmtN(zoneLoad) });
     } else {
-      summary.textContent = `전기실 ${ROOM_LETTERS[failRoom]} 상실 시 나머지 ${M - 1}개 전기실이 각 ${fmtN(totalLoad / (M - 1))}MW로 상승 (평상시 ${fmtN(totalLoad / M)}MW 대비 +${fmtN((1 / (M - 1) - 1 / M) * totalLoad)}MW)`;
+      summary.textContent = t('comb_summary_emergency', { room: ROOM_LETTERS[failRoom], rest: M - 1, newLoad: fmtN(totalLoad / (M - 1)), oldLoad: fmtN(totalLoad / M), diff: fmtN((1 / (M - 1) - 1 / M) * totalLoad) });
     }
     legend.appendChild(summary);
     combZoom.reset();
@@ -957,7 +1192,7 @@
       combLoadInput.style.background = 'var(--surface)';
     }
     calculate();
-    combApplyHint.textContent = `전기실 1개 부하 ${fmtN(targetLoad)}MW를 ①번 총부하에 적용했습니다. 이제 ②번에서 전기실 내부 이중화 방식(권장: 대기이중화, C=0)을 선택하세요.`;
+    combApplyHint.textContent = t('combApplyHint', { mw: fmtN(targetLoad) });
     document.querySelector('.wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
@@ -980,13 +1215,13 @@
 
   // topology preset lookup shared with the ② redundancy grid
   const TOPO_PRESETS = {
-    '2oo3':  { topo: 'distributed', n: 2, c: 1, label: '2oo3 분산' },
-    '3oo4':  { topo: 'distributed', n: 3, c: 1, label: '3oo4 분산' },
-    '4oo5':  { topo: 'distributed', n: 4, c: 1, label: '4oo5 분산' },
-    'n+1':   { topo: 'standby', n: 3, c: 1, label: 'N+1 대기' },
-    'n+2c':  { topo: 'standby', n: 3, c: 2, label: 'N+2C 대기' },
-    '2n':    { topo: 'full', n: 1, c: 1, label: '2N 완전' },
-    '2n+1':  { topo: 'full', n: 1, c: 2, label: '2N+1 완전' },
+    '2oo3':  { topo: 'distributed', n: 2, c: 1, labelKey: 'preset_2oo3' },
+    '3oo4':  { topo: 'distributed', n: 3, c: 1, labelKey: 'preset_3oo4' },
+    '4oo5':  { topo: 'distributed', n: 4, c: 1, labelKey: 'preset_4oo5' },
+    'n+1':   { topo: 'standby', n: 3, c: 1, labelKey: 'preset_n1' },
+    'n+2c':  { topo: 'standby', n: 3, c: 2, labelKey: 'preset_n2c' },
+    '2n':    { topo: 'full', n: 1, c: 1, labelKey: 'preset_2n' },
+    '2n+1':  { topo: 'full', n: 1, c: 2, labelKey: 'preset_2n1' },
   };
 
   let sets = []; // { id, loadMW, presetKey }  (데이터홀 목록)
@@ -1084,7 +1319,7 @@
       const tr = document.createElement('tr');
 
       const tdName = document.createElement('td');
-      tdName.textContent = `데이터홀 ${idx + 1}`;
+      tdName.textContent = t('hall_row', { n: idx + 1 });
       tdName.style.fontWeight = '700';
       tr.appendChild(tdName);
 
@@ -1103,7 +1338,7 @@
       if (overCap) {
         const warnSpan = document.createElement('div');
         warnSpan.className = 'hint warn-cell';
-        warnSpan.textContent = `최대(${fmtN(maxCap)}MW) 초과`;
+        warnSpan.textContent = t('overcap_row', { max: fmtN(maxCap) });
         tdLoad.appendChild(warnSpan);
       }
       tr.appendChild(tdLoad);
@@ -1113,7 +1348,7 @@
       Object.keys(TOPO_PRESETS).forEach(key => {
         const opt = document.createElement('option');
         opt.value = key;
-        opt.textContent = TOPO_PRESETS[key].label;
+        opt.textContent = t(TOPO_PRESETS[key].labelKey);
         if (key === set.presetKey) opt.selected = true;
         sel.appendChild(opt);
       });
@@ -1122,15 +1357,15 @@
       tr.appendChild(tdTopo);
 
       const tdPerModule = document.createElement('td');
-      tdPerModule.textContent = result.perModuleUnits + '대';
+      tdPerModule.textContent = t('unit_dae', { n: result.perModuleUnits });
       tr.appendChild(tdPerModule);
 
       const tdM = document.createElement('td');
-      tdM.textContent = result.M + '개';
+      tdM.textContent = t('unit_gae', { n: result.M });
       tr.appendChild(tdM);
 
       const tdTotal = document.createElement('td');
-      tdTotal.textContent = result.totalUnits + '대';
+      tdTotal.textContent = t('unit_dae', { n: result.totalUnits });
       tdTotal.style.fontWeight = '700';
       tdTotal.style.color = 'var(--primary)';
       tr.appendChild(tdTotal);
@@ -1147,7 +1382,7 @@
       const tdActions = document.createElement('td');
       const detailBtn = document.createElement('button');
       detailBtn.className = 'set-row-btn';
-      detailBtn.textContent = '상세보기';
+      detailBtn.textContent = t('btn_detail');
       detailBtn.addEventListener('click', () => {
         loadSyncCheckbox.checked = false;
         loadInput.disabled = false;
@@ -1167,7 +1402,7 @@
       });
       const delBtn = document.createElement('button');
       delBtn.className = 'set-row-btn del';
-      delBtn.textContent = '삭제';
+      delBtn.textContent = t('btn_delete');
       delBtn.style.marginLeft = '4px';
       delBtn.addEventListener('click', () => {
         sets = sets.filter(s => s.id !== set.id);
@@ -1189,11 +1424,11 @@
     const diffOk = diff === null || Math.abs(diff) < 0.05;
 
     const items = [
-      { label: '데이터홀 수', value: sets.length + '개' },
-      { label: '데이터홀 IT용량 합계', value: fmtN(sumLoad, 2) + ' MW' },
-      { label: '목표 IT용량', value: itTarget !== null ? fmtN(itTarget, 2) + ' MW' : '-' },
-      { label: '차이', value: diff !== null ? (diff >= 0 ? '+' : '') + fmtN(diff, 2) + ' MW' : '-', warn: !diffOk },
-      { label: '전체 변압기 합계', value: sumUnits + '대' },
+      { label: t('summary_hallCount'), value: t('unit_gae', { n: sets.length }) },
+      { label: t('summary_sumLoad'), value: fmtN(sumLoad, 2) + ' MW' },
+      { label: t('summary_target'), value: itTarget !== null ? fmtN(itTarget, 2) + ' MW' : '-' },
+      { label: t('summary_diff'), value: diff !== null ? (diff >= 0 ? '+' : '') + fmtN(diff, 2) + ' MW' : '-', warn: !diffOk },
+      { label: t('summary_sumUnits'), value: t('unit_dae', { n: sumUnits }) },
     ];
     items.forEach(it => {
       const div = document.createElement('div');
@@ -1243,3 +1478,197 @@
   })();
   updateHallCapacityDisplay();
   autoSplitSets();
+
+  // ===== 저장 (PDF / Word / PPT export) =====
+  // Rasterizes a live diagram <svg> to a PNG data URL, ignoring the user's current pan/zoom
+  // state so the export always shows the full, clean diagram at 1:1.
+  function svgToPngDataUrl(svgElement, scale) {
+    scale = scale || 2;
+    return new Promise((resolve, reject) => {
+      const clone = svgElement.cloneNode(true);
+      const w = parseFloat(svgElement.getAttribute('width'));
+      const h = parseFloat(svgElement.getAttribute('height'));
+      clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      const zoomGroup = clone.querySelector('g.zoom-group');
+      if (zoomGroup) zoomGroup.removeAttribute('transform');
+      const bgRect = document.createElementNS(NS, 'rect');
+      bgRect.setAttribute('x', 0); bgRect.setAttribute('y', 0);
+      bgRect.setAttribute('width', w); bgRect.setAttribute('height', h);
+      bgRect.setAttribute('fill', '#FFFDF7');
+      clone.insertBefore(bgRect, clone.firstChild);
+      const svgString = new XMLSerializer().serializeToString(clone);
+      const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(svgBlob);
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = w * scale;
+        canvas.height = h * scale;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: w, height: h });
+      };
+      img.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+      img.src = url;
+    });
+  }
+
+  async function gatherReportData() {
+    const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
+    const inputs = [
+      [t('label_utility'), utilityCapacityInput.value + ' MW'],
+      [t('label_it'), itCapacityInput.value + ' MW'],
+      [t('label_pue'), pueDisplay.value],
+      [t('label_load'), loadInput.value + ' MW'],
+      [t('label_rating'), ratingInput.value + ' kVA'],
+      [t('h2_title'), `${topoLabel} (N=${nInput.value}, C=${cInput.value})`],
+      [t('h3_title'), document.getElementById('resultTotal').textContent],
+    ];
+    const [diagram4, diagram5] = await Promise.all([
+      svgToPngDataUrl(document.getElementById('diagramSvg')),
+      svgToPngDataUrl(document.getElementById('combSvg')),
+    ]);
+    return {
+      title: t('pageTitle'),
+      dateStr: new Date().toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US'),
+      inputs, diagram4, diagram5,
+      h4Title: '④ ' + t('h4_title'),
+      h5Title: '⑤ ' + t('h5_title'),
+    };
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  const exportStatus = document.getElementById('exportStatus');
+  const exportBtns = document.querySelectorAll('.export-btn');
+  function setExportBusy(busy) {
+    exportBtns.forEach(b => { b.disabled = busy; });
+  }
+
+  async function exportPDF() {
+    exportStatus.textContent = t('export_generating');
+    setExportBusy(true);
+    try {
+      const data = await gatherReportData();
+      const report = document.getElementById('printReport');
+      report.innerHTML = '';
+      const h1 = document.createElement('h1'); h1.textContent = data.title; report.appendChild(h1);
+      const dateEl = document.createElement('div'); dateEl.className = 'print-date'; dateEl.textContent = data.dateStr; report.appendChild(dateEl);
+      const h2a = document.createElement('h2'); h2a.textContent = t('h3_title'); report.appendChild(h2a);
+      const table = document.createElement('table');
+      data.inputs.forEach(([k, v]) => {
+        const tr = document.createElement('tr');
+        const td1 = document.createElement('td'); td1.textContent = k;
+        const td2 = document.createElement('td'); td2.textContent = v;
+        tr.appendChild(td1); tr.appendChild(td2);
+        table.appendChild(tr);
+      });
+      report.appendChild(table);
+      const h2b = document.createElement('h2'); h2b.textContent = data.h4Title; report.appendChild(h2b);
+      const img4 = document.createElement('img'); img4.src = data.diagram4.dataUrl; report.appendChild(img4);
+      const h2c = document.createElement('h2'); h2c.textContent = data.h5Title; report.appendChild(h2c);
+      const img5 = document.createElement('img'); img5.src = data.diagram5.dataUrl; report.appendChild(img5);
+      exportStatus.textContent = '';
+      setExportBusy(false);
+      window.print();
+    } catch (e) {
+      console.error(e);
+      exportStatus.textContent = t('export_fail');
+      setExportBusy(false);
+    }
+  }
+
+  async function exportWord() {
+    exportStatus.textContent = t('export_generating');
+    setExportBusy(true);
+    try {
+      const data = await gatherReportData();
+      const { Document, Packer, Paragraph, Table, TableRow, TableCell, ImageRun, HeadingLevel, WidthType } = window.docx;
+      const toBuf = async (dataUrl) => new Uint8Array(await (await fetch(dataUrl)).arrayBuffer());
+      const [img4Buf, img5Buf] = await Promise.all([toBuf(data.diagram4.dataUrl), toBuf(data.diagram5.dataUrl)]);
+      const maxW = 600;
+      const scale4 = Math.min(1, maxW / data.diagram4.width);
+      const scale5 = Math.min(1, maxW / data.diagram5.width);
+
+      const rows = data.inputs.map(([k, v]) => new TableRow({
+        children: [
+          new TableCell({ width: { size: 40, type: WidthType.PERCENTAGE }, children: [new Paragraph(k)] }),
+          new TableCell({ width: { size: 60, type: WidthType.PERCENTAGE }, children: [new Paragraph(String(v))] }),
+        ],
+      }));
+
+      const doc = new Document({
+        sections: [{
+          children: [
+            new Paragraph({ text: data.title, heading: HeadingLevel.HEADING1 }),
+            new Paragraph({ text: data.dateStr }),
+            new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }),
+            new Paragraph({ text: data.h4Title, heading: HeadingLevel.HEADING2, spacing: { before: 300 } }),
+            new Paragraph({ children: [new ImageRun({ data: img4Buf, transformation: { width: data.diagram4.width * scale4, height: data.diagram4.height * scale4 } })] }),
+            new Paragraph({ text: data.h5Title, heading: HeadingLevel.HEADING2, spacing: { before: 300 } }),
+            new Paragraph({ children: [new ImageRun({ data: img5Buf, transformation: { width: data.diagram5.width * scale5, height: data.diagram5.height * scale5 } })] }),
+          ],
+        }],
+      });
+      const blob = await Packer.toBlob(doc);
+      downloadBlob(blob, 'power-redundancy-report.docx');
+      exportStatus.textContent = t('export_done');
+    } catch (e) {
+      console.error(e);
+      exportStatus.textContent = t('export_fail');
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
+  async function exportPPT() {
+    exportStatus.textContent = t('export_generating');
+    setExportBusy(true);
+    try {
+      const data = await gatherReportData();
+      const PptxCtor = window.PptxGenJS;
+      const pptx = new PptxCtor();
+      pptx.defineLayout({ name: 'PRC_WIDE', width: 10, height: 5.63 });
+      pptx.layout = 'PRC_WIDE';
+
+      const slide1 = pptx.addSlide();
+      slide1.addText(data.title, { x: 0.4, y: 0.25, w: 9.2, fontSize: 22, bold: true, color: '2E2419' });
+      slide1.addText(data.dateStr, { x: 0.4, y: 0.8, fontSize: 11, color: '8A8072' });
+      const tableRows = data.inputs.map(([k, v]) => [
+        { text: k, options: { color: '8A8072', fontSize: 11 } },
+        { text: String(v), options: { fontSize: 11, bold: true } },
+      ]);
+      slide1.addTable(tableRows, { x: 0.4, y: 1.2, w: 9.2, colW: [4.6, 4.6], fontSize: 11, border: { type: 'solid', color: 'E6DECB', pt: 0.5 } });
+
+      const slide2 = pptx.addSlide();
+      slide2.addText(data.h4Title, { x: 0.4, y: 0.25, fontSize: 18, bold: true, color: '6F5FBF' });
+      const ar4 = data.diagram4.height / data.diagram4.width;
+      const w4 = 9.2, h4 = Math.min(4.6, w4 * ar4);
+      slide2.addImage({ data: data.diagram4.dataUrl, x: 0.4, y: 0.85, w: w4, h: h4 });
+
+      const slide3 = pptx.addSlide();
+      slide3.addText(data.h5Title, { x: 0.4, y: 0.25, fontSize: 18, bold: true, color: '6F5FBF' });
+      const ar5 = data.diagram5.height / data.diagram5.width;
+      const w5 = 9.2, h5 = Math.min(4.6, w5 * ar5);
+      slide3.addImage({ data: data.diagram5.dataUrl, x: 0.4, y: 0.85, w: w5, h: h5 });
+
+      await pptx.writeFile({ fileName: 'power-redundancy-report.pptx' });
+      exportStatus.textContent = t('export_done');
+    } catch (e) {
+      console.error(e);
+      exportStatus.textContent = t('export_fail');
+    } finally {
+      setExportBusy(false);
+    }
+  }
+
+  document.getElementById('exportPdfBtn').addEventListener('click', exportPDF);
+  document.getElementById('exportWordBtn').addEventListener('click', exportWord);
+  document.getElementById('exportPptBtn').addEventListener('click', exportPPT);
