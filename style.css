@@ -32,6 +32,41 @@
     padding: 40px 40px 48px;
     box-shadow: 0 14px 0 rgba(46,36,25,0.05), 0 26px 48px rgba(46,36,25,0.10);
   }
+  body:has(.layout-grid) .wrap { max-width: 1360px; }
+
+  /* Desktop: left = input/calc cards (scrolls normally), right = both diagrams
+     pinned in a sticky rail split top/bottom so they stay visible while you edit inputs. */
+  .layout-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(380px, 460px);
+    gap: 24px;
+    align-items: start;
+  }
+  .left-col { min-width: 0; }
+  .right-col {
+    position: sticky;
+    top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    padding-right: 4px;
+  }
+  .right-col .card { margin-bottom: 0; }
+
+  @media (max-width: 1100px) {
+    body:has(.layout-grid) .wrap { max-width: 1040px; }
+    .layout-grid { display: block; }
+    .right-col {
+      position: static;
+      max-height: none;
+      overflow: visible;
+      display: block;
+      padding-right: 0;
+    }
+    .right-col .card { margin-bottom: 20px; }
+  }
 
   h1 {
     font-family: "Jua", "Pretendard Variable", sans-serif;
