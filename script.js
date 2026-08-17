@@ -927,8 +927,12 @@
     const dynamicMax = Math.max(3, getTotalTxCount());
     combMInput.max = dynamicMax;
     if (combMHint) combMHint.textContent = t('hint_combM', { max: dynamicMax });
-    if (parseInt(combMInput.value) > dynamicMax) {
-      combMInput.value = dynamicMax;
+    // Keep the visible field in sync with what renderCombDiagram() will actually draw —
+    // it internally clamps to [3, max], so the input itself must match or the number shown
+    // and the diagram silently disagree (e.g. field says "1" but 3 rooms are drawn).
+    const current = parseInt(combMInput.value);
+    if (!isFinite(current) || current < 3 || current > dynamicMax) {
+      combMInput.value = Math.max(3, Math.min(dynamicMax, isFinite(current) ? current : 4));
       combMInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
   }
@@ -1189,6 +1193,17 @@
     updateCombModeButtons();
     refreshFailRoomOptions();
     renderCombDiagram();
+  });
+  // On blur/Enter (not every keystroke, so typing isn't fought mid-edit), snap the field back
+  // into [3, max] so what's displayed always matches what renderCombDiagram() actually draws.
+  combMInput.addEventListener('change', () => {
+    const max = parseInt(combMInput.max) || 6;
+    const val = parseInt(combMInput.value);
+    const clamped = Math.max(3, Math.min(max, isFinite(val) ? val : 4));
+    if (clamped !== val) {
+      combMInput.value = clamped;
+      combMInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
   });
   combLoadInput.addEventListener('input', renderCombDiagram);
   combFailRoomSelect.addEventListener('change', () => {
