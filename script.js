@@ -35,7 +35,7 @@
       hint_diagram5: '휠로 확대/축소 · 드래그로 이동 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
       btn_combApply: '↑ 선택 전기실 부하를 ①~④ 계산기 총부하에 적용',
       footnote_comb: '전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.',
-      refTable_title: '참고 예시 (정격 4,000kW · 안전율 0.75 기준)',
+      refTable_title: '참고 예시 (①번 총부하 {load}MW · 정격 {rating}kVA · 안전율 {safety} 기준)',
       refTable_th_topo: '방식', refTable_th_load: '총부하', refTable_th_step1: '①모듈당 설계부하',
       refTable_th_step2: '②모듈당 변압기', refTable_th_step3: '③총 대수',
       refTable_row1: '2oo3 (분산)', refTable_row2: '3oo4 (분산)', refTable_row3: 'N+1 (대기, N=3)',
@@ -134,7 +134,7 @@
       hint_diagram5: 'Wheel to zoom · drag to pan · double-click a room: mark lost / double-click empty space: back to normal',
       btn_combApply: '↑ Apply selected room load to the ①~④ calculator total load',
       footnote_comb: 'The transformer count inside one room is sized in the ①~④ calculator, not this layout. When room-level redundancy is already secured by the combinatorial layout, rooms are typically sized as pure N (no catcher, C=0) to avoid over-design — set C≥1 if you also want redundancy inside each room.',
-      refTable_title: 'Reference examples (4,000kW rating · 0.75 safety factor)',
+      refTable_title: 'Reference examples (① total load {load}MW · {rating}kVA rating · {safety} safety factor)',
       refTable_th_topo: 'Scheme', refTable_th_load: 'Total load', refTable_th_step1: '① Design load / module',
       refTable_th_step2: '② Tx / module', refTable_th_step3: '③ Total units',
       refTable_row1: '2oo3 (distributed)', refTable_row2: '3oo4 (distributed)', refTable_row3: 'N+1 (standby, N=3)',
@@ -467,6 +467,7 @@
     // (이 calculate()의 최초 1회 호출은 ⑤번 const들이 아직 선언되기 전에 실행되므로,
     // 그 시점의 TDZ 참조 오류는 무시 — ⑤번 초기화가 끝난 뒤 다시 호출되면서 정상 반영됨)
     if (typeof updateCombMMax === 'function') { try { updateCombMMax(); } catch (e) {} }
+    if (typeof renderRefTable === 'function') { try { renderRefTable(); } catch (e) {} }
   }
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -1362,7 +1363,39 @@
       normalPct = pct;
       emergencyPct = pct;
     }
-    return { M, perModuleUnits, totalUnits, normalPct, emergencyPct };
+    return { M, perModuleUnits, totalUnits, normalPct, emergencyPct, perModuleLoad };
+  }
+
+  // 참고 예시 표 — 더 이상 고정 숫자가 아니라 지금 ①번 총부하·정격·안전율(등)로 5가지
+  // 대표 방식을 실시간 계산해 비교해준다.
+  const REF_TABLE_ROWS = [
+    { presetKey: '2oo3', labelKey: 'refTable_row1' },
+    { presetKey: '3oo4', labelKey: 'refTable_row2' },
+    { presetKey: 'n+1', labelKey: 'refTable_row3' },
+    { presetKey: 'n+2c', labelKey: 'refTable_row4' },
+    { presetKey: '2n', labelKey: 'refTable_row5' },
+  ];
+  function renderRefTable() {
+    const refBody = document.getElementById('refTableBody');
+    const refTitle = document.getElementById('refTableTitle');
+    if (!refBody || !refTitle) return;
+    const rating = parseFloat(ratingInput.value);
+    const { safety } = getGlobalDeratingFactors();
+    const load = parseFloat(loadInput.value);
+    refTitle.textContent = t('refTable_title', { load: fmtN(load), rating: fmtN(rating), safety });
+    refBody.innerHTML = '';
+    if (!load || load <= 0 || !rating || rating <= 0 || !safety) return;
+    REF_TABLE_ROWS.forEach(row => {
+      const result = computeSetResult({ loadMW: load, presetKey: row.presetKey });
+      const tr = document.createElement('tr');
+      const tdTopo = document.createElement('td'); tdTopo.textContent = t(row.labelKey);
+      const tdLoad = document.createElement('td'); tdLoad.textContent = fmtN(load) + ' MW';
+      const tdStep1 = document.createElement('td'); tdStep1.textContent = fmtN(result.perModuleLoad / 1000) + ' MW';
+      const tdStep2 = document.createElement('td'); tdStep2.textContent = t('unit_dae', { n: result.perModuleUnits });
+      const tdStep3 = document.createElement('td'); tdStep3.className = 'accent'; tdStep3.textContent = t('unit_dae', { n: result.totalUnits });
+      tr.appendChild(tdTopo); tr.appendChild(tdLoad); tr.appendChild(tdStep1); tr.appendChild(tdStep2); tr.appendChild(tdStep3);
+      refBody.appendChild(tr);
+    });
   }
 
   function renderSets() {
