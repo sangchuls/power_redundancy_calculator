@@ -43,6 +43,7 @@
       unit_3units: '3대', unit_4units: '4대', unit_8units: '8대', unit_12units: '12대', unit_15units: '15대', unit_16units: '16대',
       globalFootnote: '총 변압기 대수 = ⌈ (①모듈당 설계부하) ÷ (변압기 정격 × 안전율) ⌉ × (N + C) &nbsp;|&nbsp; 분산이중화: ①=총부하÷N (전 모듈 동시가동, C개 모듈 상실까지 무스위칭 대응) &nbsp;|&nbsp; 대기이중화: ①=총부하÷N (duty N개가 분담, C개는 평상시 idle 대기) &nbsp;|&nbsp; 완전이중화: ①=총부하 (각 트레인이 단독으로 전체부하 100% 커버)',
       export_title: '저장', export_desc: '현재 입력값·계산결과·다이어그램을 문서로 저장합니다.',
+      view_sequential: '순차형', view_dual: '듀얼형',
       export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
       export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
 
@@ -141,6 +142,7 @@
       unit_3units: '3', unit_4units: '4', unit_8units: '8', unit_12units: '12', unit_15units: '15', unit_16units: '16',
       globalFootnote: 'Total transformer units = ⌈ (① design load / module) ÷ (rating × safety factor) ⌉ × (N + C) &nbsp;|&nbsp; Distributed: ①=load÷N (all modules run simultaneously, absorbs up to C simultaneous losses without switching) &nbsp;|&nbsp; Standby: ①=load÷N (N duty modules share it, C stay idle) &nbsp;|&nbsp; Full: ①=load (each train independently covers 100%)',
       export_title: 'Save', export_desc: 'Save the current inputs, results, and diagrams as a document.',
+      view_sequential: 'Sequential', view_dual: 'Dual',
       export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
       export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
 
@@ -239,6 +241,19 @@
   applyStaticTranslations();
   document.getElementById('langKoBtn').classList.toggle('active', currentLang === 'ko');
   document.getElementById('langEnBtn').classList.toggle('active', currentLang === 'en');
+
+  // ===== 화면 보기 방식: 순차형(기본, 원래처럼 위→아래) / 듀얼형(왼쪽 입력 · 오른쪽 다이어그램 고정) =====
+  let viewMode = localStorage.getItem('prc_view') || 'sequential';
+  function setViewMode(mode) {
+    viewMode = mode;
+    localStorage.setItem('prc_view', mode);
+    document.body.classList.toggle('view-dual', mode === 'dual');
+    document.getElementById('viewSeqBtn').classList.toggle('active', mode === 'sequential');
+    document.getElementById('viewDualBtn').classList.toggle('active', mode === 'dual');
+  }
+  document.getElementById('viewSeqBtn').addEventListener('click', () => setViewMode('sequential'));
+  document.getElementById('viewDualBtn').addEventListener('click', () => setViewMode('dual'));
+  setViewMode(viewMode);
 
   const nInput = document.getElementById('nInput');
   const cInput = document.getElementById('cInput');

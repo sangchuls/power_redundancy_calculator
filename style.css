@@ -32,18 +32,21 @@
     padding: 24px 18px 30px;
     box-shadow: 0 14px 0 rgba(46,36,25,0.05), 0 26px 48px rgba(46,36,25,0.10);
   }
-  body:has(.layout-grid) .wrap { max-width: 98vw; width: 1800px; }
 
-  /* Desktop: left = input/calc cards (scrolls normally), right = both diagrams
-     pinned in a sticky rail split top/bottom so they stay visible while you edit inputs. */
-  .layout-grid {
+  /* 순차형(기본): ⓪~⑤ 카드가 원래처럼 위→아래 한 줄로. 듀얼형: 왼쪽 입력/오른쪽
+     다이어그램 2열 + 오른쪽 sticky. body.view-dual 클래스로만 전환된다. */
+  .layout-grid { display: block; }
+  .left-col { min-width: 0; }
+  .right-col { }
+
+  body.view-dual .wrap { max-width: 98vw; width: 1800px; }
+  body.view-dual .layout-grid {
     display: grid;
     grid-template-columns: minmax(360px, 1fr) minmax(420px, 1fr);
     gap: 20px;
     align-items: start;
   }
-  .left-col { min-width: 0; }
-  .right-col {
+  body.view-dual .right-col {
     position: sticky;
     top: 20px;
     display: flex;
@@ -53,19 +56,19 @@
     overflow-y: auto;
     padding-right: 4px;
   }
-  .right-col .card { margin-bottom: 0; }
+  body.view-dual .right-col .card { margin-bottom: 0; }
 
   @media (max-width: 1100px) {
-    body:has(.layout-grid) .wrap { max-width: 1040px; width: auto; }
-    .layout-grid { display: block; }
-    .right-col {
+    body.view-dual .wrap { max-width: 1040px; width: auto; }
+    body.view-dual .layout-grid { display: block; }
+    body.view-dual .right-col {
       position: static;
       max-height: none;
       overflow: visible;
       display: block;
       padding-right: 0;
     }
-    .right-col .card { margin-bottom: 20px; }
+    body.view-dual .right-col .card { margin-bottom: 20px; }
   }
 
   h1 {
@@ -84,15 +87,15 @@
     font-weight: 400;
   }
 
-  .top-bar { display: flex; justify-content: flex-end; margin-bottom: 4px; }
-  .lang-toggle {
+  .top-bar { display: flex; justify-content: flex-end; align-items: center; gap: 10px; margin-bottom: 4px; }
+  .lang-toggle, .view-toggle {
     display: inline-flex;
     background: var(--surface);
     border: 1.5px solid var(--border);
     border-radius: 999px;
     padding: 3px;
   }
-  .lang-btn {
+  .lang-btn, .view-btn {
     font-family: "Jua", "Pretendard Variable", sans-serif;
     padding: 5px 14px;
     border-radius: 999px;
@@ -103,8 +106,9 @@
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s;
+    white-space: nowrap;
   }
-  .lang-btn.active { background: var(--primary); color: var(--bg-color); }
+  .lang-btn.active, .view-btn.active { background: var(--primary); color: var(--bg-color); }
 
   .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
   .export-btn:disabled { opacity: 0.55; cursor: wait; }
