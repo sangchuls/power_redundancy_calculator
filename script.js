@@ -28,7 +28,7 @@
       btn_zoomReset: '리셋',
       h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
       h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
-      label_combM: '전기실 개수 (M)', hint_combM: '3~6 지원 (조합 수 = M×(M-1)÷2)',
+      label_combM: '전기실 개수 (M)', hint_combM: '3~{max} 지원 (방 1개당 변압기 최소 1대 기준, 조합 수 = M×(M-1)÷2)',
       label_combLoad: '이 배치도에 적용할 총 IT부하 (MW)', label_combSync: '①번 데이터홀 IT부하와 연동',
       hint_combSync: ' — 이 배치도가 데이터홀 전체를 대표할 때 사용(⓪번 홀당 용량 → ①번 총부하 → 이 값까지 자동 연계). 층/동 단위 일부만 담당하면 체크 해제 후 직접 입력.',
       label_combFailRoom: '비상시 상실 전기실',
@@ -126,7 +126,7 @@
       btn_zoomReset: 'Reset',
       h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
       h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
-      label_combM: 'Room count (M)', hint_combM: 'Supports 3~6 (combinations = M×(M-1)÷2)',
+      label_combM: 'Room count (M)', hint_combM: 'Supports 3~{max} (at least 1 transformer per room, combinations = M×(M-1)÷2)',
       label_combLoad: 'Total IT load applied to this layout (MW)', label_combSync: 'Synced with ① data hall IT load',
       hint_combSync: ' — Use when this layout represents the whole data hall (⓪ per-hall capacity → ① total load → this value, auto-chained). Uncheck and enter directly if it only covers part of a floor/building.',
       label_combFailRoom: 'Room lost in emergency',
@@ -447,6 +447,11 @@
     const perTxLoadKW = perModuleLoad / perModuleUnits;
     updateRatingRecommend(perTxLoadKW, combined);
     renderDiagram(N, C, perModuleUnits, load, rating, effectiveCap);
+    // ⑤번 전기실 개수(M) 상한은 "방 1개당 변압기 최소 1대"라는 물리적 제약을 반영해,
+    // 지금 ①~④ 설정으로 계산된 총 변압기 대수를 넘지 못하도록 동적으로 갱신한다.
+    // (이 calculate()의 최초 1회 호출은 ⑤번 const들이 아직 선언되기 전에 실행되므로,
+    // 그 시점의 TDZ 참조 오류는 무시 — ⑤번 초기화가 끝난 뒤 다시 호출되면서 정상 반영됨)
+    if (typeof updateCombMMax === 'function') { try { updateCombMMax(); } catch (e) {} }
   }
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -909,7 +914,24 @@
   const combModeEmergencyBtn = document.getElementById('combModeEmergencyBtn');
   const combApplyBtn = document.getElementById('combApplyBtn');
   const combApplyHint = document.getElementById('combApplyHint');
+  const combMHint = document.getElementById('combMHint');
   let combMode = 'normal';
+
+  // Each room needs at least 1 transformer, so M (room count) can never exceed the total
+  // transformer count that ①~④ currently calculates for the whole load.
+  function getTotalTxCount() {
+    const n = parseInt(document.getElementById('resultTotal').textContent);
+    return isFinite(n) && n > 0 ? n : 6;
+  }
+  function updateCombMMax() {
+    const dynamicMax = Math.max(3, getTotalTxCount());
+    combMInput.max = dynamicMax;
+    if (combMHint) combMHint.textContent = t('hint_combM', { max: dynamicMax });
+    if (parseInt(combMInput.value) > dynamicMax) {
+      combMInput.value = dynamicMax;
+      combMInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
 
   function syncCombLoadFromMain() {
     if (combSyncLoadCheckbox.checked) {
@@ -956,7 +978,7 @@
   }
 
   function renderCombDiagram() {
-    const M = Math.max(3, Math.min(6, parseInt(combMInput.value) || 4));
+    const M = Math.max(3, Math.min(parseInt(combMInput.max) || 6, parseInt(combMInput.value) || 4));
     const totalLoad = parseFloat(combLoadInput.value);
     const svg = document.getElementById('combSvg');
     combZoom.clear();
@@ -1186,7 +1208,7 @@
   });
 
   combApplyBtn.addEventListener('click', () => {
-    const M = Math.max(3, Math.min(6, parseInt(combMInput.value) || 4));
+    const M = Math.max(3, Math.min(parseInt(combMInput.max) || 6, parseInt(combMInput.value) || 4));
     const totalLoad = parseFloat(combLoadInput.value);
     if (!totalLoad || totalLoad <= 0) return;
     const targetLoad = combMode === 'emergency' ? totalLoad / (M - 1) : totalLoad / M;
