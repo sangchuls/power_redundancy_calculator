@@ -652,7 +652,7 @@
     const hallH = 50;
     const moduleY = 140;
     const txRowsNeeded = Math.ceil(perModuleUnits / 3);
-    const moduleH = 144 + txRowsNeeded * 34; // +14 for the per-module 설계부하/유효용량 reference line
+    const moduleH = 144 + txRowsNeeded * 46; // +14 for the per-module 설계부하/유효용량 reference line, +12/row for the per-tx rating line
     let svgH = 220 + moduleH;
     svg.setAttribute('width', svgW);
     svg.setAttribute('height', svgH);
@@ -751,29 +751,36 @@
       const perTxPct = isActive ? (perTxKW / effectiveCap * 100) : 0;
       const startTxY = moduleY + 57;
 
+      const txW = 30;
       for (let t = 0; t < txCount; t++) {
         const row = Math.floor(t / 3);
         const col = t % 3;
         const rowCount = Math.min(3, txCount - row * 3);
-        const rowWActual = rowCount * 26 + (rowCount - 1) * 8;
+        const rowWActual = rowCount * txW + (rowCount - 1) * 8;
         const rowStartX = x + boxW / 2 - rowWActual / 2;
-        const tx = rowStartX + col * (26 + 8);
-        const ty = startTxY + row * (22 + 22);
+        const tx = rowStartX + col * (txW + 8);
+        const ty = startTxY + row * (22 + 34);
 
         const txColor = isOffline ? txOfflineFill : (isIdle ? txIdleFill : mColor);
-        const txRect = svgEl('rect', { x: tx, y: ty, width: 26, height: 22, rx: 4, fill: txColor });
+        const txRect = svgEl('rect', { x: tx, y: ty, width: txW, height: 22, rx: 4, fill: txColor });
         moduleGroup.appendChild(txRect);
-        const txLabel = svgEl('text', { x: tx + 13, y: ty + 15, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 700, fill: '#fff', 'font-family': 'sans-serif' });
+        const txLabel = svgEl('text', { x: tx + txW / 2, y: ty + 15, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 700, fill: '#fff', 'font-family': 'sans-serif' });
         txLabel.textContent = isOffline ? '✕' : 'T';
         moduleGroup.appendChild(txLabel);
 
-        const pctLabel = svgEl('text', { x: tx + 13, y: ty + 33, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor), 'font-family': 'sans-serif' });
+        const pctLabel = svgEl('text', { x: tx + txW / 2, y: ty + 33, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor), 'font-family': 'sans-serif' });
         pctLabel.textContent = isOffline ? '-' : (isIdle ? '0%' : fmtN(perTxPct) + '%');
         moduleGroup.appendChild(pctLabel);
+
+        // per-transformer rated capacity, tiny — kept to a compact "N.NMVA" so it stays clear
+        // of the tx block's edges even for larger custom rating values.
+        const ratingLabel = svgEl('text', { x: tx + txW / 2, y: ty + 44, 'text-anchor': 'middle', 'font-size': 6.2, 'font-weight': 600, fill: isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : '#8A8072'), 'font-family': 'sans-serif' });
+        ratingLabel.textContent = fmtN(rating / 1000) + 'MVA';
+        moduleGroup.appendChild(ratingLabel);
       }
 
       // module summary caption
-      const capY = startTxY + txRowsNeeded * (22 + 22) + 6;
+      const capY = startTxY + txRowsNeeded * (22 + 34) + 6;
       const countText = svgEl('text', { x: x + boxW / 2, y: capY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: labelColor, 'font-family': 'sans-serif' });
       countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(mod.loadKW) });
       moduleGroup.appendChild(countText);
