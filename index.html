@@ -286,6 +286,20 @@
     </p>
   </div>
 
+  <div class="card">
+    <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → IT Rack — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
+    <div class="diagram-wrap">
+      <div class="zoom-controls">
+        <span class="hint" style="margin:4px 8px 0 0;" data-i18n="hint_sld">휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다</span>
+        <button class="zoom-btn" id="sldZoomOut">－</button>
+        <button class="zoom-btn" id="sldZoomReset" data-i18n="btn_zoomReset">리셋</button>
+        <button class="zoom-btn" id="sldZoomIn">＋</button>
+      </div>
+      <svg id="sldSvg" width="760" height="360"></svg>
+    </div>
+    <div class="diagram-legend" id="sldLegend"></div>
+  </div>
+
   </div>
   </div>
 

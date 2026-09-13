@@ -44,6 +44,10 @@
       globalFootnote: '총 변압기 대수 = ⌈ (①모듈당 설계부하) ÷ (변압기 정격 × 안전율) ⌉ × (N + C) &nbsp;|&nbsp; 분산이중화: ①=총부하÷N (전 모듈 동시가동, C개 모듈 상실까지 무스위칭 대응) &nbsp;|&nbsp; 대기이중화: ①=총부하÷N (duty N개가 분담, C개는 평상시 idle 대기) &nbsp;|&nbsp; 완전이중화: ①=총부하 (각 트레인이 단독으로 전체부하 100% 커버)',
       export_title: '저장', export_desc: '현재 입력값·계산결과·다이어그램을 문서로 저장합니다.',
       view_sequential: '순차형', view_dual: '듀얼형',
+      h6_title: 'SLD (단선결선도)', h6_desc: '한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → IT Rack — ④번과 같은 평상시/비상시 상태를 그대로 반영',
+      hint_sld: '휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다',
+      sld_utility: '한전 수전', sld_utility_sub: '상시 2회선', sld_generator: '비상발전기', sld_generator_sub: '병렬운전',
+      sld_mainbus: '주모선', sld_legend_note: '실선=상시 가동 경로 · 점선=대기/상실 경로 (④번 평상시·비상시 상태와 동일)',
       export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
       export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
 
@@ -143,6 +147,10 @@
       globalFootnote: 'Total transformer units = ⌈ (① design load / module) ÷ (rating × safety factor) ⌉ × (N + C) &nbsp;|&nbsp; Distributed: ①=load÷N (all modules run simultaneously, absorbs up to C simultaneous losses without switching) &nbsp;|&nbsp; Standby: ①=load÷N (N duty modules share it, C stay idle) &nbsp;|&nbsp; Full: ①=load (each train independently covers 100%)',
       export_title: 'Save', export_desc: 'Save the current inputs, results, and diagrams as a document.',
       view_sequential: 'Sequential', view_dual: 'Dual',
+      h6_title: 'SLD (Single Line Diagram)', h6_desc: 'Utility feed → emergency generator → main bus → per-module transformer/UPS → IT rack — mirrors the same normal/emergency state as ④',
+      hint_sld: 'Wheel to zoom · drag to pan · automatically mirrors the same normal/emergency state as the ④ configuration diagram',
+      sld_utility: 'Utility feed', sld_utility_sub: 'dual feed, always-on', sld_generator: 'Emergency generator', sld_generator_sub: 'parallel operation',
+      sld_mainbus: 'Main bus', sld_legend_note: 'Solid = always-energized path · Dashed = standby/lost path (same as ④\'s normal/emergency state)',
       export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
       export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
 
@@ -567,12 +575,16 @@
 
   const diagramZoom = makeZoomable('diagramSvg');
   const combZoom = makeZoomable('combSvg');
+  const sldZoom = makeZoomable('sldSvg');
   document.getElementById('diagramZoomIn').addEventListener('click', () => diagramZoom.zoomIn());
   document.getElementById('diagramZoomOut').addEventListener('click', () => diagramZoom.zoomOut());
   document.getElementById('diagramZoomReset').addEventListener('click', () => diagramZoom.reset());
   document.getElementById('combZoomIn').addEventListener('click', () => combZoom.zoomIn());
   document.getElementById('combZoomOut').addEventListener('click', () => combZoom.zoomOut());
   document.getElementById('combZoomReset').addEventListener('click', () => combZoom.reset());
+  document.getElementById('sldZoomIn').addEventListener('click', () => sldZoom.zoomIn());
+  document.getElementById('sldZoomOut').addEventListener('click', () => sldZoom.zoomOut());
+  document.getElementById('sldZoomReset').addEventListener('click', () => sldZoom.reset());
 
   // Double-click on empty diagram background (outside any module/room block) => back to 평상시.
   // Per-block dblclick handlers (added inside renderDiagram/renderCombDiagram, since blocks are
@@ -853,6 +865,136 @@
     const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
     document.getElementById('diagramDesc').textContent = t('diagramDesc', { topo: topoLabel, mode: diagramMode === 'normal' ? t('mode_normal') : t('mode_emergency') });
     diagramZoom.reset();
+
+    // ⑥번 SLD는 별도 상태를 갖지 않고, 방금 ④번에서 계산한 modules 배열(가동/대기/상실)을
+    // 그대로 재사용해 같은 평상시/비상시 그림을 단선결선도 형태로만 다시 그린다.
+    renderSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap);
+  }
+
+  // 개념도 수준의 단선결선도(SLD) — 실제 프로젝트 SLD처럼 모든 차단기/버스 태그를 나열하지
+  // 않고, 전력 흐름과 그룹핑·장비 명칭·주/예비 구분만 한눈에 보이도록 단순화했다.
+  // 한전 수전 → 비상발전기 → 주모선 → (모듈별) 변압기 → UPS → IT Rack.
+  function renderSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
+    const svg = document.getElementById('sldSvg');
+    if (!svg) return;
+    sldZoom.clear();
+    const svgTarget = sldZoom.group;
+    const M = modules.length;
+    if (!M) return;
+
+    const navy = '#3A2E75';
+    const offlineBorder = '#DB8478';
+    const offlineFill = '#FBEDE7';
+    const idleFill = '#F5F2FB';
+    const idleBorder = '#D9D2EC';
+    const idleText = '#9A90BB';
+
+    const colW = 108, gap = 22;
+    const totalW = M * colW + (M - 1) * gap;
+    const svgW = Math.max(760, totalW + 100);
+    const startX = (svgW - totalW) / 2;
+    const busX1 = startX + colW / 2;
+    const busX2 = startX + totalW - colW / 2;
+    const busY = 130;
+    const colTopY = busY + 25;
+    const svgH = colTopY + 196;
+    svg.setAttribute('width', svgW);
+    svg.setAttribute('height', svgH);
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+
+    function tick(x, y, color) {
+      svgTarget.appendChild(svgEl('rect', { x: x - 5, y: y - 3, width: 10, height: 6, fill: color }));
+    }
+    function transformerIcon(cx, cy, color, dashed) {
+      const attrs = { fill: 'none', stroke: color, 'stroke-width': 1.8 };
+      if (dashed) attrs['stroke-dasharray'] = '3,3';
+      svgTarget.appendChild(svgEl('circle', { cx, cy: cy - 6, r: 9, ...attrs }));
+      svgTarget.appendChild(svgEl('circle', { cx, cy: cy + 6, r: 9, ...attrs }));
+    }
+    function label(x, y, txt, size, color, weight) {
+      const el = svgEl('text', { x, y, 'text-anchor': 'middle', 'font-size': size, 'font-weight': weight || 700, fill: color, 'font-family': 'sans-serif' });
+      el.textContent = txt;
+      svgTarget.appendChild(el);
+    }
+
+    // 한전 수전 (상시 2회선) — busX1 위에서 두 가닥으로 내려와 주모선에 합류
+    label(busX1, 14, t('sld_utility'), 11, navy);
+    label(busX1, 27, `(${t('sld_utility_sub')})`, 9, '#8A8072', 500);
+    [-5, 5].forEach(dx => {
+      const line = svgEl('line', { x1: busX1 + dx, y1: 36, x2: busX1 + dx, y2: busY, stroke: navy, 'stroke-width': 1.6 });
+      svgTarget.appendChild(line);
+      tick(busX1 + dx, 72, navy);
+    });
+
+    // 비상발전기 (병렬운전) — busX2 위에서 원(G) 심볼 + 점선(평상시엔 대기 전원임을 표시)
+    label(busX2, 14, t('sld_generator'), 11, navy);
+    label(busX2, 27, `(${t('sld_generator_sub')})`, 9, '#8A8072', 500);
+    svgTarget.appendChild(svgEl('circle', { cx: busX2, cy: 55, r: 15, fill: '#fff', stroke: navy, 'stroke-width': 1.8 }));
+    label(busX2, 59, 'G', 12, navy);
+    svgTarget.appendChild(svgEl('line', { x1: busX2, y1: 70, x2: busX2, y2: busY, stroke: navy, 'stroke-width': 1.6, 'stroke-dasharray': '4,3' }));
+
+    // 주모선
+    svgTarget.appendChild(svgEl('line', { x1: busX1, y1: busY, x2: busX2, y2: busY, stroke: navy, 'stroke-width': 3 }));
+    label((busX1 + busX2) / 2, busY - 9, t('sld_mainbus'), 10.5, navy);
+
+    modules.forEach((mod, i) => {
+      const cx = startX + i * (colW + gap) + colW / 2;
+      const x = cx - colW / 2;
+      const isOffline = mod.state === 'offline';
+      const isIdle = mod.state === 'idle';
+      const isActive = mod.state === 'active';
+      const color = isOffline ? offlineBorder : (isIdle ? idleBorder : roomColor(i));
+      const dash = isActive ? 'none' : '4,3';
+
+      // 모선 → 모듈 탭 (차단기 표시)
+      svgTarget.appendChild(svgEl('line', { x1: cx, y1: busY, x2: cx, y2: colTopY, stroke: color, 'stroke-width': 2, 'stroke-dasharray': dash }));
+      tick(cx, busY + 11, color);
+
+      // 모듈 명칭 + 상태 (④번과 동일한 표기: 전기실/트레인/Duty/캐쳐, 가동중/대기/상실)
+      let roleLabel;
+      if (currentTopo === 'full') roleLabel = t('module_label_train', { n: i + 1 });
+      else if (currentTopo === 'standby') roleLabel = mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 });
+      else roleLabel = t('module_label_room', { n: i + 1 });
+      const stateLabel = isOffline ? t('state_offline') : isIdle ? t('state_idle') : (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') ? t('state_engaged') : t('state_active');
+      label(cx, colTopY, roleLabel, 10.5, isOffline ? '#C8604F' : (isIdle ? idleText : color), 800);
+      label(cx, colTopY + 12, stateLabel, 8, isOffline ? '#C8604F' : (isIdle ? idleText : '#8A8072'), 600);
+
+      // 변압기
+      transformerIcon(cx, colTopY + 34, color, !isActive);
+      label(cx, colTopY + 52, `TR ${fmtN(rating)}kVA`, 8.5, isOffline ? '#C8604F' : color, 700);
+      label(cx, colTopY + 63, '×' + t('unit_dae', { n: perModuleUnits }), 8, '#8A8072', 600);
+      tick(cx, colTopY + 74, color);
+
+      // UPS
+      const upsFill = isOffline ? offlineFill : (isIdle ? idleFill : hexToRgba(color, 0.14));
+      svgTarget.appendChild(svgEl('rect', { x, y: colTopY + 80, width: colW, height: 48, rx: 8, fill: upsFill, stroke: color, 'stroke-width': isActive ? 2 : 1.4, 'stroke-dasharray': dash }));
+      label(cx, colTopY + 100, 'UPS', 10.5, isOffline ? '#C8604F' : color, 800);
+      label(cx, colTopY + 114, isActive ? `${fmtN(mod.loadKW)}kW` : '-', 9, isOffline ? '#C8604F' : (isIdle ? idleText : '#8A8072'), 600);
+      tick(cx, colTopY + 136, color);
+
+      // IT Rack
+      svgTarget.appendChild(svgEl('rect', { x, y: colTopY + 148, width: colW, height: 26, rx: 6, fill: isOffline ? offlineFill : '#fff', stroke: color, 'stroke-width': isActive ? 2 : 1.4, 'stroke-dasharray': dash }));
+      label(cx, colTopY + 165, 'IT Rack', 9.5, isOffline ? '#C8604F' : color, 700);
+    });
+
+    const legend = document.getElementById('sldLegend');
+    if (legend) {
+      legend.innerHTML = '';
+      modules.forEach((mod, i) => {
+        const nm = currentTopo === 'full' ? t('module_label_train', { n: i + 1 }) : (currentTopo === 'standby' ? (mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 })) : t('module_label_room', { n: i + 1 }));
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="swatch" style="background:${mod.state === 'offline' ? offlineFill : roomColor(i)}"></span>${nm}`;
+        legend.appendChild(div);
+      });
+      const note = document.createElement('div');
+      note.className = 'item';
+      note.style.width = '100%';
+      note.style.marginTop = '4px';
+      note.textContent = t('sld_legend_note');
+      legend.appendChild(note);
+    }
+    sldZoom.reset();
   }
 
   function fmtN(n) {
