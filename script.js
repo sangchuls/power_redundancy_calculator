@@ -50,16 +50,16 @@
       sld_mainbus: '주모선', sld_legend_note: '실선=상시 가동 경로 · 점선=대기/상실 경로 (④번 평상시·비상시 상태와 동일)',
       sld_mode_auto: '자동 작성', sld_mode_manual: '수동 작성',
       sld_palette_title: '장비 팔레트 — 클릭해서 추가', sld_seed: '현재 계통 불러오기', sld_clear: '전체 지우기',
-      hint_sld_manual: '블럭 드래그=이동 · 블럭 2개를 차례로 클릭=연결 · 선 클릭=기본↔예비 전환 · 블럭/선 더블클릭=삭제',
+      hint_sld_manual: '블럭 드래그=이동 · 블럭 2개를 차례로 클릭=연결 · 블럭 선택 후 선 클릭=그 선에서 분기(배터리·발전기 등) · 선만 클릭=기본↔예비 전환 · 블럭/선 더블클릭=삭제',
       sld_status_idle: '블럭을 클릭하면 연결이 시작됩니다 (블럭 {n}개 · 연결선 {e}개)',
-      sld_status_selected: '“{name}” 선택됨 — 연결할 블럭을 클릭하세요 (같은 블럭 재클릭 시 취소)',
+      sld_status_selected: '“{name}” 선택됨 — 연결할 블럭을 클릭하거나, 분기할 선을 클릭하세요 (같은 블럭 재클릭 시 취소)',
       sld_edge_main: '기본', sld_edge_standby: '예비',
       sld_legend_manual: '실선=기본(주) 경로 · 점선=예비 경로 — 선을 클릭하면 서로 전환됩니다',
       sldb_kepco: '한전 변전소', sldb_ds: '단로기', sldb_gcb: '가스차단기', sldb_vcb: '진공차단기',
       sldb_acb: '기중차단기', sldb_mccb: '배선용차단기', sldb_mtr: '주변압기', sldb_tr: '변압기',
       sldb_bus: '모선', sldb_gen: '비상발전기', sldb_gcp: '발전기 제어반', sldb_syn: '동기 병렬반',
       sldb_ctts: '무순단 절체기', sldb_sts: '정지형 절체기', sldb_ups: '무정전전원장치', sldb_bat: '축전지',
-      sldb_pdu: '전력분배반', sldb_rack: '서버랙', sldb_load: '일반 부하',
+      sldb_pdu: '전력분배반', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
       export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
       export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
 
@@ -165,16 +165,16 @@
       sld_mainbus: 'Main bus', sld_legend_note: 'Solid = always-energized path · Dashed = standby/lost path (same as ④\'s normal/emergency state)',
       sld_mode_auto: 'Auto-generate', sld_mode_manual: 'Manual draw',
       sld_palette_title: 'Equipment palette — click to add', sld_seed: 'Load current system', sld_clear: 'Clear all',
-      hint_sld_manual: 'Drag a block to move · click two blocks in turn to connect · click a line to toggle main↔standby · double-click a block/line to delete',
+      hint_sld_manual: 'Drag a block to move · click two blocks in turn to connect · select a block then click a line to tap off it (battery, generator…) · click a line alone to toggle main↔standby · double-click a block/line to delete',
       sld_status_idle: 'Click a block to start a connection ({n} blocks · {e} lines)',
-      sld_status_selected: '“{name}” selected — click the block to connect to (click it again to cancel)',
+      sld_status_selected: '“{name}” selected — click a block to connect to, or click a line to tap off it (click it again to cancel)',
       sld_edge_main: 'Main', sld_edge_standby: 'Standby',
       sld_legend_manual: 'Solid = main path · Dashed = standby path — click a line to toggle between them',
       sldb_kepco: 'Utility substation', sldb_ds: 'Disconnecting switch', sldb_gcb: 'Gas circuit breaker', sldb_vcb: 'Vacuum circuit breaker',
       sldb_acb: 'Air circuit breaker', sldb_mccb: 'Molded case CB', sldb_mtr: 'Main transformer', sldb_tr: 'Transformer',
       sldb_bus: 'Bus bar', sldb_gen: 'Emergency generator', sldb_gcp: 'Gen. control panel', sldb_syn: 'Synchronizing panel',
       sldb_ctts: 'Closed transition TS', sldb_sts: 'Static transfer switch', sldb_ups: 'Uninterruptible PS', sldb_bat: 'Battery',
-      sldb_pdu: 'Power distribution unit', sldb_rack: 'Server rack', sldb_load: 'General load',
+      sldb_pdu: 'Power distribution unit', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
       export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
       export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
 
@@ -929,6 +929,9 @@
   ];
   const SLD_TYPE_MAP = {};
   SLD_BLOCK_TYPES.forEach(b => { SLD_TYPE_MAP[b.key] = b; });
+  // 분기점: 팔레트에는 없고, 선에 분기를 만들 때 자동으로 생성된다 (배터리·발전기처럼
+  // 블럭끼리가 아니라 기존 선에서 따내야 하는 장비를 연결하기 위한 노드).
+  SLD_TYPE_MAP.junction = { key: 'junction', abbr: '', cat: 'bus' };
 
   let sldMode = localStorage.getItem('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
   let sldAutoGraph = { nodes: [], edges: [], notes: [] };
@@ -970,6 +973,7 @@
     };
   }
   function sldNodeColor(node) {
+    if (node.type === 'junction') return SLD_EDGE_COLORS.main;
     if (node.state === 'offline') return SLD_EDGE_COLORS.lost;
     if (node.state === 'idle') return '#9A90BB';
     return SLD_CATS[(SLD_TYPE_MAP[node.type] || {}).cat] || SLD_CATS.load;
@@ -1097,9 +1101,16 @@
         const hit = svgEl('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, cursor: 'pointer' });
         hit.addEventListener('click', e => {
           e.stopPropagation();
-          edge.kind = edge.kind === 'main' ? 'standby' : 'main';
-          saveSldManualGraph();
-          drawSLD();
+          // 블럭이 선택된 상태에서 선을 클릭하면 그 선에 분기점을 만들어 연결한다
+          // (배터리·발전기처럼 선에서 따내는 장비). 선택이 없으면 기본↔예비 전환.
+          const selected = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+          if (selected) {
+            tapEdgeWithNode(edge, selected, sldClientToGraph(e));
+          } else {
+            edge.kind = edge.kind === 'main' ? 'standby' : 'main';
+            saveSldManualGraph();
+            drawSLD();
+          }
         });
         hit.addEventListener('dblclick', e => {
           e.stopPropagation();
@@ -1128,28 +1139,36 @@
       const selected = manual && node.id === sldSelectedId;
       const grp = svgEl('g', manual ? { cursor: 'move' } : {});
       const dashed = node.state !== 'active';
-      grp.appendChild(svgEl('rect', {
-        x: node.x, y: node.y, width: node.w, height: node.h, rx: 8,
-        fill: node.state === 'offline' ? '#FBEDE7' : hexToRgba(color, 0.12),
-        stroke: color, 'stroke-width': selected ? 3 : (dashed ? 1.4 : 2),
-        'stroke-dasharray': dashed ? '5,4' : 'none',
-      }));
-      const sub = sldNodeSub(node);
-      const cx = node.x + node.w / 2;
-      const labelY = sub ? node.y + node.h / 2 - 3 : node.y + node.h / 2 + 4;
-      const nameEl = svgEl('text', {
-        x: cx, y: labelY, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 800,
-        fill: color, 'font-family': 'sans-serif',
-      });
-      nameEl.textContent = node.label;
-      grp.appendChild(nameEl);
-      if (sub) {
-        const subEl = svgEl('text', {
-          x: cx, y: node.y + node.h / 2 + 11, 'text-anchor': 'middle', 'font-size': 8,
-          'font-weight': 600, fill: node.state === 'active' ? '#8A8072' : color, 'font-family': 'sans-serif',
+      if (node.type === 'junction') {
+        // 분기점은 선 위의 점으로만 표시 (라벨 없음)
+        const cxj = node.x + node.w / 2, cyj = node.y + node.h / 2;
+        grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: selected ? 7 : 5, fill: color }));
+        if (selected) grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: 10, fill: 'none', stroke: color, 'stroke-width': 1.5 }));
+        if (manual) grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: 11, fill: 'transparent' }));
+      } else {
+        grp.appendChild(svgEl('rect', {
+          x: node.x, y: node.y, width: node.w, height: node.h, rx: 8,
+          fill: node.state === 'offline' ? '#FBEDE7' : hexToRgba(color, 0.12),
+          stroke: color, 'stroke-width': selected ? 3 : (dashed ? 1.4 : 2),
+          'stroke-dasharray': dashed ? '5,4' : 'none',
+        }));
+        const sub = sldNodeSub(node);
+        const cx = node.x + node.w / 2;
+        const labelY = sub ? node.y + node.h / 2 - 3 : node.y + node.h / 2 + 4;
+        const nameEl = svgEl('text', {
+          x: cx, y: labelY, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 800,
+          fill: color, 'font-family': 'sans-serif',
         });
-        subEl.textContent = sub;
-        grp.appendChild(subEl);
+        nameEl.textContent = node.label;
+        grp.appendChild(nameEl);
+        if (sub) {
+          const subEl = svgEl('text', {
+            x: cx, y: node.y + node.h / 2 + 11, 'text-anchor': 'middle', 'font-size': 8,
+            'font-weight': 600, fill: node.state === 'active' ? '#8A8072' : color, 'font-family': 'sans-serif',
+          });
+          subEl.textContent = sub;
+          grp.appendChild(subEl);
+        }
       }
       if (manual) {
         grp.addEventListener('mousedown', e => {
@@ -1159,12 +1178,7 @@
         });
         grp.addEventListener('dblclick', e => {
           e.stopPropagation();
-          sldManualGraph.nodes = sldManualGraph.nodes.filter(n => n !== node);
-          sldManualGraph.edges = sldManualGraph.edges.filter(ed => ed.from !== node.id && ed.to !== node.id);
-          if (sldSelectedId === node.id) sldSelectedId = null;
-          saveSldManualGraph();
-          drawSLD();
-          updateSldStatus();
+          removeSldNode(node);
         });
       }
       target.appendChild(grp);
@@ -1226,6 +1240,48 @@
     el.textContent = sel
       ? t('sld_status_selected', { name: sel.label })
       : t('sld_status_idle', { n: sldManualGraph.nodes.length, e: sldManualGraph.edges.length });
+  }
+
+  // 기존 선에 분기점을 끼워 넣고 그 분기점에서 블럭으로 선을 뽑는다.
+  // 원래 선은 (시작→분기점) + (분기점→끝)으로 쪼개져 kind(기본/예비)를 그대로 유지한다.
+  function tapEdgeWithNode(edge, node, point) {
+    const g = sldManualGraph;
+    if (edge.from === node.id || edge.to === node.id) { sldSelectedId = null; drawSLD(); updateSldStatus(); return; }
+    const j = makeSldNode('junction', point.x - 6, point.y - 6, { w: 12, h: 12, label: '', sub: '' });
+    g.nodes.push(j);
+    g.edges = g.edges.filter(e => e !== edge);
+    g.edges.push({ id: 'e' + edge.from + '-' + j.id + '-' + (++sldSeq), from: edge.from, to: j.id, kind: edge.kind });
+    g.edges.push({ id: 'e' + j.id + '-' + edge.to + '-' + (++sldSeq), from: j.id, to: edge.to, kind: edge.kind });
+    g.edges.push({ id: 'e' + j.id + '-' + node.id + '-' + (++sldSeq), from: j.id, to: node.id, kind: 'main' });
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  }
+
+  // 분기점을 지울 때는 통과 경로를 다시 하나로 이어줘야 한다 — 그러지 않으면 분기만
+  // 지웠는데 본선까지 두 동으로 끊어져 사라진 것처럼 보인다.
+  function removeSldNode(node) {
+    const g = sldManualGraph;
+    const attached = g.edges.filter(e => e.from === node.id || e.to === node.id);
+    if (node.type === 'junction') {
+      const other = e => (e.from === node.id ? e.to : e.from);
+      const byKind = {};
+      attached.forEach(e => { (byKind[e.kind] = byKind[e.kind] || []).push(e); });
+      Object.keys(byKind).forEach(kind => {
+        const list = byKind[kind];
+        if (list.length < 2) return;
+        const a = other(list[0]), b = other(list[1]);
+        const dup = g.edges.some(e => (e.from === a && e.to === b) || (e.from === b && e.to === a));
+        if (a !== b && !dup) g.edges.push({ id: 'e' + a + '-' + b + '-' + (++sldSeq), from: a, to: b, kind });
+      });
+    }
+    g.nodes = g.nodes.filter(n => n !== node);
+    g.edges = g.edges.filter(e => e.from !== node.id && e.to !== node.id);
+    if (sldSelectedId === node.id) sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
   }
 
   function handleSldNodeClick(node) {
