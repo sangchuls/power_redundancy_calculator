@@ -110,6 +110,28 @@
   }
   .lang-btn.active, .view-btn.active { background: var(--primary); color: var(--bg-color); }
 
+  .sld-palette-label { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .sld-palette { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .sld-chip {
+    display: flex; flex-direction: column; align-items: flex-start;
+    padding: 4px 9px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-color);
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.25;
+    text-align: left;
+  }
+  .sld-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 0 rgba(46,36,25,0.08); }
+  .sld-chip .abbr { font-size: 11.5px; font-weight: 700; }
+  .sld-chip .desc { font-size: 9.5px; color: var(--text-muted); font-weight: 500; }
+  .sld-manual-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  /* 수동 작성 모드에서는 캔버스를 축소하지 않고 원래 크기로 두고 래퍼를 스크롤한다 —
+     좁은 컬럼에서 블럭이 너무 작아져 드래그/클릭이 어려워지는 것을 막기 위함. */
+  .diagram-wrap svg.sld-editing { max-width: none; cursor: default; }
+  .diagram-wrap:has(svg.sld-editing) { overflow: auto; }
+
   .export-row { display: flex; gap: 10px; flex-wrap: wrap; }
   .export-btn:disabled { opacity: 0.55; cursor: wait; }
 

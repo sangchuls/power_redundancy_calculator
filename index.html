@@ -288,9 +288,22 @@
 
   <div class="card">
     <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → IT Rack — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
+    <div class="mode-toggle">
+      <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
+      <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
+    </div>
+    <div id="sldManualUI" style="display:none;">
+      <div class="sld-palette-label" data-i18n="sld_palette_title">장비 팔레트 — 클릭해서 추가</div>
+      <div class="sld-palette" id="sldPalette"></div>
+      <div class="sld-manual-bar">
+        <button id="sldSeedBtn" class="quick-btn" data-i18n="sld_seed">현재 계통 불러오기</button>
+        <button id="sldClearBtn" class="quick-btn" style="border-color:var(--border); color:var(--text-muted);" data-i18n="sld_clear">전체 지우기</button>
+        <span class="hint" id="sldStatus" style="margin:0;"></span>
+      </div>
+    </div>
     <div class="diagram-wrap">
       <div class="zoom-controls">
-        <span class="hint" style="margin:4px 8px 0 0;" data-i18n="hint_sld">휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다</span>
+        <span class="hint" style="margin:4px 8px 0 0;" id="sldHint" data-i18n="hint_sld">휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다</span>
         <button class="zoom-btn" id="sldZoomOut">－</button>
         <button class="zoom-btn" id="sldZoomReset" data-i18n="btn_zoomReset">리셋</button>
         <button class="zoom-btn" id="sldZoomIn">＋</button>

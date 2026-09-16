@@ -48,6 +48,18 @@
       hint_sld: '휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다',
       sld_utility: '한전 수전', sld_utility_sub: '상시 2회선', sld_generator: '비상발전기', sld_generator_sub: '병렬운전',
       sld_mainbus: '주모선', sld_legend_note: '실선=상시 가동 경로 · 점선=대기/상실 경로 (④번 평상시·비상시 상태와 동일)',
+      sld_mode_auto: '자동 작성', sld_mode_manual: '수동 작성',
+      sld_palette_title: '장비 팔레트 — 클릭해서 추가', sld_seed: '현재 계통 불러오기', sld_clear: '전체 지우기',
+      hint_sld_manual: '블럭 드래그=이동 · 블럭 2개를 차례로 클릭=연결 · 선 클릭=기본↔예비 전환 · 블럭/선 더블클릭=삭제',
+      sld_status_idle: '블럭을 클릭하면 연결이 시작됩니다 (블럭 {n}개 · 연결선 {e}개)',
+      sld_status_selected: '“{name}” 선택됨 — 연결할 블럭을 클릭하세요 (같은 블럭 재클릭 시 취소)',
+      sld_edge_main: '기본', sld_edge_standby: '예비',
+      sld_legend_manual: '실선=기본(주) 경로 · 점선=예비 경로 — 선을 클릭하면 서로 전환됩니다',
+      sldb_kepco: '한전 변전소', sldb_ds: '단로기', sldb_gcb: '가스차단기', sldb_vcb: '진공차단기',
+      sldb_acb: '기중차단기', sldb_mccb: '배선용차단기', sldb_mtr: '주변압기', sldb_tr: '변압기',
+      sldb_bus: '모선', sldb_gen: '비상발전기', sldb_gcp: '발전기 제어반', sldb_syn: '동기 병렬반',
+      sldb_ctts: '무순단 절체기', sldb_sts: '정지형 절체기', sldb_ups: '무정전전원장치', sldb_bat: '축전지',
+      sldb_pdu: '전력분배반', sldb_rack: '서버랙', sldb_load: '일반 부하',
       export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
       export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
 
@@ -151,6 +163,18 @@
       hint_sld: 'Wheel to zoom · drag to pan · automatically mirrors the same normal/emergency state as the ④ configuration diagram',
       sld_utility: 'Utility feed', sld_utility_sub: 'dual feed, always-on', sld_generator: 'Emergency generator', sld_generator_sub: 'parallel operation',
       sld_mainbus: 'Main bus', sld_legend_note: 'Solid = always-energized path · Dashed = standby/lost path (same as ④\'s normal/emergency state)',
+      sld_mode_auto: 'Auto-generate', sld_mode_manual: 'Manual draw',
+      sld_palette_title: 'Equipment palette — click to add', sld_seed: 'Load current system', sld_clear: 'Clear all',
+      hint_sld_manual: 'Drag a block to move · click two blocks in turn to connect · click a line to toggle main↔standby · double-click a block/line to delete',
+      sld_status_idle: 'Click a block to start a connection ({n} blocks · {e} lines)',
+      sld_status_selected: '“{name}” selected — click the block to connect to (click it again to cancel)',
+      sld_edge_main: 'Main', sld_edge_standby: 'Standby',
+      sld_legend_manual: 'Solid = main path · Dashed = standby path — click a line to toggle between them',
+      sldb_kepco: 'Utility substation', sldb_ds: 'Disconnecting switch', sldb_gcb: 'Gas circuit breaker', sldb_vcb: 'Vacuum circuit breaker',
+      sldb_acb: 'Air circuit breaker', sldb_mccb: 'Molded case CB', sldb_mtr: 'Main transformer', sldb_tr: 'Transformer',
+      sldb_bus: 'Bus bar', sldb_gen: 'Emergency generator', sldb_gcp: 'Gen. control panel', sldb_syn: 'Synchronizing panel',
+      sldb_ctts: 'Closed transition TS', sldb_sts: 'Static transfer switch', sldb_ups: 'Uninterruptible PS', sldb_bat: 'Battery',
+      sldb_pdu: 'Power distribution unit', sldb_rack: 'Server rack', sldb_load: 'General load',
       export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
       export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
 
@@ -242,6 +266,7 @@
     calculate();
     renderCombDiagram();
     renderSets();
+    if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
   }
 
   document.getElementById('langKoBtn').addEventListener('click', () => setLang('ko'));
@@ -866,136 +891,449 @@
     document.getElementById('diagramDesc').textContent = t('diagramDesc', { topo: topoLabel, mode: diagramMode === 'normal' ? t('mode_normal') : t('mode_emergency') });
     diagramZoom.reset();
 
-    // ⑥번 SLD는 별도 상태를 갖지 않고, 방금 ④번에서 계산한 modules 배열(가동/대기/상실)을
-    // 그대로 재사용해 같은 평상시/비상시 그림을 단선결선도 형태로만 다시 그린다.
-    renderSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap);
+    // ⑥번 SLD 자동 작성 모드는 별도 상태를 갖지 않고, 방금 ④번에서 계산한 modules 배열
+    // (가동/대기/상실)을 그대로 그래프로 변환해 같은 상태를 단선결선도로 다시 그린다.
+    buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap);
   }
 
-  // 개념도 수준의 단선결선도(SLD) — 실제 프로젝트 SLD처럼 모든 차단기/버스 태그를 나열하지
-  // 않고, 전력 흐름과 그룹핑·장비 명칭·주/예비 구분만 한눈에 보이도록 단순화했다.
-  // 한전 수전 → 비상발전기 → 주모선 → (모듈별) 변압기 → UPS → IT Rack.
-  function renderSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
-    const svg = document.getElementById('sldSvg');
-    if (!svg) return;
-    sldZoom.clear();
-    const svgTarget = sldZoom.group;
+  // ===== ⑥ SLD 에디터 =====
+  // 자동 작성: ①~⑤ 계산 결과를 그래프(노드+엣지)로 변환해 그린다 (읽기 전용, 재계산 시 갱신).
+  // 수동 작성: 같은 그래프 모델을 직접 편집한다 — 팔레트 클릭으로 블럭 추가, 드래그로 이동,
+  //            블럭 2개를 차례로 클릭하면 연결, 선 클릭으로 기본↔예비 전환, 더블클릭으로 삭제.
+  //            편집 내용은 localStorage에 저장되어 새로고침 후에도 유지된다.
+  const SLD_CATS = {
+    source: '#3A2E75', switch: '#6759B0', breaker: '#7A6BCB', tr: '#0F6E56',
+    bus: '#2E2419', gen: '#993C1D', transfer: '#854F0B', ups: '#185FA5', load: '#993556',
+  };
+  const SLD_EDGE_COLORS = { main: '#3A2E75', standby: '#854F0B', lost: '#DB8478' };
+  const SLD_BLOCK_TYPES = [
+    { key: 'kepco', abbr: 'KEPCO', cat: 'source' },
+    { key: 'ds', abbr: 'DS', cat: 'switch' },
+    { key: 'gcb', abbr: 'GCB', cat: 'breaker' },
+    { key: 'vcb', abbr: 'VCB', cat: 'breaker' },
+    { key: 'acb', abbr: 'ACB', cat: 'breaker' },
+    { key: 'mccb', abbr: 'MCCB', cat: 'breaker' },
+    { key: 'mtr', abbr: 'MTR', cat: 'tr' },
+    { key: 'tr', abbr: 'TR', cat: 'tr' },
+    { key: 'bus', abbr: 'BUS', cat: 'bus' },
+    { key: 'gen', abbr: 'GEN', cat: 'gen' },
+    { key: 'gcp', abbr: 'GCP', cat: 'gen' },
+    { key: 'syn', abbr: 'SYN', cat: 'gen' },
+    { key: 'ctts', abbr: 'CTTS', cat: 'transfer' },
+    { key: 'sts', abbr: 'STS', cat: 'transfer' },
+    { key: 'ups', abbr: 'UPS', cat: 'ups' },
+    { key: 'bat', abbr: 'BAT', cat: 'ups' },
+    { key: 'pdu', abbr: 'PDU', cat: 'load' },
+    { key: 'rack', abbr: 'RACK', cat: 'load' },
+    { key: 'load', abbr: 'LOAD', cat: 'load' },
+  ];
+  const SLD_TYPE_MAP = {};
+  SLD_BLOCK_TYPES.forEach(b => { SLD_TYPE_MAP[b.key] = b; });
+
+  let sldMode = localStorage.getItem('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
+  let sldAutoGraph = { nodes: [], edges: [], notes: [] };
+  let sldSelectedId = null;
+  let sldSeq = 0;
+  let sldDrag = null;
+
+  function loadSldManualGraph() {
+    try {
+      const g = JSON.parse(localStorage.getItem('prc_sld_graph') || 'null');
+      if (g && Array.isArray(g.nodes) && Array.isArray(g.edges)) {
+        g.nodes.forEach(n => {
+          const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
+          if (isFinite(num) && num > sldSeq) sldSeq = num;
+        });
+        return { nodes: g.nodes, edges: g.edges, notes: [] };
+      }
+    } catch (e) {}
+    return { nodes: [], edges: [], notes: [] };
+  }
+  let sldManualGraph = loadSldManualGraph();
+
+  function saveSldManualGraph() {
+    try {
+      localStorage.setItem('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges }));
+    } catch (e) {}
+  }
+  function sldGraph() { return sldMode === 'manual' ? sldManualGraph : sldAutoGraph; }
+
+  function makeSldNode(typeKey, x, y, opts) {
+    opts = opts || {};
+    const type = SLD_TYPE_MAP[typeKey] || SLD_TYPE_MAP.load;
+    return {
+      id: 'n' + (++sldSeq), type: typeKey, x, y,
+      w: opts.w || 96, h: opts.h || 44,
+      label: opts.label || type.abbr,
+      sub: opts.sub === undefined ? null : opts.sub,
+      state: opts.state || 'active',
+    };
+  }
+  function sldNodeColor(node) {
+    if (node.state === 'offline') return SLD_EDGE_COLORS.lost;
+    if (node.state === 'idle') return '#9A90BB';
+    return SLD_CATS[(SLD_TYPE_MAP[node.type] || {}).cat] || SLD_CATS.load;
+  }
+  function sldNodeSub(node) {
+    if (node.sub !== null && node.sub !== undefined) return node.sub;
+    return t('sldb_' + node.type);
+  }
+
+  // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → IT Rack.
+  function buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
+    const nodes = [], edges = [], notes = [];
     const M = modules.length;
-    if (!M) return;
+    if (!M) { sldAutoGraph = { nodes, edges, notes }; if (sldMode === 'auto') drawSLD(); return; }
 
-    const navy = '#3A2E75';
-    const offlineBorder = '#DB8478';
-    const offlineFill = '#FBEDE7';
-    const idleFill = '#F5F2FB';
-    const idleBorder = '#D9D2EC';
-    const idleText = '#9A90BB';
-
-    const colW = 108, gap = 22;
+    const colW = 116, gap = 20;
     const totalW = M * colW + (M - 1) * gap;
     const svgW = Math.max(760, totalW + 100);
     const startX = (svgW - totalW) / 2;
-    const busX1 = startX + colW / 2;
-    const busX2 = startX + totalW - colW / 2;
-    const busY = 130;
-    const colTopY = busY + 25;
-    const svgH = colTopY + 196;
-    svg.setAttribute('width', svgW);
-    svg.setAttribute('height', svgH);
-    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+    const add = n => { nodes.push(n); return n; };
+    const link = (a, b, kind) => edges.push({ id: 'e' + a.id + '-' + b.id, from: a.id, to: b.id, kind: kind || 'main' });
 
-    function tick(x, y, color) {
-      svgTarget.appendChild(svgEl('rect', { x: x - 5, y: y - 3, width: 10, height: 6, fill: color }));
-    }
-    function transformerIcon(cx, cy, color, dashed) {
-      const attrs = { fill: 'none', stroke: color, 'stroke-width': 1.8 };
-      if (dashed) attrs['stroke-dasharray'] = '3,3';
-      svgTarget.appendChild(svgEl('circle', { cx, cy: cy - 6, r: 9, ...attrs }));
-      svgTarget.appendChild(svgEl('circle', { cx, cy: cy + 6, r: 9, ...attrs }));
-    }
-    function label(x, y, txt, size, color, weight) {
-      const el = svgEl('text', { x, y, 'text-anchor': 'middle', 'font-size': size, 'font-weight': weight || 700, fill: color, 'font-family': 'sans-serif' });
-      el.textContent = txt;
-      svgTarget.appendChild(el);
-    }
-
-    // 한전 수전 (상시 2회선) — busX1 위에서 두 가닥으로 내려와 주모선에 합류
-    label(busX1, 14, t('sld_utility'), 11, navy);
-    label(busX1, 27, `(${t('sld_utility_sub')})`, 9, '#8A8072', 500);
-    [-5, 5].forEach(dx => {
-      const line = svgEl('line', { x1: busX1 + dx, y1: 36, x2: busX1 + dx, y2: busY, stroke: navy, 'stroke-width': 1.6 });
-      svgTarget.appendChild(line);
-      tick(busX1 + dx, 72, navy);
-    });
-
-    // 비상발전기 (병렬운전) — busX2 위에서 원(G) 심볼 + 점선(평상시엔 대기 전원임을 표시)
-    label(busX2, 14, t('sld_generator'), 11, navy);
-    label(busX2, 27, `(${t('sld_generator_sub')})`, 9, '#8A8072', 500);
-    svgTarget.appendChild(svgEl('circle', { cx: busX2, cy: 55, r: 15, fill: '#fff', stroke: navy, 'stroke-width': 1.8 }));
-    label(busX2, 59, 'G', 12, navy);
-    svgTarget.appendChild(svgEl('line', { x1: busX2, y1: 70, x2: busX2, y2: busY, stroke: navy, 'stroke-width': 1.6, 'stroke-dasharray': '4,3' }));
-
-    // 주모선
-    svgTarget.appendChild(svgEl('line', { x1: busX1, y1: busY, x2: busX2, y2: busY, stroke: navy, 'stroke-width': 3 }));
-    label((busX1 + busX2) / 2, busY - 9, t('sld_mainbus'), 10.5, navy);
+    const kepco = add(makeSldNode('kepco', startX, 16, { w: 120, sub: t('sld_utility_sub') }));
+    const mtr = add(makeSldNode('mtr', startX, 92, { w: 120 }));
+    const gen = add(makeSldNode('gen', startX + totalW - 120, 16, { w: 120, sub: t('sld_generator_sub') }));
+    const bus = add(makeSldNode('bus', startX, 170, { w: totalW, h: 30, label: t('sld_mainbus') + ' (BUS)', sub: '' }));
+    link(kepco, mtr, 'main');
+    link(mtr, bus, 'main');
+    link(gen, bus, 'standby');
 
     modules.forEach((mod, i) => {
-      const cx = startX + i * (colW + gap) + colW / 2;
-      const x = cx - colW / 2;
-      const isOffline = mod.state === 'offline';
-      const isIdle = mod.state === 'idle';
+      const x = startX + i * (colW + gap);
       const isActive = mod.state === 'active';
-      const color = isOffline ? offlineBorder : (isIdle ? idleBorder : roomColor(i));
-      const dash = isActive ? 'none' : '4,3';
-
-      // 모선 → 모듈 탭 (차단기 표시)
-      svgTarget.appendChild(svgEl('line', { x1: cx, y1: busY, x2: cx, y2: colTopY, stroke: color, 'stroke-width': 2, 'stroke-dasharray': dash }));
-      tick(cx, busY + 11, color);
-
-      // 모듈 명칭 + 상태 (④번과 동일한 표기: 전기실/트레인/Duty/캐쳐, 가동중/대기/상실)
+      const kind = mod.state === 'offline' ? 'lost' : (isActive ? 'main' : 'standby');
       let roleLabel;
       if (currentTopo === 'full') roleLabel = t('module_label_train', { n: i + 1 });
       else if (currentTopo === 'standby') roleLabel = mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 });
       else roleLabel = t('module_label_room', { n: i + 1 });
-      const stateLabel = isOffline ? t('state_offline') : isIdle ? t('state_idle') : (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') ? t('state_engaged') : t('state_active');
-      label(cx, colTopY, roleLabel, 10.5, isOffline ? '#C8604F' : (isIdle ? idleText : color), 800);
-      label(cx, colTopY + 12, stateLabel, 8, isOffline ? '#C8604F' : (isIdle ? idleText : '#8A8072'), 600);
+      const stateLabel = mod.state === 'offline' ? t('state_offline') : mod.state === 'idle' ? t('state_idle')
+        : (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') ? t('state_engaged') : t('state_active');
+      notes.push({ x: x + colW / 2, y: 224, text: roleLabel, size: 10.5, weight: 800, color: sldNodeColor({ type: 'tr', state: mod.state }) });
+      notes.push({ x: x + colW / 2, y: 236, text: stateLabel, size: 8, weight: 600, color: mod.state === 'active' ? '#8A8072' : sldNodeColor({ type: 'tr', state: mod.state }) });
 
-      // 변압기
-      transformerIcon(cx, colTopY + 34, color, !isActive);
-      label(cx, colTopY + 52, `TR ${fmtN(rating)}kVA`, 8.5, isOffline ? '#C8604F' : color, 700);
-      label(cx, colTopY + 63, '×' + t('unit_dae', { n: perModuleUnits }), 8, '#8A8072', 600);
-      tick(cx, colTopY + 74, color);
-
-      // UPS
-      const upsFill = isOffline ? offlineFill : (isIdle ? idleFill : hexToRgba(color, 0.14));
-      svgTarget.appendChild(svgEl('rect', { x, y: colTopY + 80, width: colW, height: 48, rx: 8, fill: upsFill, stroke: color, 'stroke-width': isActive ? 2 : 1.4, 'stroke-dasharray': dash }));
-      label(cx, colTopY + 100, 'UPS', 10.5, isOffline ? '#C8604F' : color, 800);
-      label(cx, colTopY + 114, isActive ? `${fmtN(mod.loadKW)}kW` : '-', 9, isOffline ? '#C8604F' : (isIdle ? idleText : '#8A8072'), 600);
-      tick(cx, colTopY + 136, color);
-
-      // IT Rack
-      svgTarget.appendChild(svgEl('rect', { x, y: colTopY + 148, width: colW, height: 26, rx: 6, fill: isOffline ? offlineFill : '#fff', stroke: color, 'stroke-width': isActive ? 2 : 1.4, 'stroke-dasharray': dash }));
-      label(cx, colTopY + 165, 'IT Rack', 9.5, isOffline ? '#C8604F' : color, 700);
+      const tr = add(makeSldNode('tr', x, 244, { w: colW, label: `TR ${fmtN(rating)}kVA`, sub: '×' + t('unit_dae', { n: perModuleUnits }), state: mod.state }));
+      const ups = add(makeSldNode('ups', x, 318, { w: colW, sub: isActive ? `${fmtN(mod.loadKW)}kW` : '-', state: mod.state }));
+      const rack = add(makeSldNode('rack', x, 392, { w: colW, label: 'IT Rack', state: mod.state }));
+      link(bus, tr, kind);
+      link(tr, ups, kind);
+      link(ups, rack, kind);
     });
 
+    sldAutoGraph = { nodes, edges, notes };
+    if (sldMode === 'auto') drawSLD();
+  }
+
+  function sldEdgePath(a, b) {
+    const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
+    const aTop = a.y, aBot = a.y + a.h, bTop = b.y, bBot = b.y + b.h;
+    if (bTop >= aBot - 4) {
+      const midY = (aBot + bTop) / 2;
+      return `M${acx},${aBot} L${acx},${midY} L${bcx},${midY} L${bcx},${bTop}`;
+    }
+    if (aTop >= bBot - 4) {
+      const midY = (aTop + bBot) / 2;
+      return `M${acx},${aTop} L${acx},${midY} L${bcx},${midY} L${bcx},${bBot}`;
+    }
+    const acy = a.y + a.h / 2, bcy = b.y + b.h / 2;
+    const ax = bcx > acx ? a.x + a.w : a.x;
+    const bx = bcx > acx ? b.x : b.x + b.w;
+    const midX = (ax + bx) / 2;
+    return `M${ax},${acy} L${midX},${acy} L${midX},${bcy} L${bx},${bcy}`;
+  }
+
+  function sldClientToGraph(evt) {
+    const svg = document.getElementById('sldSvg');
+    const m = sldZoom.group.getScreenCTM();
+    if (!svg || !m) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(m.inverse());
+  }
+
+  function drawSLD() {
+    const svg = document.getElementById('sldSvg');
+    if (!svg) return;
+    const g = sldGraph();
+    const manual = sldMode === 'manual';
+    sldZoom.clear();
+    const target = sldZoom.group;
+
+    let maxX = 700, maxY = 260;
+    g.nodes.forEach(n => { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); });
+    (g.notes || []).forEach(nt => { maxX = Math.max(maxX, nt.x + 60); maxY = Math.max(maxY, nt.y); });
+    const svgW = Math.max(760, maxX + 40);
+    const svgH = Math.max(manual ? 440 : 300, maxY + 40);
+    svg.setAttribute('width', svgW);
+    svg.setAttribute('height', svgH);
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+    svg.classList.toggle('sld-editing', manual);
+
+    const byId = {};
+    g.nodes.forEach(n => { byId[n.id] = n; });
+
+    // ----- 연결선 -----
+    g.edges.forEach(edge => {
+      const a = byId[edge.from], b = byId[edge.to];
+      if (!a || !b) return;
+      const d = sldEdgePath(a, b);
+      const color = SLD_EDGE_COLORS[edge.kind] || SLD_EDGE_COLORS.main;
+      target.appendChild(svgEl('path', {
+        d, fill: 'none', stroke: color,
+        'stroke-width': edge.kind === 'main' ? 2 : 1.6,
+        'stroke-dasharray': edge.kind === 'main' ? 'none' : '5,4',
+      }));
+      if (edge.kind !== 'main') {
+        const mid = sldEdgeMidpoint(a, b);
+        const lbl = svgEl('text', {
+          x: mid.x, y: mid.y - 3, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 700,
+          fill: color, 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+        });
+        lbl.textContent = t('sld_edge_standby');
+        target.appendChild(lbl);
+      }
+      if (manual) {
+        const hit = svgEl('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, cursor: 'pointer' });
+        hit.addEventListener('click', e => {
+          e.stopPropagation();
+          edge.kind = edge.kind === 'main' ? 'standby' : 'main';
+          saveSldManualGraph();
+          drawSLD();
+        });
+        hit.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          sldManualGraph.edges = sldManualGraph.edges.filter(x => x !== edge);
+          saveSldManualGraph();
+          drawSLD();
+          updateSldStatus();
+        });
+        target.appendChild(hit);
+      }
+    });
+
+    // ----- 주석(자동 작성 모드의 모듈 명칭/상태) -----
+    (g.notes || []).forEach(nt => {
+      const el = svgEl('text', {
+        x: nt.x, y: nt.y, 'text-anchor': 'middle', 'font-size': nt.size || 10,
+        'font-weight': nt.weight || 700, fill: nt.color || '#8A8072', 'font-family': 'sans-serif',
+      });
+      el.textContent = nt.text;
+      target.appendChild(el);
+    });
+
+    // ----- 블럭 -----
+    g.nodes.forEach(node => {
+      const color = sldNodeColor(node);
+      const selected = manual && node.id === sldSelectedId;
+      const grp = svgEl('g', manual ? { cursor: 'move' } : {});
+      const dashed = node.state !== 'active';
+      grp.appendChild(svgEl('rect', {
+        x: node.x, y: node.y, width: node.w, height: node.h, rx: 8,
+        fill: node.state === 'offline' ? '#FBEDE7' : hexToRgba(color, 0.12),
+        stroke: color, 'stroke-width': selected ? 3 : (dashed ? 1.4 : 2),
+        'stroke-dasharray': dashed ? '5,4' : 'none',
+      }));
+      const sub = sldNodeSub(node);
+      const cx = node.x + node.w / 2;
+      const labelY = sub ? node.y + node.h / 2 - 3 : node.y + node.h / 2 + 4;
+      const nameEl = svgEl('text', {
+        x: cx, y: labelY, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 800,
+        fill: color, 'font-family': 'sans-serif',
+      });
+      nameEl.textContent = node.label;
+      grp.appendChild(nameEl);
+      if (sub) {
+        const subEl = svgEl('text', {
+          x: cx, y: node.y + node.h / 2 + 11, 'text-anchor': 'middle', 'font-size': 8,
+          'font-weight': 600, fill: node.state === 'active' ? '#8A8072' : color, 'font-family': 'sans-serif',
+        });
+        subEl.textContent = sub;
+        grp.appendChild(subEl);
+      }
+      if (manual) {
+        grp.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          const p = sldClientToGraph(e);
+          sldDrag = { node, dx: p.x - node.x, dy: p.y - node.y, moved: false };
+        });
+        grp.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          sldManualGraph.nodes = sldManualGraph.nodes.filter(n => n !== node);
+          sldManualGraph.edges = sldManualGraph.edges.filter(ed => ed.from !== node.id && ed.to !== node.id);
+          if (sldSelectedId === node.id) sldSelectedId = null;
+          saveSldManualGraph();
+          drawSLD();
+          updateSldStatus();
+        });
+      }
+      target.appendChild(grp);
+    });
+
+    renderSldLegend(g, manual);
+    sldZoom.reset();
+  }
+
+  function sldEdgeMidpoint(a, b) {
+    const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
+    const aBot = a.y + a.h, bTop = b.y;
+    if (bTop >= aBot - 4) return { x: (acx + bcx) / 2, y: (aBot + bTop) / 2 };
+    return { x: (acx + bcx) / 2, y: (a.y + a.h / 2 + b.y + b.h / 2) / 2 };
+  }
+
+  function renderSldLegend(g, manual) {
     const legend = document.getElementById('sldLegend');
-    if (legend) {
-      legend.innerHTML = '';
-      modules.forEach((mod, i) => {
-        const nm = currentTopo === 'full' ? t('module_label_train', { n: i + 1 }) : (currentTopo === 'standby' ? (mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 })) : t('module_label_room', { n: i + 1 }));
+    if (!legend) return;
+    legend.innerHTML = '';
+    if (manual) {
+      [['main', t('sld_edge_main')], ['standby', t('sld_edge_standby')]].forEach(([kind, label]) => {
         const div = document.createElement('div');
         div.className = 'item';
-        div.innerHTML = `<span class="swatch" style="background:${mod.state === 'offline' ? offlineFill : roomColor(i)}"></span>${nm}`;
+        div.innerHTML = `<span class="swatch" style="background:${SLD_EDGE_COLORS[kind]}"></span>${label}`;
         legend.appendChild(div);
       });
       const note = document.createElement('div');
       note.className = 'item';
       note.style.width = '100%';
       note.style.marginTop = '4px';
-      note.textContent = t('sld_legend_note');
+      note.textContent = t('sld_legend_manual');
       legend.appendChild(note);
+      return;
     }
-    sldZoom.reset();
+    const seen = {};
+    g.nodes.forEach(n => {
+      const cat = (SLD_TYPE_MAP[n.type] || {}).cat;
+      if (!cat || seen[cat]) return;
+      seen[cat] = true;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span class="swatch" style="background:${SLD_CATS[cat]}"></span>${t('sldb_' + n.type)}`;
+      legend.appendChild(div);
+    });
+    const note = document.createElement('div');
+    note.className = 'item';
+    note.style.width = '100%';
+    note.style.marginTop = '4px';
+    note.textContent = t('sld_legend_note');
+    legend.appendChild(note);
   }
+
+  function updateSldStatus() {
+    const el = document.getElementById('sldStatus');
+    if (!el) return;
+    if (sldMode !== 'manual') { el.textContent = ''; return; }
+    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+    el.textContent = sel
+      ? t('sld_status_selected', { name: sel.label })
+      : t('sld_status_idle', { n: sldManualGraph.nodes.length, e: sldManualGraph.edges.length });
+  }
+
+  function handleSldNodeClick(node) {
+    if (sldMode !== 'manual') return;
+    if (!sldSelectedId) {
+      sldSelectedId = node.id;
+    } else if (sldSelectedId === node.id) {
+      sldSelectedId = null;
+    } else {
+      const from = sldSelectedId, to = node.id;
+      const dup = sldManualGraph.edges.some(e => (e.from === from && e.to === to) || (e.from === to && e.to === from));
+      if (!dup) sldManualGraph.edges.push({ id: 'e' + from + '-' + to + '-' + (++sldSeq), from, to, kind: 'main' });
+      sldSelectedId = null;
+      saveSldManualGraph();
+    }
+    drawSLD();
+    updateSldStatus();
+  }
+
+  window.addEventListener('mousemove', e => {
+    if (!sldDrag) return;
+    const p = sldClientToGraph(e);
+    const nx = p.x - sldDrag.dx, ny = p.y - sldDrag.dy;
+    if (Math.abs(nx - sldDrag.node.x) > 2 || Math.abs(ny - sldDrag.node.y) > 2) sldDrag.moved = true;
+    sldDrag.node.x = Math.max(0, nx);
+    sldDrag.node.y = Math.max(0, ny);
+    drawSLD();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!sldDrag) return;
+    const { node, moved } = sldDrag;
+    sldDrag = null;
+    if (moved) saveSldManualGraph();
+    else handleSldNodeClick(node);
+  });
+
+  function renderSldPalette() {
+    const pal = document.getElementById('sldPalette');
+    if (!pal) return;
+    pal.innerHTML = '';
+    SLD_BLOCK_TYPES.forEach(b => {
+      const color = SLD_CATS[b.cat];
+      const chip = document.createElement('button');
+      chip.className = 'sld-chip';
+      chip.style.borderColor = color;
+      chip.innerHTML = `<span class="abbr" style="color:${color}">${b.abbr}</span><span class="desc">${t('sldb_' + b.key)}</span>`;
+      chip.addEventListener('click', () => {
+        const n = sldManualGraph.nodes.length;
+        sldManualGraph.nodes.push(makeSldNode(b.key, 50 + (n % 7) * 120, 40 + Math.floor(n / 7) * 78));
+        saveSldManualGraph();
+        drawSLD();
+        updateSldStatus();
+      });
+      pal.appendChild(chip);
+    });
+  }
+
+  function setSldMode(mode) {
+    sldMode = mode === 'manual' ? 'manual' : 'auto';
+    localStorage.setItem('prc_sld_mode', sldMode);
+    document.getElementById('sldAutoBtn').classList.toggle('active', sldMode === 'auto');
+    document.getElementById('sldManualBtn').classList.toggle('active', sldMode === 'manual');
+    document.getElementById('sldManualUI').style.display = sldMode === 'manual' ? 'block' : 'none';
+    const hintEl = document.getElementById('sldHint');
+    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
+    sldSelectedId = null;
+    sldDrag = null;
+    drawSLD();
+    updateSldStatus();
+  }
+
+  function refreshSldTexts() {
+    renderSldPalette();
+    const hintEl = document.getElementById('sldHint');
+    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
+    drawSLD();
+    updateSldStatus();
+  }
+
+  document.getElementById('sldAutoBtn').addEventListener('click', () => setSldMode('auto'));
+  document.getElementById('sldManualBtn').addEventListener('click', () => setSldMode('manual'));
+  document.getElementById('sldSeedBtn').addEventListener('click', () => {
+    const clone = JSON.parse(JSON.stringify({ nodes: sldAutoGraph.nodes, edges: sldAutoGraph.edges }));
+    clone.nodes.forEach(n => { n.state = 'active'; });
+    clone.edges.forEach(e => { if (e.kind === 'lost') e.kind = 'standby'; });
+    sldManualGraph = { nodes: clone.nodes, edges: clone.edges, notes: [] };
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  });
+  document.getElementById('sldClearBtn').addEventListener('click', () => {
+    sldManualGraph = { nodes: [], edges: [], notes: [] };
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  });
+  document.getElementById('sldSvg').addEventListener('click', e => {
+    if (sldMode === 'manual' && e.target === e.currentTarget && sldSelectedId) {
+      sldSelectedId = null;
+      drawSLD();
+      updateSldStatus();
+    }
+  });
+
+  renderSldPalette();
+  setSldMode(sldMode);
 
   function fmtN(n) {
     return Number(n).toLocaleString('ko-KR', { maximumFractionDigits: 1 });
