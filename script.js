@@ -1312,51 +1312,15 @@
     // manualFail4 (populated by double-clicking a block) overrides the automatic "last C
     // modules" fallback so any specific room can be marked 상실, individually or in combination.
     // state: 'active' | 'idle' | 'offline'
+    // 모듈은 '세트 1개 안의 자리'일 뿐이다 — 상실은 방 단위로 따로 적용한다
+    // (예전엔 모듈 번호로 상실을 지정해 S1·1그룹을 끄면 S2·1그룹까지 같이 꺼졌다).
     const modules = [];
     let overloadWarning = '';
     if (currentTopo === 'standby') {
-      for (let i = 0; i < N; i++) modules.push({ role: 'duty', state: 'active', loadKW: loadKW / N });
-      for (let i = 0; i < C; i++) modules.push({ role: 'catcher', state: 'idle', loadKW: 0 });
-      if (diagramMode === 'emergency') {
-        let failedDutyIdx;
-        if (manualFail4.size > 0) {
-          failedDutyIdx = [...manualFail4].filter(i => i < N).sort((a, b) => a - b);
-        } else {
-          // fail C duty modules (the last C duty ones)
-          failedDutyIdx = [];
-          const failCount = Math.min(C, N);
-          for (let i = 0; i < failCount; i++) failedDutyIdx.push(N - 1 - i);
-        }
-        failedDutyIdx.forEach(idx => { modules[idx].state = 'offline'; modules[idx].loadKW = 0; });
-        // activate catchers to take over, one per failed duty module (limited by how many exist)
-        const activateCount = Math.min(C, failedDutyIdx.length);
-        for (let i = 0; i < activateCount; i++) {
-          modules[N + i].state = 'active';
-          modules[N + i].loadKW = loadKW / N;
-        }
-        if (failedDutyIdx.length > C) {
-          overloadWarning = t('overload_warn', { n: failedDutyIdx.length, c: C, diff: failedDutyIdx.length - C });
-        }
-      }
+      for (let i = 0; i < N; i++) modules.push({ role: 'duty', state: 'active' });
+      for (let i = 0; i < C; i++) modules.push({ role: 'catcher', state: 'idle' });
     } else {
-      // distributed & full: all M modules active in normal, sharing load/M
-      for (let i = 0; i < M; i++) modules.push({ role: 'module', state: 'active', loadKW: loadKW / M });
-      if (diagramMode === 'emergency') {
-        let failedIdx;
-        if (manualFail4.size > 0) {
-          failedIdx = [...manualFail4].sort((a, b) => a - b);
-        } else {
-          // C modules lost (the last C ones)
-          failedIdx = [];
-          for (let i = 0; i < C; i++) failedIdx.push(M - 1 - i);
-        }
-        failedIdx.forEach(idx => { if (modules[idx]) { modules[idx].state = 'offline'; modules[idx].loadKW = 0; } });
-        const activeCount = M - failedIdx.filter(idx => idx < M).length;
-        if (activeCount > 0) {
-          const activeLoad = currentTopo === 'full' ? loadKW : loadKW / activeCount;
-          modules.forEach(mod => { if (mod.state === 'active') mod.loadKW = activeLoad; });
-        }
-      }
+      for (let i = 0; i < M; i++) modules.push({ role: 'module', state: 'active' });
     }
 
     // ----- POD 구성 (①번 설정) -----
@@ -1384,6 +1348,38 @@
     }
     lastRoomCount = rooms.length;
     lastPerModuleUnits = rooms.length ? rooms[0].txCount : perModuleUnits;
+    // ----- 상실 적용 (방 단위) -----
+    // 더블클릭으로 고른 방만 끈다. 세트는 서로 독립이므로 다른 세트의 같은 자리는 영향 없다.
+    if (diagramMode === 'emergency') {
+      let failedRooms;
+      if (manualFail4.size > 0) {
+        failedRooms = [...manualFail4].filter(i => i < rooms.length);
+      } else {
+        // 자동: 세트마다 마지막 C개 방을 상실시킨다 (세트별 최악 상황)
+        failedRooms = [];
+        const perSetFail = Math.min(C, roomPlan.perSet);
+        for (let si = 0; si < roomPlan.sets; si++) {
+          for (let k = 0; k < perSetFail; k++) failedRooms.push(si * roomPlan.perSet + roomPlan.perSet - 1 - k);
+        }
+      }
+      failedRooms.forEach(i => { if (rooms[i]) rooms[i].state = 'offline'; });
+      // 대기이중화: 같은 세트 안에서 쓰러진 Duty 수만큼 캐쳐를 투입한다
+      if (currentTopo === 'standby') {
+        for (let si = 0; si < roomPlan.sets; si++) {
+          const base = si * roomPlan.perSet;
+          const downDuty = rooms.slice(base, base + N).filter(r => r.state === 'offline').length;
+          let toEngage = Math.min(downDuty, C);
+          for (let k = 0; k < C && toEngage > 0; k++) {
+            const r = rooms[base + N + k];
+            if (r && r.state === 'idle') { r.state = 'active'; toEngage--; }
+          }
+          if (downDuty > C) {
+            overloadWarning = t('overload_warn', { n: downDuty, c: C, diff: downDuty - C });
+          }
+        }
+      }
+    }
+
     const podSet = new Array(podCount).fill(0);
     roomPlan.setPods.forEach((list, si) => list.forEach(p => { podSet[p] = si; }));
     const firstRoomOfSet = si => si * roomPlan.perSet;
@@ -1476,7 +1472,14 @@
     if (podCount > 24) { podW = 26; podGap = 4; podDetail = 0; }
     if (podCount > 44) { podW = 17; podGap = 3; podDetail = 0; }
     const podH = podDetail === 2 ? 34 : 24;
-    const podRowW = podCount * podW + (podCount - 1) * podGap;
+    // 분할한 갈래는 바짝 붙이고 POD 사이는 벌려서, 어느 블럭이 한 POD인지 간격만으로 읽히게 한다.
+    // (위아래로 쌓으면 윗칸의 급전선이 아랫칸 블럭을 관통해야 해서 오히려 더 엉킨다.)
+    const podSplitN = podPlan.split;
+    const podGapIn = podSplitN > 1 ? Math.max(3, Math.round(podGap * 0.45)) : podGap;
+    const podGapOut = podSplitN > 1 ? podGap + 14 : podGap;
+    const podGroupW = podSplitN * podW + (podSplitN - 1) * podGapIn;
+    const podGroups = podPlan.pods;
+    const podRowW = podGroups * podGroupW + (podGroups - 1) * podGapOut;
 
     const moduleCount = rooms.length;
     const boxW = moduleCount > 8 ? 92 : 118;
@@ -1491,7 +1494,8 @@
 
     const podY = hallY + hallH + 40;
     const podStartX = (svgW - podRowW) / 2;
-    const podX = p => podStartX + p * (podW + podGap);
+    const podGroupX = gi => podStartX + gi * (podGroupW + podGapOut);
+    const podX = p => podGroupX(Math.floor(p / podSplitN)) + (p % podSplitN) * (podW + podGapIn);
     const podCx = p => podX(p) + podW / 2;
     // 전기실별 급전모선을 POD 행과 전기실 행 사이에 층층이 깔고, POD가 거기서 분기한다.
     const combLayout = distMode === 'comb' && rooms.length >= 3;
@@ -1559,6 +1563,16 @@
         d: `M${podCx(p)},${combY} L${podCx(p)},${podY}`,
         fill: 'none', stroke: grayLine, 'stroke-width': 2,
       }));
+    }
+
+    // POD 그룹 테두리 — 분할했을 때 같은 POD의 갈래를 하나로 묶어 보여준다
+    if (podSplitN > 1) {
+      for (let gi = 0; gi < podGroups; gi++) {
+        svgTarget.appendChild(svgEl('rect', {
+          x: podGroupX(gi) - 5, y: podY - 5, width: podGroupW + 10, height: podH + 10, rx: 8,
+          fill: 'none', stroke: navy, 'stroke-width': 1, 'stroke-dasharray': '3,3', opacity: 0.45,
+        }));
+      }
     }
 
     // POD 블럭 — 하이라이트된 전기실이 급전하지 않는 POD는 흐리게
@@ -1714,8 +1728,6 @@
 
       // All of this room's own visuals live in one group so a double-click anywhere on the
       // block (box, strip, labels, transformer icons) toggles its 상실 state as a single unit.
-      // 상실은 이중화 단위인 '모듈' 기준이므로, 한 모듈이 여러 방으로 쪼개져 있으면 그 모듈의
-      // 방들이 함께 상실된다.
       const roomLit = highlightRoom === null || highlightRoom === i;
       const moduleGroup = svgEl('g', roomLit ? { cursor: 'pointer' } : { cursor: 'pointer', opacity: 0.3 });
       // 한 번 클릭하면 이 전기실의 급전 회선만 또렷해지고, 두 번 클릭하면 상실 지정이다.
@@ -1729,7 +1741,8 @@
       moduleGroup.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
-        if (manualFail4.has(mi)) manualFail4.delete(mi); else manualFail4.add(mi);
+        // 상실은 방 단위 — i는 전기실 통번호다 (모듈 번호 mi를 쓰면 다른 세트의 같은 자리도 꺼진다)
+        if (manualFail4.has(i)) manualFail4.delete(i); else manualFail4.add(i);
         diagramMode = manualFail4.size > 0 ? 'emergency' : 'normal';
         updateDiagramModeButtons();
         calculate();
