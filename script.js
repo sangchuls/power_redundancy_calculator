@@ -29,7 +29,17 @@
       btn_expand: '크게 보기',
       btn_modalClose: '닫기 ✕',
       label_podCapacity: 'POD 용량 (kW/POD)',
-      hint_pod: 'POD {n}개 / POD당 약 {kw}kW — 모듈당 설계부하 ÷ POD 용량(올림). PDU에서 각 POD로 분배선이 자동 생성됩니다.',
+      label_podCount: 'POD 수량 (개)',
+      label_podAuto: '총부하 ÷ POD 용량으로 자동 산정',
+      hint_podCapacity: '랙 그룹(POD) 1개가 받는 설계 전력 — ④·⑤·⑥ 다이어그램의 POD 블럭과 급전 회선에 공통 적용',
+      hint_pod: '— POD {n}개 × {cap}kW, POD당 실부하 약 {kw}kW',
+      pod_row_title: '데이터홀 POD — {n}개 × {cap}kW (POD당 실부하 {kw}kW)',
+      pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
+      pod_chip: 'POD {n}',
+      legend_pod_note: 'POD(랙 그룹) — 데이터홀을 POD 단위로 분할하고, 각 POD는 위 급전모선에서 {feeds}회선으로 이중급전',
+      zone_pod_label: 'POD {n}개 · {mw}MW',
+      warn_podOver: '⚠ POD당 실부하가 설정 용량을 초과합니다 — 수량을 늘리거나 용량을 키우세요.',
+      comb_pod_summary: 'POD {n}개 × {cap}kW (POD당 실부하 {kw}kW) — IT존 {zones}개에 평균 {perZone}개씩 배분. POD 수량·용량은 ①번에서 조절합니다.',
       h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
       h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
       label_combM: '전기실 개수 (M)', hint_combM: '3~{max} 지원 (방 1개당 변압기 최소 1대 기준, 조합 수 = M×(M-1)÷2)',
@@ -148,7 +158,17 @@
       btn_expand: 'Expand',
       btn_modalClose: 'Close ✕',
       label_podCapacity: 'POD capacity (kW/POD)',
-      hint_pod: '{n} PODs / about {kw}kW each — design load per module ÷ POD capacity (rounded up). Distribution lines from the PDU to each POD are generated automatically.',
+      label_podCount: 'POD count',
+      label_podAuto: 'Auto: total load ÷ POD capacity',
+      hint_podCapacity: 'Design power for one rack group (POD) — shared by the POD blocks and feeders in diagrams ④, ⑤ and ⑥',
+      hint_pod: '— {n} PODs × {cap}kW, about {kw}kW actual per POD',
+      pod_row_title: 'Data hall PODs — {n} × {cap}kW ({kw}kW actual each)',
+      pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
+      pod_chip: 'POD {n}',
+      legend_pod_note: 'POD (rack group) — the hall is split into PODs, each dual-fed by {feeds} feeders from the buses above',
+      zone_pod_label: '{n} PODs · {mw}MW',
+      warn_podOver: '⚠ Actual load per POD exceeds the configured capacity — raise the count or the capacity.',
+      comb_pod_summary: '{n} PODs × {cap}kW ({kw}kW actual each) — about {perZone} per zone across {zones} zones. Adjust POD count and capacity in section ①.',
       h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
       h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
       label_combM: 'Room count (M)', hint_combM: 'Supports 3~{max} (at least 1 transformer per room, combinations = M×(M-1)÷2)',
@@ -450,6 +470,9 @@
 
     totalModulesEl.value = (isFinite(N) && isFinite(C)) ? (N + C) : '-';
 
+    // 총부하가 바뀌면 자동 모드의 POD 수량 칸이 먼저 따라와야 아래 다이어그램들이 같은 값을 쓴다.
+    if (typeof updatePodControls === 'function') { try { updatePodControls(); } catch (e) {} }
+
     warnBox.style.display = 'none';
 
     if (!N || N <= 0 || C < 0 || !load || !rating || !safety || !pf || !upsEff || load <= 0 || rating <= 0 || safety <= 0) {
@@ -549,7 +572,61 @@
 
   // Shared color palette for rooms/modules (distinct hues so cross-connections read intuitively)
   const ROOM_COLORS = ['#6F5FBF', '#0F6E56', '#993C1D', '#185FA5', '#993556', '#3B6D11', '#854F0B', '#A32D2D'];
+  const ROOM_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   function roomColor(i) { return ROOM_COLORS[i % ROOM_COLORS.length]; }
+
+  // ===== POD(랙 그룹) 공통 설정 =====
+  // 데이터홀은 POD 단위로 쪼개져 구성되고, ④ 구성 다이어그램의 급전 회선, ⑤ 조합형 배치도의
+  // IT존 내부 POD, ⑥ SLD의 분배선이 모두 이 하나의 설정(용량 × 수량)에서 파생된다.
+  // 수량은 기본적으로 "총부하 ÷ POD 용량(올림)"으로 자동 산정되고, 체크를 풀면 직접 입력한다.
+  const POD_CAP_DEFAULT = 500;
+  const POD_COUNT_MAX = 200;
+  function getPodCapacityKW() {
+    const el = document.getElementById('podCapacity');
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : POD_CAP_DEFAULT;
+  }
+  function isPodCountAuto() {
+    const el = document.getElementById('podAuto');
+    return el ? el.checked : true;
+  }
+  // loadMW를 주면 그 부하 기준으로, 없으면 ①번 데이터홀 총부하 기준으로 POD 구성을 돌려준다.
+  function getPodPlan(loadMW) {
+    const cap = getPodCapacityKW();
+    const mw = (loadMW === undefined || loadMW === null || !isFinite(loadMW))
+      ? (parseFloat(document.getElementById('load').value) || 0) : loadMW;
+    const loadKW = mw * 1000;
+    const autoCount = Math.max(1, Math.ceil(loadKW / cap));
+    let count = autoCount;
+    if (!isPodCountAuto()) {
+      const el = document.getElementById('podCount');
+      const v = el ? parseInt(el.value, 10) : NaN;
+      if (isFinite(v) && v > 0) count = Math.min(POD_COUNT_MAX, v);
+    }
+    return { cap, count, loadKW, perPodKW: loadKW / count, auto: isPodCountAuto() };
+  }
+  // ①번 총부하가 바뀌면 자동 모드의 수량 칸과 안내 문구를 다시 채운다.
+  function updatePodControls() {
+    const countInput = document.getElementById('podCount');
+    const hint = document.getElementById('podHint');
+    if (!countInput) return;
+    const auto = isPodCountAuto();
+    countInput.disabled = auto;
+    countInput.style.background = auto ? 'var(--primary-bg)' : '';
+    const plan = getPodPlan();
+    if (auto) countInput.value = plan.count;
+    if (hint) {
+      hint.textContent = ' ' + t('hint_pod', {
+        n: plan.count, kw: fmtN(Math.round(plan.perPodKW)), cap: fmtN(plan.cap),
+      });
+      // 수량을 직접 줄이면 POD 1개가 설정 용량보다 큰 부하를 받게 되므로 그때만 경고한다.
+      const over = plan.perPodKW > plan.cap + 0.5;
+      hint.textContent += over ? ' ' + t('warn_podOver') : '';
+      hint.style.color = over ? 'var(--warn)' : '';
+      hint.style.fontWeight = over ? '700' : '';
+    }
+    return plan;
+  }
   function hexToRgba(hex, alpha) {
     const h = hex.replace('#', '');
     const r = parseInt(h.substring(0, 2), 16), g = parseInt(h.substring(2, 4), 16), b = parseInt(h.substring(4, 6), 16);
@@ -777,20 +854,60 @@
       }
     }
 
+    // ----- POD 구성 (①번 공통 설정) -----
+    // 데이터홀은 단일 덩어리가 아니라 POD(랙 그룹) 단위로 쪼개지고, 각 POD는 이중화 방식이
+    // 정하는 수만큼의 회선으로 전기실에서 급전받는다. POD 수량·용량을 바꾸면 블럭과 회선이
+    // 함께 갱신된다.
+    const podPlan = getPodPlan(load);
+    const podCount = podPlan.count;
+    // POD마다 급전받는 전기실 목록 — 이중화 방식이 그대로 회선 구성이 된다.
+    //  · 분산/완전이중화: 모든 모듈이 모든 POD에 병렬 급전 (M회선)
+    //  · 대기(캐쳐)이중화: 담당 Duty 1회선 + 캐쳐 C회선(대기)
+    const podFeeds = [];
+    for (let p = 0; p < podCount; p++) {
+      if (currentTopo === 'standby') {
+        const duty = p % Math.max(1, N);
+        const feeds = [duty];
+        for (let c = 0; c < C; c++) feeds.push(N + c);
+        podFeeds.push(feeds);
+      } else {
+        podFeeds.push(modules.map((_, k) => k));
+      }
+    }
+    const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
+
+    // POD가 많아지면 블럭을 좁혀서 도면 가로폭이 과도하게 늘어나지 않게 한다.
+    let podW = 56, podGap = 6, podDetail = 2;   // 2: 이름+부하, 1: 이름만, 0: 번호만
+    if (podCount > 12) { podW = 40; podGap = 5; podDetail = 1; }
+    if (podCount > 24) { podW = 26; podGap = 4; podDetail = 0; }
+    if (podCount > 44) { podW = 17; podGap = 3; podDetail = 0; }
+    const podH = podDetail === 2 ? 34 : 24;
+    const podRowW = podCount * podW + (podCount - 1) * podGap;
+
     const moduleCount = M;
     const boxW = 118;
     const gap = 22;
     const totalW = moduleCount * boxW + (moduleCount - 1) * gap;
-    const svgW = Math.max(760, totalW + 80);
+    const svgW = Math.max(760, totalW + 80, podRowW + 80);
     const startX = (svgW - totalW) / 2;
     const hallY = 42;
     const hallW = 220;
     const hallX = svgW / 2 - hallW / 2;
     const hallH = 50;
-    const moduleY = 140;
+
+    const podY = hallY + hallH + 40;
+    const podStartX = (svgW - podRowW) / 2;
+    const podX = p => podStartX + p * (podW + podGap);
+    const podCx = p => podX(p) + podW / 2;
+    // 전기실별 급전모선을 POD 행과 전기실 행 사이에 층층이 깔고, POD가 거기서 분기한다.
+    const busGap = 15;
+    const busY0 = podY + podH + 24;
+    const busY = k => busY0 + k * busGap;
+    const moduleY = busY(moduleCount - 1) + 30;
+
     const txRowsNeeded = Math.ceil(perModuleUnits / 3);
     const moduleH = 144 + txRowsNeeded * 46; // +14 for the per-module 설계부하/유효용량 reference line, +12/row for the per-tx rating line
-    let svgH = 220 + moduleH;
+    let svgH = moduleY + moduleH + 80;
     svg.setAttribute('width', svgW);
     svg.setAttribute('height', svgH);
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
@@ -814,22 +931,126 @@
     hallText2.textContent = fmtN(load) + ' MW' + (diagramMode === 'emergency' ? t('hall_emergency_suffix') : '');
     svgTarget.appendChild(hallText2);
 
+    // ----- 데이터홀 → POD 분할 -----
+    const podTitle = svgEl('text', { x: svgW / 2, y: podY - 20, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
+    podTitle.textContent = t('pod_row_title', { n: podCount, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podPlan.perPodKW)) });
+    svgTarget.appendChild(podTitle);
+
+    // 데이터홀 박스에서 POD 행으로 내려오는 빗살 배선
+    const combY = podY - 11;
+    svgTarget.appendChild(svgEl('path', {
+      d: `M${svgW / 2},${hallY + hallH} L${svgW / 2},${combY}`,
+      fill: 'none', stroke: grayLine, 'stroke-width': 2,
+    }));
+    if (podCount > 1) {
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${podCx(0)},${combY} L${podCx(podCount - 1)},${combY}`,
+        fill: 'none', stroke: grayLine, 'stroke-width': 2,
+      }));
+    }
+    for (let p = 0; p < podCount; p++) {
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${podCx(p)},${combY} L${podCx(p)},${podY}`,
+        fill: 'none', stroke: grayLine, 'stroke-width': 2,
+      }));
+    }
+
+    // POD 블럭
+    const podLoadKW = podPlan.perPodKW;
+    for (let p = 0; p < podCount; p++) {
+      svgTarget.appendChild(svgEl('rect', {
+        x: podX(p), y: podY, width: podW, height: podH, rx: 5,
+        fill: hexToRgba(navy, 0.07), stroke: accent, 'stroke-width': 1.2,
+      }));
+      const label = svgEl('text', {
+        x: podCx(p), y: podDetail === 2 ? podY + 15 : podY + 16, 'text-anchor': 'middle',
+        'font-size': podDetail === 0 ? 8.5 : 9.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+      });
+      label.textContent = podDetail === 2 ? t('pod_chip', { n: p + 1 }) : (podDetail === 1 ? 'P' + (p + 1) : String(p + 1));
+      svgTarget.appendChild(label);
+      if (podDetail === 2) {
+        const sub = svgEl('text', { x: podCx(p), y: podY + 27, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
+        sub.textContent = fmtN(Math.round(podLoadKW)) + 'kW';
+        svgTarget.appendChild(sub);
+      }
+    }
+
+    // ----- 전기실별 급전모선 + POD 분기 (이중화 회선) -----
+    // 각 전기실은 자기 색의 수평 모선을 하나씩 갖고, POD는 자기에게 급전하는 모선마다
+    // 짧은 수직 분기선을 내려 접점(점)으로 연결한다. 접점이 없는 교차는 연결이 아니다.
+    const tapSpacing = Math.min(6, Math.max(2.5, (podW - 5) / Math.max(1, feedsPerPod)));
+    const busSpan = [];   // 전기실별 모선의 x 범위
+    for (let k = 0; k < moduleCount; k++) busSpan.push(null);
+    const taps = [];      // { k, x, y }
+    for (let p = 0; p < podCount; p++) {
+      const feeds = podFeeds[p];
+      feeds.forEach((k, j) => {
+        const x = podCx(p) + (j - (feeds.length - 1) / 2) * tapSpacing;
+        taps.push({ k, x, podIndex: p });
+        const span = busSpan[k];
+        if (!span) busSpan[k] = [x, x];
+        else { span[0] = Math.min(span[0], x); span[1] = Math.max(span[1], x); }
+      });
+    }
+
+    for (let k = 0; k < moduleCount; k++) {
+      const mod = modules[k];
+      const isOff = mod.state === 'offline';
+      const isIdleMod = mod.state === 'idle';
+      const color = isOff ? offlineBorder : (isIdleMod ? standbyBorder : roomColor(k));
+      const dash = (isOff || isIdleMod) ? '5,4' : 'none';
+      const cx = startX + k * (boxW + gap) + boxW / 2;
+      const span = busSpan[k] || [cx, cx];
+      const x1 = Math.min(span[0], cx) - 8;
+      const x2 = Math.max(span[1], cx) + 8;
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${x1},${busY(k)} L${x2},${busY(k)}`,
+        fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-dasharray': dash,
+        opacity: isOff ? 0.55 : 1,
+      }));
+      // 모선 → 전기실 인입
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${cx},${busY(k)} L${cx},${moduleY}`,
+        fill: 'none', stroke: color, 'stroke-width': 2.25, 'stroke-dasharray': dash,
+        opacity: isOff ? 0.55 : 1,
+      }));
+      svgTarget.appendChild(svgEl('circle', { cx, cy: busY(k), r: 3, fill: color, opacity: isOff ? 0.55 : 1 }));
+      // 모선 이름 (회선 식별)
+      const busLabel = svgEl('text', {
+        x: x2 + 5, y: busY(k) + 3.2, 'text-anchor': 'start', 'font-size': 7.5, 'font-weight': 700,
+        fill: color, 'font-family': 'sans-serif', opacity: isOff ? 0.6 : 1,
+      });
+      busLabel.textContent = ROOM_LETTERS[k] || String(k + 1);
+      svgTarget.appendChild(busLabel);
+    }
+
+    taps.forEach(tap => {
+      const mod = modules[tap.k];
+      const isOff = mod.state === 'offline';
+      const isIdleMod = mod.state === 'idle';
+      const color = isOff ? offlineBorder : (isIdleMod ? standbyBorder : roomColor(tap.k));
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${tap.x},${podY + podH} L${tap.x},${busY(tap.k)}`,
+        fill: 'none', stroke: color, 'stroke-width': 1.4,
+        'stroke-dasharray': (isOff || isIdleMod) ? '3,3' : 'none',
+        opacity: isOff ? 0.5 : (isIdleMod ? 0.75 : 0.95),
+      }));
+      svgTarget.appendChild(svgEl('circle', {
+        cx: tap.x, cy: busY(tap.k), r: 2.1, fill: color, opacity: isOff ? 0.5 : 1,
+      }));
+    });
+
+    const topoShort = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
+    const feedCaption = svgEl('text', { x: svgW / 2, y: moduleY - 12, 'text-anchor': 'middle', 'font-size': 9.5, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
+    feedCaption.textContent = t('pod_feed_caption', { feeds: feedsPerPod, topo: topoShort });
+    svgTarget.appendChild(feedCaption);
+
     modules.forEach((mod, i) => {
       const x = startX + i * (boxW + gap);
       const isOffline = mod.state === 'offline';
       const isIdle = mod.state === 'idle';
       const isActive = mod.state === 'active';
       const mColor = roomColor(i);
-
-      const lineColor = isOffline ? offlineBorder : (isIdle ? standbyBorder : mColor);
-      const lineX1 = svgW / 2, lineY1 = hallY + hallH, lineX2 = x + boxW / 2, lineY2 = moduleY;
-      const line = svgEl('path', {
-        d: smoothCurvePath(lineX1, lineY1, lineX2, lineY2),
-        fill: 'none',
-        stroke: lineColor, 'stroke-width': 2.25,
-        'stroke-dasharray': (isIdle || isOffline) ? '5,4' : 'none',
-      });
-      svgTarget.appendChild(line);
 
       // All of this module's own visuals live in one group so a double-click anywhere on the
       // block (box, strip, labels, transformer icons) toggles its 상실 state as a single unit.
@@ -965,6 +1186,11 @@
     noteDiv.style.marginTop = '4px';
     noteDiv.innerHTML = `<span class="swatch" style="background:#7A6BCB"></span>${t('legend_tx_note')}`;
     legend.appendChild(noteDiv);
+    const podNoteDiv = document.createElement('div');
+    podNoteDiv.className = 'item';
+    podNoteDiv.style.width = '100%';
+    podNoteDiv.innerHTML = `<span class="swatch" style="background:${hexToRgba(navy, 0.25)}; border:1.2px solid ${accent};"></span>${t('legend_pod_note', { feeds: feedsPerPod })}`;
+    legend.appendChild(podNoteDiv);
 
     const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
     document.getElementById('diagramDesc').textContent = t('diagramDesc', { topo: topoLabel, mode: diagramMode === 'normal' ? t('mode_normal') : t('mode_emergency') });
@@ -1064,19 +1290,6 @@
     return t('sldb_' + node.type);
   }
 
-  // POD(랙군) 용량 — 모듈당 설계부하를 이 값으로 나눠 POD 개수와 분배선을 결정한다.
-  const POD_CAP_DEFAULT = 500;
-  function getPodCapacityKW() {
-    const el = document.getElementById('podCapacity');
-    const v = el ? parseFloat(el.value) : NaN;
-    return isFinite(v) && v > 0 ? v : POD_CAP_DEFAULT;
-  }
-  function updatePodHint(podCount, perPodKW) {
-    const el = document.getElementById('podHint');
-    if (!el) return;
-    el.textContent = t('hint_pod', { n: podCount, kw: fmtN(Math.round(perPodKW)) });
-  }
-
   // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → PDU → POD.
   function buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
     const nodes = [], edges = [], notes = [];
@@ -1085,9 +1298,10 @@
 
     // POD(랙군) 분할 — 모듈 1개가 감당해야 하는 설계부하를 POD 용량으로 나눠 개수를 정하고,
     // UPS에서 각 POD로 분배선을 뽑는다. POD 용량을 바꾸면 개수와 분배선이 함께 갱신된다.
-    const podCapKW = getPodCapacityKW();
-    const designLoadKW = currentTopo === 'full' ? load * 1000 : (load * 1000) / Math.max(1, N);
-    const podCount = Math.max(1, Math.ceil(designLoadKW / podCapKW));
+    // 데이터홀 전체 POD 수(①번 공통 설정)를 설계기준으로 모듈에 나눠 담는다 —
+    // 완전이중화는 트레인 1개가 전체 POD를 100% 커버하고, 그 외에는 N개 모듈이 분담한다.
+    const hallPlan = getPodPlan(load);
+    const podCount = currentTopo === 'full' ? hallPlan.count : Math.max(1, Math.ceil(hallPlan.count / Math.max(1, N)));
     const podW = 56, podH = 38, podGap = 6, podRowGap = 10;
     // POD 용량을 작게 잡으면 개수가 많아지므로 한 줄에 최대 6개씩 줄바꿈해 가로폭을 유지한다.
     const podPerRow = Math.min(podCount, 6);
@@ -1100,7 +1314,6 @@
     const startX = (svgW - totalW) / 2;
     const add = n => { nodes.push(n); return n; };
     const link = (a, b, kind) => edges.push({ id: 'e' + a.id + '-' + b.id + '-' + (++sldSeq), from: a.id, to: b.id, kind: kind || 'main' });
-    updatePodHint(podCount, designLoadKW / podCount);
 
     const kepco = add(makeSldNode('kepco', startX, 16, { w: 120, sub: t('sld_utility_sub') }));
     const mtr = add(makeSldNode('mtr', startX, 92, { w: 120 }));
@@ -1510,9 +1723,18 @@
     }
   });
 
-  // POD 용량을 바꾸면 ④번 결과를 다시 돌려 ⑥번 POD 개수와 분배선을 갱신한다.
-  const podCapacityInput = document.getElementById('podCapacity');
-  if (podCapacityInput) podCapacityInput.addEventListener('input', () => calculate());
+  // POD 설정을 바꾸면 ④·⑤·⑥이 함께 다시 그려진다.
+  function onPodSettingChange() {
+    updatePodControls();
+    renderCombDiagram();
+    calculate();
+  }
+  ['podCapacity', 'podCount'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', onPodSettingChange);
+  });
+  const podAutoCheckbox = document.getElementById('podAuto');
+  if (podAutoCheckbox) podAutoCheckbox.addEventListener('change', onPodSettingChange);
 
   renderSldPalette();
   setSldMode(sldMode);
@@ -1636,7 +1858,6 @@
     renderCombDiagram();
   });
 
-  const ROOM_LETTERS = ['A','B','C','D','E','F','G','H'];
 
   function combPairs(M) {
     const pairs = [];
@@ -1669,8 +1890,16 @@
 
     const pairs = combPairs(M);
     const zoneCount = pairs.length;
-    const zoneLoad = totalLoad / zoneCount;
     const failRoom = combMode === 'emergency' ? parseInt(combFailRoomSelect.value) : -1;
+
+    // ----- POD 배분 -----
+    // IT존은 전기실 2개가 짝지어 이중급전하는 '급전 그룹'이고, 그 안에 실제 부하 단위인
+    // POD(랙 그룹)가 들어간다. POD 총 수량·용량은 ①번 공통 설정에서 오고, 존에 순서대로
+    // 돌려 배분한다. 따라서 POD 수량을 바꾸면 존별 POD 개수와 부하, 급전 회선이 함께 바뀐다.
+    const podPlan = getPodPlan(totalLoad);
+    const zonePods = pairs.map(() => []);
+    for (let p = 0; p < podPlan.count; p++) zonePods[p % zoneCount].push(p);
+    const podLoadMW = totalLoad / podPlan.count;
 
     const navy = '#3A2E75';
     const offlineBorder = '#DB8478';
@@ -1682,7 +1911,13 @@
     const roomsTotalW = M * roomW + (M - 1) * roomGap;
 
     const zonesPerRow = zoneCount > 8 ? Math.ceil(zoneCount / 2) : zoneCount;
-    const zoneW = 132, zoneH = 58, zoneGapX = 16, zoneGapY = 22;
+    const zoneW = 132, zoneGapX = 16, zoneGapY = 22;
+    // POD 칩이 들어갈 자리만큼 존 박스를 키운다
+    const podChipW = 28, podChipH = 13, podChipGap = 3;
+    const podChipsPerRow = Math.max(1, Math.floor((zoneW - 12 + podChipGap) / (podChipW + podChipGap)));
+    const maxPodsInZone = zonePods.reduce((m, arr) => Math.max(m, arr.length), 0);
+    const podChipRows = Math.ceil(maxPodsInZone / podChipsPerRow);
+    const zoneH = 58 + podChipRows * (podChipH + podChipGap) + 4;
     const zoneRows = Math.ceil(zoneCount / zonesPerRow);
     const zoneRowW = zonesPerRow * zoneW + (zonesPerRow - 1) * zoneGapX;
 
@@ -1758,6 +1993,8 @@
       const zy = zoneStartY + row * (zoneH + zoneGapY);
       const zCenterX = zx + zoneW / 2;
 
+      const myPods = zonePods[idx];
+      const zoneLoad = myPods.length * podLoadMW;
       const [a, b] = pair;
       const aFailed = (a === failRoom);
       const bFailed = (b === failRoom);
@@ -1830,8 +2067,29 @@
       svgTarget.appendChild(zLabel);
 
       const zLoadText = svgEl('text', { x: zCenterX, y: zy + 42, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
-      zLoadText.textContent = t('zone_it_label', { mw: fmtN(zoneLoad) });
+      zLoadText.textContent = t('zone_pod_label', { n: myPods.length, mw: fmtN(zoneLoad) });
       svgTarget.appendChild(zLoadText);
+
+      // 이 존에 속한 POD 칩 — 수량·용량은 ①번 POD 설정에서 온다
+      myPods.forEach((podIdx, pi) => {
+        const prow = Math.floor(pi / podChipsPerRow);
+        const pcol = pi % podChipsPerRow;
+        const inRow = Math.min(podChipsPerRow, myPods.length - prow * podChipsPerRow);
+        const rowWidth = inRow * podChipW + (inRow - 1) * podChipGap;
+        const cx0 = zCenterX - rowWidth / 2 + pcol * (podChipW + podChipGap);
+        const cy0 = zy + 50 + prow * (podChipH + podChipGap);
+        svgTarget.appendChild(svgEl('rect', {
+          x: cx0, y: cy0, width: podChipW, height: podChipH, rx: 3,
+          fill: zoneAffected ? '#FBEDE7' : '#FFFFFF',
+          stroke: zoneAffected ? '#D0A96B' : '#B9AEE4', 'stroke-width': 1,
+        }));
+        const chipLabel = svgEl('text', {
+          x: cx0 + podChipW / 2, y: cy0 + 9.5, 'text-anchor': 'middle', 'font-size': 7.5,
+          'font-weight': 700, fill: zoneAffected ? '#C8604F' : navy, 'font-family': 'sans-serif',
+        });
+        chipLabel.textContent = 'P' + (podIdx + 1);
+        svgTarget.appendChild(chipLabel);
+      });
 
     });
 
@@ -1852,11 +2110,20 @@
     summary.style.fontWeight = '700';
     summary.style.color = navy;
     if (combMode === 'normal') {
-      summary.textContent = t('comb_summary_normal', { m: M, perRoom: fmtN(totalLoad / M), total: fmtN(totalLoad), zones: zoneCount, zoneLoad: fmtN(zoneLoad) });
+      summary.textContent = t('comb_summary_normal', { m: M, perRoom: fmtN(totalLoad / M), total: fmtN(totalLoad), zones: zoneCount, zoneLoad: fmtN(totalLoad / zoneCount) });
     } else {
       summary.textContent = t('comb_summary_emergency', { room: ROOM_LETTERS[failRoom], rest: M - 1, newLoad: fmtN(totalLoad / (M - 1)), oldLoad: fmtN(totalLoad / M), diff: fmtN((1 / (M - 1) - 1 / M) * totalLoad) });
     }
     legend.appendChild(summary);
+    const podSummary = document.createElement('div');
+    podSummary.style.width = '100%';
+    podSummary.style.marginTop = '4px';
+    podSummary.style.color = '#8A8072';
+    podSummary.textContent = t('comb_pod_summary', {
+      n: podPlan.count, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podLoadMW * 1000)),
+      zones: zoneCount, perZone: fmtN(Math.round(podPlan.count / zoneCount * 10) / 10),
+    });
+    legend.appendChild(podSummary);
     combZoom.reset();
   }
 
