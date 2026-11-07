@@ -28,12 +28,14 @@
       btn_zoomReset: '리셋',
       btn_expand: '크게 보기',
       btn_modalClose: '닫기 ✕',
-      label_podCapacity: 'POD 용량 (kW/POD)',
+      label_podCapacity: 'POD 1개 부하 (kW)',
       label_podCount: 'POD 수량 (개)',
-      label_podAuto: '총부하 ÷ POD 용량으로 자동 산정',
-      hint_podCapacity: '랙 그룹(POD) 1개가 받는 설계 전력 — ④·⑤·⑥ 다이어그램의 POD 블럭과 급전 회선에 공통 적용',
-      hint_pod: '— POD {n}개 × {cap}kW, POD당 실부하 약 {kw}kW',
-      pod_row_title: '데이터홀 POD — {n}개 × {cap}kW (POD당 실부하 {kw}kW)',
+      label_podAuto: '총부하 ÷ POD 부하로 자동 산정',
+      hint_podCapacity: '랙 그룹(POD) 1개가 쓰는 전력 — 이 블럭이 이중급전 단위가 됩니다',
+      hint_pod_manual: '— POD {n}개 × {cap}kW = 데이터홀 {total}MW (이 합계가 ①번 총부하가 됩니다)',
+      hint_pod_auto: '— 총부하 기준 POD {n}개, POD당 실부하 약 {kw}kW. 6MW POD 같은 고정 블럭으로 보려면 체크 해제.',
+      pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}개',
+      set_label: 'S{n}',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
       pod_chip: 'POD {n}',
@@ -108,10 +110,9 @@
       count_offline: '변압기 {n}대 (정지)', count_active: '{n}대 · {kw}kW',
       total_normal: '총 {m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대  (정격 {rating}kW, 유효 {eff}kW)',
       total_emergency: '모듈 {m}개 중 {active}개 가동으로 전체부하 대응 · 변압기 총 {total}대 중 {activeTx}대 가동',
-      total_normal_rooms: '{m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대 → 전기실 {rooms}개에 배치  (정격 {rating}kW, 유효 {eff}kW)',
+      total_normal_sets: '{topo} {perSet}실 × {sets}세트 = 전기실 {rooms}개 · 총 변압기 {total}대  (정격 {rating}kW, 유효 {eff}kW)',
       total_emergency_rooms: '모듈 {m}개 기준 · 전기실 {rooms}개 중 {activeRooms}개 가동 · 변압기 총 {total}대 중 {activeTx}대 가동',
       module_label_group: '{n}그룹',
-      label_roomCount: '전기실 수량 (개)',
       preset_title: '설정',
       preset_placeholder: '설정 이름 (예: 60MW 3홀)',
       preset_save: '저장',
@@ -126,19 +127,20 @@
       preset_need_pick: '삭제할 설정을 선택하세요',
       dist_bus: '모선형 분배',
       dist_comb: '조합형 분배',
-      dist_bus_hint: '이중화 방식이 정한 전기실 전부가 급전모선을 통해 모든 POD에 병렬 급전합니다.',
-      dist_comb_hint: 'POD마다 서로 다른 전기실 2곳이 짝을 지어 이중급전합니다 — 전기실 {rooms}개로 가능한 조합 {pairs}개 중 {used}개 사용. 1개 전기실을 잃어도 그 부하가 짝 전체로 분산됩니다.',
-      dist_comb_need3: '⚠ 조합형 분배는 전기실이 최소 3개 필요합니다 (현재 {rooms}개) — 모선형으로 표시합니다.',
+      dist_bus_hint: 'POD마다 자기 세트의 전기실 {perSet}곳 전부에서 급전받습니다 — {topo}이므로 {perSet}회선이 들어가고 그중 일부를 잃어도 남은 회선이 POD 전량을 커버합니다. (세트 {sets}개)',
+      dist_comb_hint: '⚠ 조합형은 POD당 2회선 고정입니다 — 세트 안 {perSet}개 중 2곳씩만 짝지으므로 {topo} 같은 N-of-M 구성은 표현하지 못합니다. (조합 {pairs}개 중 {used}개 사용) 3oo4 검토는 모선형으로 보세요.',
+      dist_comb_need3: '⚠ 조합형 분배는 세트당 전기실이 최소 3개 필요합니다 (현재 {rooms}개) — 모선형으로 표시합니다.',
       label_roomCapacity: '전기실 1개 용량 (kW)',
       room_cap_line: '용량 {cap}kW · 부하율 {pct}%',
       label_roomCapAuto: '실당 변압기 대수 × 유효용량',
-      hint_roomCapAuto: ' — 변압기 1대당 유효용량 {eff}kW 기준으로 자동 산출. 직접 정하려면 체크 해제.',
+      hint_roomCapAuto: ' — 세트 설계부하 ÷ N을 유효용량 {eff}kW/대로 올림해 산출 (세트별 {caps}kW). 직접 정하려면 체크 해제.',
       hint_roomCapManual: ' — 이 용량이면 실당 변압기 {tx}대(유효 {eff}kW/대), 전체 {total}대가 필요합니다.',
-      alloc_ok: '✓ 분배 결과 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 최대 전기실 부하율 {ratio}% (용량 이내)',
-      alloc_over: '⚠ 분배 결과 — 전기실 {over}개가 용량 초과 (최대 부하율 {ratio}%). 전기실 용량·수량을 늘리거나 POD 부하를 줄이세요.',
+      alloc_ok: '✓ 분배 가능 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (남은 {n}실이 전량 부담, 용량 이내)',
+      alloc_over: '⚠ 분배 불가 — 평상시부터 전기실 {over}개가 용량 초과 (최대 {ratio}%). 전기실 용량·세트 수를 늘리거나 POD 부하를 줄이세요.',
+      alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
-      label_roomAuto: '이중화 모듈 수(N+C)와 동일',
-      hint_roomCount: ' — {min}~{max}개. 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
+      label_roomSets: '전기실 세트 수',
+      hint_roomSets: '{topo} 1세트 = 전기실 {perSet}개 → 세트 {sets}개 = 총 전기실 {total}개. POD는 부하가 적은 세트부터 배정됩니다.',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
       diagramDesc: '({topo} · {mode} 구성)',
@@ -184,12 +186,14 @@
       btn_zoomReset: 'Reset',
       btn_expand: 'Expand',
       btn_modalClose: 'Close ✕',
-      label_podCapacity: 'POD capacity (kW/POD)',
+      label_podCapacity: 'Load per POD (kW)',
       label_podCount: 'POD count',
       label_podAuto: 'Auto: total load ÷ POD capacity',
-      hint_podCapacity: 'Design power for one rack group (POD) — shared by the POD blocks and feeders in diagrams ④, ⑤ and ⑥',
-      hint_pod: '— {n} PODs × {cap}kW, about {kw}kW actual per POD',
-      pod_row_title: 'Data hall PODs — {n} × {cap}kW ({kw}kW actual each)',
+      hint_podCapacity: 'Power drawn by one rack group (POD) — this block is the unit that gets dual-fed',
+      hint_pod_manual: '— {n} PODs × {cap}kW = {total}MW for the hall (this total becomes the ① total load)',
+      hint_pod_auto: '— {n} PODs from the total load, about {kw}kW each. Uncheck to model fixed blocks such as 6MW PODs.',
+      pod_row_title: 'Data hall PODs — {n} × {cap}kW = {mw}MW · per set {sets}',
+      set_label: 'S{n}',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
       pod_feed_caption_comb: '2 feeders per POD (combinatorial) — a different pair of rooms carries half each, {pairs} combinations',
       pod_chip: 'POD {n}',
@@ -264,10 +268,9 @@
       count_offline: '{n} tx (stopped)', count_active: '{n} tx · {kw}kW',
       total_normal: '{m} modules × {units} tx/module = {total} transformers total  (rating {rating}kW, effective {eff}kW)',
       total_emergency: '{active} of {m} modules running to cover full load · {activeTx} of {total} transformers running',
-      total_normal_rooms: '{m} modules × {units} tx/module = {total} transformers → placed in {rooms} electrical rooms  (rating {rating}kW, effective {eff}kW)',
+      total_normal_sets: '{topo}: {perSet} rooms × {sets} sets = {rooms} rooms · {total} transformers  (rating {rating}kW, effective {eff}kW)',
       total_emergency_rooms: '{m} modules · {activeRooms} of {rooms} rooms running · {activeTx} of {total} transformers running',
       module_label_group: 'Group {n}',
-      label_roomCount: 'Electrical rooms',
       preset_title: 'Presets',
       preset_placeholder: 'Preset name (e.g. 60MW 3 halls)',
       preset_save: 'Save',
@@ -282,19 +285,20 @@
       preset_need_pick: 'Pick a preset to delete',
       dist_bus: 'Bus distribution',
       dist_comb: 'Combinatorial distribution',
-      dist_bus_hint: 'Every room the redundancy scheme names feeds every POD in parallel through its distribution bus.',
-      dist_comb_hint: 'Each POD is dual-fed by its own pair of rooms — {used} of the {pairs} combinations {rooms} rooms allow, so losing one room spreads its load across all the others.',
-      dist_comb_need3: '⚠ Combinatorial distribution needs at least 3 rooms (currently {rooms}) — showing bus distribution.',
+      dist_bus_hint: 'Each POD is fed from all {perSet} rooms of its set — {topo} means {perSet} feeders, and the survivors carry the whole POD when some are lost. ({sets} sets)',
+      dist_comb_hint: '⚠ Combinatorial is fixed at 2 feeders per POD — pairing 2 of the {perSet} rooms in a set cannot express an N-of-M scheme such as {topo}. ({used} of {pairs} combinations) Use bus distribution to study 3oo4.',
+      dist_comb_need3: '⚠ Combinatorial distribution needs at least 3 rooms per set (currently {rooms}) — showing bus distribution.',
       label_roomCapacity: 'Capacity per room (kW)',
       room_cap_line: 'capacity {cap}kW · {pct}% loaded',
       label_roomCapAuto: 'Transformers per room × effective capacity',
-      hint_roomCapAuto: ' — derived from {eff}kW effective per transformer. Uncheck to set it yourself.',
+      hint_roomCapAuto: ' — set design load ÷ N rounded up at {eff}kW per transformer (per set: {caps}kW). Uncheck to set it yourself.',
       hint_roomCapManual: ' — that capacity needs {tx} transformers per room ({eff}kW each), {total} in total.',
-      alloc_ok: '✓ Allocation — {pods} PODs shared across {rooms} rooms, {feeds} feeders each. Highest room loading {ratio}% (within capacity)',
-      alloc_over: '⚠ Allocation — {over} room(s) over capacity (peak loading {ratio}%). Raise room capacity or count, or lower the POD load.',
+      alloc_ok: '✓ Feasible — {pods} PODs across {rooms} rooms, {feeds} feeders each. Peak room loading {ratio}% normally, {emergency}% with {lost} room(s) lost (the surviving {n} carry it all, within capacity)',
+      alloc_over: '⚠ Not feasible — {over} room(s) already over capacity in normal operation (peak {ratio}%). Raise room capacity or set count, or lower the POD load.',
+      alloc_over_emergency: '⚠ Over capacity on a loss — {ratio}% is fine normally, but losing {lost} room(s) pushes the surviving {n} to {emergency}%. Raise room capacity or add a set.',
       alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
-      label_roomAuto: 'Same as module count (N+C)',
-      hint_roomCount: ' — {min}–{max}. Raising it splits a module’s transformers across several rooms.',
+      label_roomSets: 'Room sets',
+      hint_roomSets: 'One {topo} set = {perSet} rooms → {sets} sets = {total} rooms in all. PODs go to the least loaded set first.',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
       diagramDesc: '({topo} · {mode})',
@@ -518,14 +522,14 @@
   function calculate() {
     const N = parseInt(nInput.value);
     const C = parseInt(cInput.value);
+    // POD 설정을 먼저 반영한다 — POD 주도 모드에서는 POD 합계가 총부하가 되므로
+    // 이 호출이 loadInput을 바꾼 뒤에 읽어야 아래 전체가 같은 값을 쓴다.
+    if (typeof updatePodControls === 'function') { try { updatePodControls(); } catch (e) {} }
     const load = parseFloat(loadInput.value); // MW
     const rating = parseFloat(ratingInput.value); // kVA
     const { pf, upsEff, safety, combined } = getGlobalDeratingFactors();
 
     totalModulesEl.value = (isFinite(N) && isFinite(C)) ? (N + C) : '-';
-
-    // 총부하가 바뀌면 자동 모드의 POD 수량 칸이 먼저 따라와야 아래 다이어그램들이 같은 값을 쓴다.
-    if (typeof updatePodControls === 'function') { try { updatePodControls(); } catch (e) {} }
 
     warnBox.style.display = 'none';
 
@@ -543,15 +547,13 @@
     updateEffectiveFormulaNote();
     const M = N + C; // total modules/trains
 
-    let perModuleLoad; // kW, design basis
-    if (currentTopo === 'full') {
-      perModuleLoad = loadKW; // each train covers 100%
-    } else {
-      perModuleLoad = loadKW / N; // distributed or standby: N modules share/cover full load
-    }
-
-    const perModuleUnits = Math.ceil(perModuleLoad / effectiveCap);
-    const totalUnits = perModuleUnits * M;
+    // 전기실 세트를 S개 두면 POD가 세트에 배분되고, 모듈은 자기 세트 몫만 책임진다.
+    // ④ 다이어그램과 같은 배분 결과를 써서 두 섹션의 대수가 어긋나지 않게 한다.
+    const setPlan = planRoomSets(getPodPlan(load), N, M, effectiveCap);
+    const setLoadKW = Math.max(...setPlan.setLoad);           // 가장 무거운 세트 기준
+    const perModuleLoad = Math.max(...setPlan.designPerRoom);  // kW, design basis
+    const perModuleUnits = Math.max(...setPlan.txPerSet);
+    const totalUnits = setPlan.totalTx;
 
     document.getElementById('step1').textContent = fmt(perModuleLoad / 1000, 2) + ' MW';
     document.getElementById('stepCap').textContent = fmt(effectiveCap) + ' kW';
@@ -560,22 +562,22 @@
 
     let sub = '';
     if (currentTopo === 'distributed') {
-      const normalPct = (loadKW / M) / (perModuleUnits * effectiveCap) * 100;
-      const emergencyPct = (loadKW / N) / (perModuleUnits * effectiveCap) * 100;
+      const normalPct = (setLoadKW / M) / (perModuleUnits * effectiveCap) * 100;
+      const emergencyPct = (setLoadKW / N) / (perModuleUnits * effectiveCap) * 100;
       sub = t('sub_distributed', { units: perModuleUnits, M, normal: fmt(normalPct), C, emergency: fmt(emergencyPct) });
       if (emergencyPct > 100) {
         warnBox.textContent = t('warn_distributed', { pct: fmt(emergencyPct) });
         warnBox.style.display = 'block';
       }
     } else if (currentTopo === 'standby') {
-      const dutyPct = (loadKW / N) / (perModuleUnits * effectiveCap) * 100;
+      const dutyPct = (setLoadKW / N) / (perModuleUnits * effectiveCap) * 100;
       sub = t('sub_standby', { units: perModuleUnits, N, C, M, pct: fmt(dutyPct) });
       if (dutyPct > 100) {
         warnBox.textContent = t('warn_standby', { pct: fmt(dutyPct) });
         warnBox.style.display = 'block';
       }
     } else if (currentTopo === 'full') {
-      const pct = loadKW / (perModuleUnits * effectiveCap) * 100;
+      const pct = setLoadKW / (perModuleUnits * effectiveCap) * 100;
       sub = t('sub_full', { units: perModuleUnits, M, pct: fmt(pct) });
     }
     document.getElementById('resultSub').textContent = sub;
@@ -636,17 +638,17 @@
   //  · 모선형: 이중화 방식이 정한 전기실 전부가 모선을 통해 모든 POD에 병렬 급전
   //  · 조합형: POD마다 서로 다른 전기실 2곳(N choose 2 조합)이 짝지어 이중급전
   let distMode = localStorage.getItem('prc_dist') === 'comb' ? 'comb' : 'bus';
-  function updateDistHint(combActive, roomCount, pairCount, usedPairs) {
+  function updateDistHint(combActive, perSet, pairCount, usedPairs, sets, topoName) {
     const el = document.getElementById('distHint');
     if (!el) return;
     if (distMode === 'comb' && !combActive) {
-      el.textContent = t('dist_comb_need3', { rooms: roomCount });
+      el.textContent = t('dist_comb_need3', { rooms: perSet });
       el.style.color = 'var(--warn)';
     } else if (combActive) {
-      el.textContent = t('dist_comb_hint', { rooms: roomCount, pairs: pairCount, used: usedPairs });
-      el.style.color = '';
+      el.textContent = t('dist_comb_hint', { perSet, pairs: pairCount, used: usedPairs, topo: topoName });
+      el.style.color = 'var(--warn)';
     } else {
-      el.textContent = t('dist_bus_hint');
+      el.textContent = t('dist_bus_hint', { perSet, topo: topoName, sets });
       el.style.color = '';
     }
   }
@@ -672,26 +674,8 @@
   // 몇 개의 방에 나눠 담을지는 별도 설정이다 — 기본값은 모듈 1개 = 전기실 1개이고,
   // 전기실 수를 늘리면 각 모듈의 변압기가 여러 방으로 쪼개진다. 방마다 최소 변압기 1대는
   // 들어가야 하므로 상한은 총 변압기 대수다 (전기실 8개 = 총 8대면 방당 1대씩).
-  function isRoomCountAuto() {
-    const el = document.getElementById('roomAuto');
-    return el ? el.checked : true;
-  }
-  // modules: ④에서 만든 모듈 배열, perModuleUnits: 모듈당 변압기 대수
-  // → 각 전기실이 어느 모듈 소속이고 변압기를 몇 대 갖는지 돌려준다.
-  function isRoomCapAuto() {
-    const el = document.getElementById('roomCapAuto');
-    return el ? el.checked : true;
-  }
-  // 전기실 1개의 용량. 자동이면 "그 방의 변압기 대수 × 유효용량", 수동이면 입력값이
-  // 기준이 되고 거기서 실당 변압기 대수를 거꾸로 산출한다(⌈용량 ÷ 유효용량⌉).
-  function getRoomCapacityKW(effectiveCap) {
-    if (isRoomCapAuto()) return null;
-    const el = document.getElementById('roomCapacity');
-    const v = el ? parseFloat(el.value) : NaN;
-    return isFinite(v) && v > 0 ? v : (effectiveCap || null);
-  }
-  // 분배 결과 판정 — 어떤 방이든 용량을 넘기면 경고, 급전 못 받는 POD가 있으면 더 강한 경고.
-  function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod) {
+  // 분배 결과 판정 — 용량을 넘기는 방이 있으면 경고, 급전원을 모두 잃은 POD가 있으면 더 강하게.
+  function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, M) {
     const el = document.getElementById('allocVerdict');
     if (!el) return;
     const over = rooms.filter(r => r.capacityKW > 0 && r.loadKW > r.capacityKW + 0.5).length;
@@ -699,59 +683,79 @@
     if (unfedPods > 0) { key = 'alloc_unfed'; color = 'var(--warn)'; }
     else if (over > 0) { key = 'alloc_over'; color = 'var(--warn)'; }
     else { key = 'alloc_ok'; color = 'var(--primary)'; }
+    if (key === 'alloc_ok' && worstEmergency > 100.5) { key = 'alloc_over_emergency'; color = 'var(--warn)'; }
     el.textContent = t(key, {
       pods: podCount, feeds: feedsPerPod, rooms: rooms.length,
       ratio: fmtN(Math.round(worstRatio * 10) / 10), over, unfed: unfedPods,
+      emergency: fmtN(Math.round(worstEmergency * 10) / 10), lost: M - N, n: N,
     });
     el.style.color = color;
     el.style.fontWeight = '700';
   }
 
-  function buildRooms(modules, perModuleUnits, effectiveCap) {
-    const M = modules.length;
-    const totalTx = M * perModuleUnits;
-    const fixedCap = getRoomCapacityKW(effectiveCap);
-    // 용량을 직접 정하면 실당 변압기 대수가 거기서 나오므로, 전기실 수의 상한이
-    // "총 변압기 대수"에 묶이지 않는다.
-    const maxRooms = fixedCap ? 60 : totalTx;
-    let R = M;
-    if (!isRoomCountAuto()) {
-      const el = document.getElementById('roomCount');
-      const v = el ? parseInt(el.value, 10) : NaN;
-      if (isFinite(v)) R = Math.max(M, Math.min(maxRooms, v));
+  function getRoomSetCount() {
+    const el = document.getElementById('roomSets');
+    const v = el ? parseInt(el.value, 10) : NaN;
+    return Math.max(1, Math.min(12, isFinite(v) && v > 0 ? v : 1));
+  }
+  function isRoomCapAuto() {
+    const el = document.getElementById('roomCapAuto');
+    return el ? el.checked : true;
+  }
+  function getRoomCapacityKW() {
+    if (isRoomCapAuto()) return null;
+    const el = document.getElementById('roomCapacity');
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : null;
+  }
+
+  // 전기실은 '이중화 세트' 단위로 구성된다. 3oo4 한 세트 = 전기실 4개(N=3 상시 + C=1 여유)이고,
+  // 세트를 S개 두면 전기실은 S × (N+C)개가 된다. POD는 세트에 배정되고, 그 세트의 전기실
+  // 전부에서 급전받는다 — 4개 중 3개만 살아 있어도 POD 전량을 커버하는 게 3oo4의 의미다.
+  // POD를 세트에 배분하고 세트별 설계부하·변압기 대수를 낸다.
+  // ③ 계산 결과와 ④ 다이어그램이 같은 숫자를 쓰도록 한 곳에서만 계산한다.
+  function planRoomSets(podPlan, N, perSet, effectiveCap) {
+    const S = getRoomSetCount();
+    // 매번 부하가 가장 적은 세트에 POD를 넣어 가능한 한 고르게 나눈다.
+    const setPods = Array.from({ length: S }, () => []);
+    const setLoad = new Array(S).fill(0);
+    for (let p = 0; p < podPlan.count; p++) {
+      let best = 0;
+      for (let i = 1; i < S; i++) if (setLoad[i] < setLoad[best]) best = i;
+      setPods[best].push(p);
+      setLoad[best] += podPlan.perPodKW;
     }
-    const fixedTx = fixedCap ? Math.max(1, Math.ceil(fixedCap / Math.max(1, effectiveCap))) : 0;
-    const base = Math.floor(R / M), rem = R % M;
+    const fixedCap = getRoomCapacityKW();
+    // 세트가 감당해야 하는 설계부하: 완전이중화는 트레인 1개가 세트 전량, 그 외는 N개가 분담.
+    const designPerRoom = setLoad.map(l => (currentTopo === 'full' ? l : l / Math.max(1, N)));
+    const txPerSet = designPerRoom.map(d =>
+      Math.max(1, Math.ceil((fixedCap || d) / Math.max(1, effectiveCap))));
+    const totalTx = txPerSet.reduce((n, tx) => n + tx * perSet, 0);
+    return { sets: S, perSet, setPods, setLoad, designPerRoom, txPerSet, totalTx, fixedCap };
+  }
+  function buildRoomSets(modules, plan, effectiveCap) {
     const rooms = [];
-    const roomsPerModule = [];
-    modules.forEach((mod, mi) => {
-      const rc = base + (mi < rem ? 1 : 0);
-      roomsPerModule.push(rc);
-      const txBase = Math.floor(perModuleUnits / rc), txRem = perModuleUnits % rc;
-      for (let k = 0; k < rc; k++) {
-        const txCount = fixedTx || (txBase + (k < txRem ? 1 : 0));
+    for (let si = 0; si < plan.sets; si++) {
+      for (let mi = 0; mi < plan.perSet; mi++) {
+        const mod = modules[mi];
         rooms.push({
-          moduleIndex: mi, indexInModule: k, roomsInModule: rc, txCount,
+          setIndex: si, moduleIndex: mi, roomsInModule: 1, txCount: plan.txPerSet[si],
           role: mod.role, state: mod.state,
-          capacityKW: fixedCap || txCount * effectiveCap,
+          capacityKW: plan.fixedCap || plan.txPerSet[si] * effectiveCap,
+          designPerRoomKW: plan.designPerRoom[si],
           loadKW: 0,   // 아래에서 POD 분배 결과로 채운다
         });
       }
-    });
-    return { rooms, roomsPerModule, requested: R, min: M, max: maxRooms, fixedCap, fixedTx, totalTx };
+    }
+    return Object.assign({}, plan, { rooms });
   }
-  function updateRoomControls(plan, effectiveCap) {
-    const input = document.getElementById('roomCount');
+
+  function updateRoomControls(plan, effectiveCap, topoName) {
     const hint = document.getElementById('roomHint');
-    if (input) {
-      const auto = isRoomCountAuto();
-      input.disabled = auto;
-      input.style.background = auto ? 'var(--primary-bg)' : '';
-      input.min = plan.min;
-      input.max = plan.max;
-      if (auto) input.value = plan.min;
-      else if (String(plan.requested) !== input.value) input.value = plan.requested;
-      if (hint) hint.textContent = ' ' + t('hint_roomCount', { min: plan.min, max: plan.max });
+    if (hint) {
+      hint.textContent = t('hint_roomSets', {
+        topo: topoName, perSet: plan.perSet, sets: plan.sets, total: plan.rooms.length,
+      });
     }
     const capInput = document.getElementById('roomCapacity');
     const capHint = document.getElementById('roomCapHint');
@@ -759,14 +763,17 @@
       const auto = isRoomCapAuto();
       capInput.disabled = auto;
       capInput.style.background = auto ? 'var(--primary-bg)' : '';
+      const caps = [...new Set(plan.rooms.map(r => Math.round(r.capacityKW)))].sort((a, b) => a - b);
       if (auto) {
-        const caps = [...new Set(plan.rooms.map(r => Math.round(r.capacityKW)))];
-        capInput.value = caps[0] || Math.round(effectiveCap);
-        if (capHint) capHint.textContent = ' ' + t('hint_roomCapAuto', { eff: fmtN(Math.round(effectiveCap)) });
+        capInput.value = caps[caps.length - 1] || Math.round(effectiveCap);
+        if (capHint) capHint.textContent = ' ' + t('hint_roomCapAuto', {
+          eff: fmtN(Math.round(effectiveCap)),
+          caps: caps.map(c => fmtN(c)).join(' / '),
+        });
       } else if (capHint) {
+        const tx = plan.rooms[0] ? plan.rooms[0].txCount : 1;
         capHint.textContent = ' ' + t('hint_roomCapManual', {
-          tx: plan.fixedTx, eff: fmtN(Math.round(effectiveCap)),
-          total: plan.rooms.length * plan.fixedTx,
+          tx, eff: fmtN(Math.round(effectiveCap)), total: plan.rooms.length * tx,
         });
       }
     }
@@ -793,15 +800,18 @@
     const cap = getPodCapacityKW();
     const mw = (loadMW === undefined || loadMW === null || !isFinite(loadMW))
       ? (parseFloat(document.getElementById('load').value) || 0) : loadMW;
-    const loadKW = mw * 1000;
-    const autoCount = Math.max(1, Math.ceil(loadKW / cap));
-    let count = autoCount;
-    if (!isPodCountAuto()) {
-      const el = document.getElementById('podCount');
-      const v = el ? parseInt(el.value, 10) : NaN;
-      if (isFinite(v) && v > 0) count = Math.min(POD_COUNT_MAX, v);
+    const auto = isPodCountAuto();
+    if (auto) {
+      // 부하 주도: 총부하를 POD 부하로 나눠 개수를 정한다 (마지막 POD는 부분 적재)
+      const loadKW = mw * 1000;
+      const count = Math.max(1, Math.ceil(loadKW / cap));
+      return { cap, count, loadKW, perPodKW: loadKW / count, auto: true };
     }
-    return { cap, count, loadKW, perPodKW: loadKW / count, auto: isPodCountAuto() };
+    // POD 주도: POD 1개가 cap만큼 쓰는 고정 블럭이고, 그 합이 데이터홀 부하가 된다.
+    const el = document.getElementById('podCount');
+    const v = el ? parseInt(el.value, 10) : NaN;
+    const count = Math.max(1, Math.min(POD_COUNT_MAX, isFinite(v) && v > 0 ? v : 1));
+    return { cap, count, loadKW: count * cap, perPodKW: cap, auto: false };
   }
   // ①번 총부하가 바뀌면 자동 모드의 수량 칸과 안내 문구를 다시 채운다.
   function updatePodControls() {
@@ -813,15 +823,26 @@
     countInput.style.background = auto ? 'var(--primary-bg)' : '';
     const plan = getPodPlan();
     if (auto) countInput.value = plan.count;
+    // POD 주도 모드에서는 POD 합계가 곧 데이터홀 부하다 — ①번 총부하를 거기에 맞춘다.
+    if (!auto) {
+      const loadEl = document.getElementById('load');
+      const target = Number((plan.loadKW / 1000).toFixed(2));
+      if (parseFloat(loadEl.value) !== target) {
+        if (loadSyncCheckbox && loadSyncCheckbox.checked) {
+          loadSyncCheckbox.checked = false;
+          loadEl.disabled = false;
+          loadEl.style.background = '';
+        }
+        loadEl.value = target;
+      }
+    }
     if (hint) {
-      hint.textContent = ' ' + t('hint_pod', {
+      hint.textContent = ' ' + t(plan.auto ? 'hint_pod_auto' : 'hint_pod_manual', {
         n: plan.count, kw: fmtN(Math.round(plan.perPodKW)), cap: fmtN(plan.cap),
+        total: fmtN(Math.round(plan.loadKW / 100) / 10),
       });
-      // 수량을 직접 줄이면 POD 1개가 설정 용량보다 큰 부하를 받게 되므로 그때만 경고한다.
-      const over = plan.perPodKW > plan.cap + 0.5;
-      hint.textContent += over ? ' ' + t('warn_podOver') : '';
-      hint.style.color = over ? 'var(--warn)' : '';
-      hint.style.fontWeight = over ? '700' : '';
+      hint.style.color = '';
+      hint.style.fontWeight = '';
     }
     return plan;
   }
@@ -1043,39 +1064,41 @@
       }
     }
 
-    // ----- 전기실 구성 -----
-    // 모듈(이중화 단위)의 변압기를 실제 방 몇 개에 나눠 담을지 — 기본은 모듈 1개 = 방 1개.
-    const roomPlan = buildRooms(modules, perModuleUnits, effectiveCap);
-    const rooms = roomPlan.rooms;
-    updateRoomControls(roomPlan, effectiveCap);
-    // ⑤는 같은 전기실을 조합형으로 배치하므로 방 개수를 그대로 넘긴다
-    // (⑤ 섹션은 이 함수보다 아래에서 초기화되므로 존재 확인 후 호출한다).
-    lastRoomCount = rooms.length;
-    lastPerModuleUnits = perModuleUnits;
-
-    // ----- POD 구성 (①번 공통 설정) -----
-    // 데이터홀은 단일 덩어리가 아니라 POD(랙 그룹) 단위로 쪼개지고, 각 POD는 이중화 방식이
-    // 정하는 수만큼의 회선으로 전기실에서 급전받는다. POD 수량·용량을 바꾸면 블럭과 회선이
-    // 함께 갱신된다.
+    // ----- POD 구성 (①번 설정) -----
     const podPlan = getPodPlan(load);
     const podCount = podPlan.count;
-    // POD마다 급전받는 전기실 목록 — 이중화 방식이 그대로 회선 구성이 된다.
-    //  · 분산/완전이중화: 모든 모듈이 모든 POD에 병렬 급전 (M회선)
-    //  · 대기(캐쳐)이중화: 담당 Duty 1회선 + 캐쳐 C회선(대기)
-    // 모듈별 첫 전기실의 인덱스 — 모듈이 여러 방으로 쪼개졌을 때 POD를 방에 돌려 배분한다.
-    const firstRoomOfModule = [];
-    { let acc = 0; roomPlan.roomsPerModule.forEach(rc => { firstRoomOfModule.push(acc); acc += rc; }); }
-    // 조합형은 전기실이 최소 3개 있어야 짝을 지을 수 있다
-    const combPossible = distMode === 'comb' && rooms.length >= 3;
-    const pairs = combPossible ? combPairs(rooms.length) : null;
-    // POD를 조합에 물릴 때 combPairs 순서를 그대로 쓰면 앞쪽 전기실에 몰린다
-    // (POD 3개 × 8실이면 (A,B) (A,C) (A,D) — A가 3개를 전부 떠안는다).
-    // 그래서 매번 '지금까지 가장 적게 쓰인 두 방'을, 가능하면 아직 안 쓴 조합으로 고른다.
+    const podLoadKW = podPlan.perPodKW;
+
+    // ----- 전기실 세트 -----
+    // 이중화 세트 1개 = 전기실 (N+C)개. 세트를 S개 두면 전기실은 S×(N+C)개이고,
+    // POD는 부하가 가장 적은 세트에 하나씩 배정된다.
+    const topoShortName = currentTopo === 'distributed' ? `${N}oo${N + C}`
+      : (currentTopo === 'standby' ? `N+${C}` : (C ? '2N+1' : '2N'));
+    const roomPlan = buildRoomSets(modules, planRoomSets(podPlan, N, M, effectiveCap), effectiveCap);
+    const rooms = roomPlan.rooms;
+    updateRoomControls(roomPlan, effectiveCap, topoShortName);
+    lastRoomCount = rooms.length;
+    lastPerModuleUnits = rooms.length ? rooms[0].txCount : perModuleUnits;
+    const podSet = new Array(podCount).fill(0);
+    roomPlan.setPods.forEach((list, si) => list.forEach(p => { podSet[p] = si; }));
+    const firstRoomOfSet = si => si * roomPlan.perSet;
+
+    // ----- 급전 회선 배정 -----
+    // 모선형: POD는 자기 세트의 전기실 전부에서 급전받는다. 3oo4면 4회선이 들어가고
+    //         그중 3개만 살아 있어도 POD 전량을 커버한다 (대기이중화는 Duty+캐쳐).
+    // 조합형: POD마다 세트 안의 전기실 2곳이 짝을 지어 절반씩 — 2회선 고정이라
+    //         "4개 중 3개" 같은 구성은 표현하지 못한다.
+    const combPossible = distMode === 'comb' && roomPlan.perSet >= 3;
+    if (combPossible) rooms.forEach(r => { if (r.state === 'idle') r.state = 'active'; });
+    const pairs = combPossible ? combPairs(roomPlan.perSet) : null;
     const pairUse = new Array(rooms.length).fill(0);
     const pairSeen = new Set();
     const pairKey = (a, b) => Math.min(a, b) + '-' + Math.max(a, b);
-    const roomPairFor = () => {
-      const order = rooms.map((_, i) => i).sort((x, y) => pairUse[x] - pairUse[y] || x - y);
+    // 짝은 그 세트 안에서, 지금까지 가장 적게 쓰인 두 방으로 — 앞쪽 방에 몰리지 않게.
+    const roomPairFor = si => {
+      const base = firstRoomOfSet(si);
+      const order = Array.from({ length: roomPlan.perSet }, (_, i) => base + i)
+        .sort((x, y) => pairUse[x] - pairUse[y] || x - y);
       let a = order[0], b = order[1];
       search:
       for (let i = 0; i < order.length; i++) {
@@ -1087,35 +1110,26 @@
       pairUse[a]++; pairUse[b]++;
       return [a, b];
     };
-    // 조합형에는 '대기 중인 캐쳐'라는 개념이 없다 — 모든 전기실이 조합에 참여해 상시 급전한다.
-    // (그대로 두면 캐쳐 2곳이 짝인 POD가 급전원 없는 상태로 남는다.)
-    if (combPossible) rooms.forEach(r => { if (r.state === 'idle') r.state = 'active'; });
     const podFeeds = [];
     for (let p = 0; p < podCount; p++) {
-      if (combPossible) {
-        podFeeds.push(roomPairFor());
-        continue;
-      }
+      const si = podSet[p];
+      if (combPossible) { podFeeds.push(roomPairFor(si)); continue; }
+      const base = firstRoomOfSet(si);
       const feedModules = currentTopo === 'standby'
         ? [p % Math.max(1, N)].concat(Array.from({ length: C }, (_, c) => N + c))
         : modules.map((_, k) => k);
-      // 같은 모듈 안에 방이 여러 개면 POD를 방마다 돌려가며 물린다
-      podFeeds.push(feedModules.map(mi => {
-        const rc = roomPlan.roomsPerModule[mi] || 1;
-        return firstRoomOfModule[mi] + (p % rc);
-      }));
+      podFeeds.push(feedModules.map(mi => base + mi));
     }
     const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
     const usedPairKeys = new Set();
     if (combPossible) podFeeds.forEach(f => usedPairKeys.add([...f].sort((a, b) => a - b).join('-')));
-    updateDistHint(combPossible, rooms.length, pairs ? pairs.length : 0, usedPairKeys.size);
+    updateDistHint(combPossible, roomPlan.perSet, pairs ? pairs.length : 0, usedPairKeys.size, roomPlan.sets, topoShortName);
 
     // ----- 분배 -----
     // 선택한 이중화 방식이 POD마다 급전 전기실을 정하고, 그중 '살아 있는' 방들이 그 POD의
     // 부하를 똑같이 나눠 받는다. 전기실의 실제 부하는 이 분배 결과의 합이다.
     //  · 분산/완전이중화 평상시 M방 → 방당 1/M, 1방 상실 → 남은 방이 1/(M-1)
     //  · 대기이중화 평상시 Duty가 전량, Duty 상실 → 투입된 캐쳐가 전량
-    const podLoadKW = podCount ? loadKW / podCount : 0;
     const podCarriers = [];
     for (let p = 0; p < podCount; p++) {
       const live = podFeeds[p].filter(r => rooms[r] && rooms[r].state === 'active');
@@ -1125,8 +1139,14 @@
     }
     const roomRatio = r => (r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0);
     const worstRatio = rooms.reduce((m, r) => Math.max(m, roomRatio(r)), 0);
+    // 3oo4의 핵심은 평상시가 아니라 '1실 상실 시'다 — 세트 부하를 남은 N개가 떠안을 때의
+    // 부하율을 따로 계산해 같이 보여준다 (설계를 결정하는 쪽은 이 숫자다).
+    const worstEmergency = rooms.reduce((m, r) => {
+      const load = roomPlan.setLoad[r.setIndex] / Math.max(1, N);
+      return r.capacityKW > 0 ? Math.max(m, load / r.capacityKW * 100) : m;
+    }, 0);
     const unfedPods = podCarriers.filter(c => !c.length).length;
-    updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod);
+    updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C);
 
     // POD가 많아지면 블럭을 좁혀서 도면 가로폭이 과도하게 늘어나지 않게 한다.
     let podW = 56, podGap = 6, podDetail = 2;   // 2: 이름+부하, 1: 이름만, 0: 번호만
@@ -1162,7 +1182,7 @@
     const maxRoomTx = rooms.reduce((m, r) => Math.max(m, r.txCount), 1);
     const txRowsNeeded = Math.ceil(maxRoomTx / 3);
     // 전기실 박스 안에 소속 모듈(트레인/Duty/캐쳐) 줄이 한 줄 더 들어가면 그만큼 키운다
-    const hasOwnerLine = currentTopo !== 'distributed' || rooms.some(r => r.roomsInModule > 1);
+    const hasOwnerLine = true;
     const moduleH = 144 + (hasOwnerLine ? 9 : 0) + txRowsNeeded * 46; // +14 for the per-module 설계부하/유효용량 reference line, +12/row for the per-tx rating line
     let svgH = moduleY + moduleH + 80;
     svg.setAttribute('width', svgW);
@@ -1190,7 +1210,10 @@
 
     // ----- 데이터홀 → POD 분할 -----
     const podTitle = svgEl('text', { x: svgW / 2, y: podY - 20, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
-    podTitle.textContent = t('pod_row_title', { n: podCount, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podPlan.perPodKW)) });
+    podTitle.textContent = t('pod_row_title', {
+      n: podCount, cap: fmtN(podPlan.cap), mw: fmtN(Math.round(podPlan.loadKW / 100) / 10),
+      sets: roomPlan.setPods.map(list => list.length).join('/'),
+    });
     svgTarget.appendChild(podTitle);
 
     // 데이터홀 박스에서 POD 행으로 내려오는 빗살 배선
@@ -1226,7 +1249,7 @@
       svgTarget.appendChild(label);
       if (podDetail === 2) {
         const sub = svgEl('text', { x: podCx(p), y: podY + 27, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
-        sub.textContent = fmtN(Math.round(podLoadKW)) + 'kW';
+        sub.textContent = fmtN(Math.round(podLoadKW)) + 'kW · ' + t('set_label', { n: podSet[p] + 1 });
         svgTarget.appendChild(sub);
       }
     }
@@ -1381,10 +1404,11 @@
 
       // 전기실 이름은 늘 통번호(전기실 1..R), 그 아래에 소속 모듈(트레인/Duty/캐쳐)을 적는다.
       const label = t('module_label_room', { n: i + 1 });
-      let ownerLabel = null;
+      let ownerLabel;
       if (currentTopo === 'full') ownerLabel = t('module_label_train', { n: mi + 1 });
       else if (currentTopo === 'standby') ownerLabel = mod.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 });
-      else if (mod.roomsInModule > 1) ownerLabel = t('module_label_group', { n: mi + 1 });
+      else ownerLabel = t('module_label_group', { n: mi + 1 });
+      if (roomPlan.sets > 1) ownerLabel = t('set_label', { n: mod.setIndex + 1 }) + ' · ' + ownerLabel;
       const labelColor = isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor);
       const labelText = svgEl('text', { x: x + boxW / 2, y: moduleY + 25, 'text-anchor': 'middle', 'font-size': moduleCount > 8 ? 10.5 : 12, 'font-weight': 800, fill: labelColor, 'font-family': 'sans-serif' });
       labelText.textContent = label;
@@ -1456,12 +1480,12 @@
     });
 
     // total caption at bottom
-    const totalTx = M * perModuleUnits;
+    const totalTx = rooms.reduce((n, r) => n + r.txCount, 0);
     const activeRooms = rooms.filter(r => r.state === 'active');
     const activeTx = activeRooms.reduce((n, r) => n + r.txCount, 0);
     const totalCaption = svgEl('text', { x: svgW / 2, y: svgH - 12, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
     totalCaption.textContent = diagramMode === 'normal'
-      ? t('total_normal_rooms', { m: M, units: perModuleUnits, total: totalTx, rooms: moduleCount, rating: fmtN(rating), eff: fmtN(effectiveCap) })
+      ? t('total_normal_sets', { topo: topoShortName, perSet: roomPlan.perSet, sets: roomPlan.sets, rooms: moduleCount, total: totalTx, rating: fmtN(rating), eff: fmtN(effectiveCap) })
       : t('total_emergency_rooms', { m: M, rooms: moduleCount, activeRooms: activeRooms.length, total: totalTx, activeTx });
     svgTarget.appendChild(totalCaption);
 
@@ -1478,9 +1502,10 @@
     for (let i = 0; i < moduleCount; i++) {
       const room = rooms[i];
       const mi = room.moduleIndex;
-      const owner = currentTopo === 'full' ? t('module_label_train', { n: mi + 1 })
+      let owner = currentTopo === 'full' ? t('module_label_train', { n: mi + 1 })
         : currentTopo === 'standby' ? (room.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 }))
-        : (room.roomsInModule > 1 ? t('module_label_group', { n: mi + 1 }) : null);
+        : t('module_label_group', { n: mi + 1 });
+      if (roomPlan.sets > 1) owner = t('set_label', { n: room.setIndex + 1 }) + ' · ' + owner;
       const nm = t('module_label_room', { n: i + 1 }) + (owner ? ` (${owner})` : '');
       legendItems.push({ color: room.state === 'offline' ? '#FBEDE7' : roomColor(i), label: nm });
     }
@@ -2053,10 +2078,8 @@
   if (podAutoCheckbox) podAutoCheckbox.addEventListener('change', onPodSettingChange);
 
   function onRoomSettingChange() { calculate(); }
-  const roomCountInput = document.getElementById('roomCount');
-  if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
-  const roomAutoCheckbox = document.getElementById('roomAuto');
-  if (roomAutoCheckbox) roomAutoCheckbox.addEventListener('change', onRoomSettingChange);
+  const roomSetsInput = document.getElementById('roomSets');
+  if (roomSetsInput) roomSetsInput.addEventListener('input', onRoomSettingChange);
   const roomCapacityInput = document.getElementById('roomCapacity');
   if (roomCapacityInput) roomCapacityInput.addEventListener('input', onRoomSettingChange);
   const roomCapAutoCheckbox = document.getElementById('roomCapAuto');
@@ -2460,9 +2483,9 @@
   const PRESET_FIELDS = [
     'utilityCapacity', 'itCapacityInput', 'hallCountInput', 'load', 'rating',
     'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount',
-    'nInput', 'cInput', 'roomCount', 'roomCapacity',
+    'nInput', 'cInput', 'roomSets', 'roomCapacity',
   ];
-  const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomAuto', 'roomCapAuto'];
+  const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomCapAuto'];
   const presetSelect = document.getElementById('presetSelect');
   const presetNameInput = document.getElementById('presetName');
   const presetStatus = document.getElementById('presetStatus');

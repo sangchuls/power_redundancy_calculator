@@ -142,16 +142,16 @@
     </div>
     <div class="field-row" style="margin-top:14px;">
       <div class="field">
-        <label for="podCapacity" data-i18n="label_podCapacity">POD 용량 (kW/POD)</label>
-        <input type="number" id="podCapacity" value="5800" step="100" min="10">
-        <div class="hint" data-i18n="hint_podCapacity">랙 그룹(POD) 1개가 받는 설계 전력 — ④·⑤·⑥ 다이어그램의 POD 블럭과 급전 회선에 공통 적용</div>
+        <label for="podCapacity" data-i18n="label_podCapacity">POD 1개 부하 (kW)</label>
+        <input type="number" id="podCapacity" value="6000" step="100" min="10">
+        <div class="hint" data-i18n="hint_podCapacity">랙 그룹(POD) 1개가 쓰는 전력 — 이 블럭이 이중급전 단위가 됩니다</div>
       </div>
       <div class="field">
         <label for="podCount" data-i18n="label_podCount">POD 수량 (개)</label>
-        <input type="number" id="podCount" value="3" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
+        <input type="number" id="podCount" value="3" step="1" min="1" max="200">
         <div class="hint">
           <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="podAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_podAuto">총부하 ÷ POD 용량으로 자동 산정</span>
+            <input type="checkbox" id="podAuto" style="width:13px; height:13px; margin:0;"> <span data-i18n="label_podAuto">총부하 ÷ POD 부하로 자동 산정</span>
           </label>
           <span id="podHint"></span>
         </div>
@@ -249,14 +249,9 @@
     <h2>④ <span data-i18n="h4_title">구성 다이어그램</span> <span class="desc" id="diagramDesc"></span></h2>
     <div class="field-row">
       <div class="field">
-        <label for="roomCount" data-i18n="label_roomCount">전기실 수량 (개)</label>
-        <input type="number" id="roomCount" value="8" step="1" min="1" max="200">
-        <div class="hint">
-          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="roomAuto" style="width:13px; height:13px; margin:0;"> <span data-i18n="label_roomAuto">이중화 모듈 수(N+C)와 동일</span>
-          </label>
-          <span id="roomHint"></span>
-        </div>
+        <label for="roomSets" data-i18n="label_roomSets">전기실 세트 수</label>
+        <input type="number" id="roomSets" value="2" step="1" min="1" max="12">
+        <div class="hint" id="roomHint"></div>
       </div>
       <div class="field">
         <label for="roomCapacity" data-i18n="label_roomCapacity">전기실 1개 용량 (kW)</label>
