@@ -8,8 +8,8 @@
       h0_title: '전체 용량 계획', h0_desc: '수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할(하이브리드 가능)',
       label_utility: '수전용량 (MW)', label_it: 'IT용량 (MW)', label_pue: 'PUE (수전 ÷ IT, 자동계산)',
       label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
-      label_maxSetCapacity: '권장 최대용량 (MW, 경고용)',
-      hint_maxSetCapacity: '변압기 정격×안전율×3(N) 기준 — ①번 값에 따라 자동 재계산, 초과 시 표에 경고만 표시',
+      label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
+      hint_maxSetCapacity: '변압기 정격×안전율×3(N)으로 ①번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
       btn_autoSplit: '데이터홀 개수로 균등 자동 분할', btn_addSet: '+ 데이터홀 수동 추가',
       th_hall: '데이터홀', th_itCap: 'IT용량 (MW)', th_topo: '이중화 방식', th_perRoomTx: '전기실당 변압기',
       th_totalModules: '총 모듈수', th_totalTx: '총 변압기', th_normal: '평상시', th_emergency: '비상시',
@@ -37,19 +37,12 @@
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_chip: 'POD {n}',
       legend_pod_note: 'POD(랙 그룹) — 데이터홀을 POD 단위로 분할하고, 각 POD는 위 급전모선에서 {feeds}회선으로 이중급전',
-      zone_pod_label: 'POD {n}개 · {mw}MW',
       warn_podOver: '⚠ POD당 실부하가 설정 용량을 초과합니다 — 수량을 늘리거나 용량을 키우세요.',
-      comb_pod_summary_manual: '블럭 1개 = POD 1개 · 직접 입력한 {n}개 — POD당 실부하 {kw}kW. 전기실 조합 {pairs}개 중 {zones}개 사용(조합당 평균 {perZone}개). 평상시 회선당 절반씩, 짝 중 1곳 상실 시 남은 1곳이 전량 부담.',
-      comb_pod_summary: '블럭 1개 = POD 1개 · 총 {n}개 × {cap}kW (POD당 실부하 {kw}kW) — 전기실 조합 {pairs}개 중 {zones}개 사용(조합당 평균 {perZone}개). POD 수량은 위에서 직접 입력할 수 있습니다.',
-      h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
+      comb_pod_summary: '블럭 1개 = POD 1개 · 총 {n}개 × {cap}kW (POD당 실부하 {kw}kW) — 전기실 조합 {pairs}개 중 {zones}개 사용(조합당 평균 {perZone}개). 수량·용량은 ①번 POD 설정에서 조절합니다.',
+      h5_title: '조합형 분배 배치도', h5_desc: '전기실 2개씩 짝지어 POD에 이중급전 — 전기실 수와 POD 수량은 ①·④번 값을 그대로 사용',
       h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
-      label_combM: '전기실 개수 (M)', hint_combM: '3~{max} 지원 (방 1개당 변압기 최소 1대 기준, 조합 수 = M×(M-1)÷2)',
-      label_combLoad: '이 배치도에 적용할 총 IT부하 (MW)', label_combSync: '①번 데이터홀 IT부하와 연동',
-      hint_combSync: ' — 이 배치도가 데이터홀 전체를 대표할 때 사용(⓪번 홀당 용량 → ①번 총부하 → 이 값까지 자동 연계). 층/동 단위 일부만 담당하면 체크 해제 후 직접 입력.',
       label_combFailRoom: '비상시 상실 전기실',
       hint_diagram5: '휠로 확대/축소 · 드래그로 이동 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
-      btn_combApply: '↑ 선택 전기실 부하를 ①~④ 계산기 총부하에 적용',
-      footnote_comb: '전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.',
       refTable_title: '참고 예시 (①번 총부하 {load}MW · 정격 {rating}kVA · 안전율 {safety} 기준)',
       refTable_th_topo: '방식', refTable_th_load: '총부하', refTable_th_step1: '①모듈당 설계부하',
       refTable_th_step2: '②모듈당 변압기', refTable_th_step3: '③총 대수',
@@ -120,20 +113,17 @@
       label_roomCount: '전기실 수량 (개)',
       label_roomAuto: '이중화 모듈 수(N+C)와 동일',
       hint_roomCount: ' — {min}~{max}개 (전기실 1개당 변압기 최소 1대 → 상한 = 총 변압기 대수). 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
-      label_combMSync: '④번 전기실 수량과 연동',
-      label_combPodCount: 'POD 블럭 수량 (개)',
-      label_combPodSync: '①번 POD 수량과 연동',
-      hint_combPod: ' — POD당 {kw}kW (설정 용량 {cap}kW), 각 POD는 전기실 2곳에서 절반씩 이중급전',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
       diagramDesc: '({topo} · {mode} 구성)',
       topoLabel_distributed: '분산이중화', topoLabel_standby: '대기이중화', topoLabel_full: '완전이중화',
 
-      room_label: '전기실 {letter}', room_offline: '⨯ 상실', zone_it_label: 'IT {mw}MW',
+      room_label: '전기실 {letter}', room_offline: '⨯ 상실',
+      footnote_comb: '전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.',
+      hint_combSource: '전기실 수는 ④번, 총 IT부하와 POD 수량은 ①번 값을 그대로 씁니다 — 현재 전기실 {m}개({pairs}개 조합) · 총 {mw}MW',
       comb_legend_room: '전기실 {letter}{suffix}', comb_legend_offline_suffix: ' (상실)',
       comb_summary_normal: '전기실 {m}개 × 평상시 부하 {perRoom}MW = 총 IT부하 {total}MW (전기실 조합 {zones}개 사용 · POD당 {zoneLoad}MW)',
       comb_summary_emergency: '전기실 {room} 상실 시 나머지 {rest}개 전기실이 각 {newLoad}MW로 상승 (평상시 {oldLoad}MW 대비 +{diff}MW)',
-      combApplyHint: '전기실 1개 부하 {mw}MW를 ①번 총부하에 적용했습니다. 이제 ②번에서 전기실 내부 이중화 방식(권장: 대기이중화, C=0)을 선택하세요.',
 
       hall_row: '데이터홀 {n}', overcap_row: '최대({max}MW) 초과', btn_detail: '상세보기', btn_delete: '삭제',
       summary_hallCount: '데이터홀 수', summary_sumLoad: '데이터홀 IT용량 합계', summary_target: '목표 IT용량',
@@ -148,8 +138,8 @@
       h0_title: 'Overall capacity plan', h0_desc: 'Utility · IT capacity → auto PUE → data hall count split (hybrid supported)',
       label_utility: 'Utility capacity (MW)', label_it: 'IT capacity (MW)', label_pue: 'PUE (utility ÷ IT, auto)',
       label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
-      label_maxSetCapacity: 'Recommended max capacity (MW, warning)',
-      hint_maxSetCapacity: 'Based on transformer rating × safety factor × 3(N) — auto-recalculated from ①, table just warns when exceeded',
+      label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
+      hint_maxSetCapacity: 'Derived from ① as transformer rating × safety factor × 3(N) — halls above it are flagged in the table below',
       btn_autoSplit: 'Auto-split evenly by hall count', btn_addSet: '+ Add hall manually',
       th_hall: 'Data hall', th_itCap: 'IT capacity (MW)', th_topo: 'Redundancy', th_perRoomTx: 'Tx per room',
       th_totalModules: 'Total modules', th_totalTx: 'Total tx', th_normal: 'Normal', th_emergency: 'Emergency',
@@ -177,19 +167,12 @@
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
       pod_chip: 'POD {n}',
       legend_pod_note: 'POD (rack group) — the hall is split into PODs, each dual-fed by {feeds} feeders from the buses above',
-      zone_pod_label: '{n} PODs · {mw}MW',
       warn_podOver: '⚠ Actual load per POD exceeds the configured capacity — raise the count or the capacity.',
-      comb_pod_summary_manual: 'One block = one POD · {n} entered by hand — {kw}kW actual each. {zones} of {pairs} room combinations in use ({perZone} PODs each on average). Half per feeder normally; the surviving room carries all of it when its partner is lost.',
-      comb_pod_summary: 'One block = one POD · {n} × {cap}kW ({kw}kW actual each) — {zones} of {pairs} room combinations in use ({perZone} PODs each on average). The POD count can be entered directly above.',
-      h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
+      comb_pod_summary: 'One block = one POD · {n} × {cap}kW ({kw}kW actual each) — {zones} of {pairs} room combinations in use ({perZone} PODs each on average). Count and capacity are set in the POD fields in ①.',
+      h5_title: 'Combinatorial distribution layout', h5_desc: 'Rooms paired up to dual-feed each POD — room count and POD count come from ① and ④',
       h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
-      label_combM: 'Room count (M)', hint_combM: 'Supports 3~{max} (at least 1 transformer per room, combinations = M×(M-1)÷2)',
-      label_combLoad: 'Total IT load applied to this layout (MW)', label_combSync: 'Synced with ① data hall IT load',
-      hint_combSync: ' — Use when this layout represents the whole data hall (⓪ per-hall capacity → ① total load → this value, auto-chained). Uncheck and enter directly if it only covers part of a floor/building.',
       label_combFailRoom: 'Room lost in emergency',
       hint_diagram5: 'Wheel to zoom · drag to pan · double-click a room: mark lost / double-click empty space: back to normal',
-      btn_combApply: '↑ Apply selected room load to the ①~④ calculator total load',
-      footnote_comb: 'The transformer count inside one room is sized in the ①~④ calculator, not this layout. When room-level redundancy is already secured by the combinatorial layout, rooms are typically sized as pure N (no catcher, C=0) to avoid over-design — set C≥1 if you also want redundancy inside each room.',
       refTable_title: 'Reference examples (① total load {load}MW · {rating}kVA rating · {safety} safety factor)',
       refTable_th_topo: 'Scheme', refTable_th_load: 'Total load', refTable_th_step1: '① Design load / module',
       refTable_th_step2: '② Tx / module', refTable_th_step3: '③ Total units',
@@ -260,20 +243,17 @@
       label_roomCount: 'Electrical rooms',
       label_roomAuto: 'Same as module count (N+C)',
       hint_roomCount: ' — {min}–{max} (at least one transformer per room, so the cap is the total transformer count). Raising it splits a module’s transformers across several rooms.',
-      label_combMSync: 'Follow the room count in ④',
-      label_combPodCount: 'POD blocks',
-      label_combPodSync: 'Follow the POD count in ①',
-      hint_combPod: ' — {kw}kW per POD (configured {cap}kW), each dual-fed at half from two rooms',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
       diagramDesc: '({topo} · {mode})',
       topoLabel_distributed: 'Distributed', topoLabel_standby: 'Standby', topoLabel_full: 'Full',
 
-      room_label: 'Room {letter}', room_offline: '⨯ Lost', zone_it_label: 'IT {mw}MW',
+      room_label: 'Room {letter}', room_offline: '⨯ Lost',
+      footnote_comb: 'The transformer count inside one room is sized in the ①~④ calculator, not this layout. When room-level redundancy is already secured by the combinatorial layout, rooms are typically sized as pure N (no catcher, C=0) to avoid over-design — set C≥1 if you also want redundancy inside each room.',
+      hint_combSource: 'Room count comes from ④, total IT load and POD count from ① — currently {m} rooms ({pairs} combinations) · {mw}MW total',
       comb_legend_room: 'Room {letter}{suffix}', comb_legend_offline_suffix: ' (lost)',
       comb_summary_normal: '{m} rooms × normal load {perRoom}MW = total IT load {total}MW ({zones} feed combinations in use · {zoneLoad}MW per POD)',
       comb_summary_emergency: 'If room {room} is lost, the other {rest} rooms rise to {newLoad}MW each (+{diff}MW vs. {oldLoad}MW normal)',
-      combApplyHint: 'Applied the single-room load {mw}MW to the ① total load. Now pick a room-internal redundancy scheme in ② (recommended: standby, C=0).',
 
       hall_row: 'Data hall {n}', overcap_row: 'Exceeds max ({max}MW)', btn_detail: 'Details', btn_delete: 'Delete',
       summary_hallCount: 'Data halls', summary_sumLoad: 'Sum of hall IT capacity', summary_target: 'Target IT capacity',
@@ -478,7 +458,6 @@
   // (e.g. from ⓪번 홀당 용량 auto-calc), since setting .value directly does not fire 'input'.
   function applyMainLoad(mw) {
     loadInput.value = Number(mw.toFixed(2));
-    if (typeof syncCombLoadFromMain === 'function') syncCombLoadFromMain();
     if (typeof renderCombDiagram === 'function') renderCombDiagram();
     calculate();
   }
@@ -555,7 +534,6 @@
     // 지금 ①~④ 설정으로 계산된 총 변압기 대수를 넘지 못하도록 동적으로 갱신한다.
     // (이 calculate()의 최초 1회 호출은 ⑤번 const들이 아직 선언되기 전에 실행되므로,
     // 그 시점의 TDZ 참조 오류는 무시 — ⑤번 초기화가 끝난 뒤 다시 호출되면서 정상 반영됨)
-    if (typeof updateCombMMax === 'function') { try { updateCombMMax(); } catch (e) {} }
     if (typeof renderRefTable === 'function') { try { renderRefTable(); } catch (e) {} }
   }
 
@@ -687,36 +665,6 @@
     return { cap, count, loadKW, perPodKW: loadKW / count, auto: isPodCountAuto() };
   }
   // ①번 총부하가 바뀌면 자동 모드의 수량 칸과 안내 문구를 다시 채운다.
-  // ⑤ 전용 POD 수량 — 기본은 ①번 공통 수량을 그대로 쓰고, 연동을 풀면 이 배치도에만
-  // 적용할 POD 블럭 수를 직접 입력한다 (전기실 수나 존 수에 따라 자동으로 쪼개지지 않는다).
-  function resolveCombPodPlan(loadMW) {
-    const base = getPodPlan(loadMW);
-    const sync = document.getElementById('combPodSync');
-    const input = document.getElementById('combPodCount');
-    const linked = sync ? sync.checked : true;
-    let count = base.count;
-    if (!linked && input) {
-      const v = parseInt(input.value, 10);
-      if (isFinite(v) && v > 0) count = Math.min(POD_COUNT_MAX, v);
-    }
-    const loadKW = (loadMW || 0) * 1000;
-    const plan = { cap: base.cap, count, loadKW, perPodKW: count ? loadKW / count : 0, linked };
-    if (input) {
-      input.disabled = linked;
-      input.style.background = linked ? 'var(--primary-bg)' : '';
-      if (linked) input.value = count;
-    }
-    const hint = document.getElementById('combPodHint');
-    if (hint) {
-      const over = plan.perPodKW > plan.cap + 0.5;
-      hint.textContent = ' ' + t('hint_combPod', { kw: fmtN(Math.round(plan.perPodKW)), cap: fmtN(plan.cap) })
-        + (over ? ' ' + t('warn_podOver') : '');
-      hint.style.color = over ? 'var(--warn)' : '';
-      hint.style.fontWeight = over ? '700' : '';
-    }
-    return plan;
-  }
-
   function updatePodControls() {
     const countInput = document.getElementById('podCount');
     const hint = document.getElementById('podHint');
@@ -972,9 +920,7 @@
     updateRoomControls(roomPlan);
     // ⑤는 같은 전기실을 조합형으로 배치하므로 방 개수를 그대로 넘긴다
     // (⑤ 섹션은 이 함수보다 아래에서 초기화되므로 존재 확인 후 호출한다).
-    if (typeof syncCombMFromRooms === 'function') {
-      try { lastRoomCount = rooms.length; syncCombMFromRooms(); } catch (e) {}
-    }
+    lastRoomCount = rooms.length;
 
     // ----- POD 구성 (①번 공통 설정) -----
     // 데이터홀은 단일 덩어리가 아니라 POD(랙 그룹) 단위로 쪼개지고, 각 POD는 이중화 방식이
@@ -1891,17 +1837,6 @@
   if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
   const roomAutoCheckbox = document.getElementById('roomAuto');
   if (roomAutoCheckbox) roomAutoCheckbox.addEventListener('change', onRoomSettingChange);
-  ['combPodCount'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener('input', renderCombDiagram);
-  });
-  const combPodSyncCheckbox = document.getElementById('combPodSync');
-  if (combPodSyncCheckbox) combPodSyncCheckbox.addEventListener('change', renderCombDiagram);
-  const combMSyncCheckbox = document.getElementById('combMSync');
-  if (combMSyncCheckbox) combMSyncCheckbox.addEventListener('change', () => {
-    syncCombMFromRooms();
-    renderCombDiagram();
-  });
 
   renderSldPalette();
   setSldMode(sldMode);
@@ -1973,69 +1908,36 @@
   calculate();
 
   // ===== ⑤ 조합형 분배 배치도 (Combinatorial N choose 2) =====
-  const combMInput = document.getElementById('combM');
-  const combLoadInput = document.getElementById('combLoad');
-  const combSyncLoadCheckbox = document.getElementById('combSyncLoad');
   const combFailRoomSelect = document.getElementById('combFailRoom');
   const combModeNormalBtn = document.getElementById('combModeNormalBtn');
   const combModeEmergencyBtn = document.getElementById('combModeEmergencyBtn');
-  const combApplyBtn = document.getElementById('combApplyBtn');
-  const combApplyHint = document.getElementById('combApplyHint');
-  const combMHint = document.getElementById('combMHint');
   let combMode = 'normal';
 
-  // Each room needs at least 1 transformer, so M (room count) can never exceed the total
-  // transformer count that ①~④ currently calculates for the whole load.
+  // ⑤는 자체 입력값을 갖지 않는다 — 전기실 수는 ④, 총 IT부하와 POD 수량은 ①에서 그대로
+  // 가져온다. (예전에는 같은 값을 '연동' 체크박스와 함께 한 번 더 입력받았는데, 같은 수치를
+  // 두 곳에서 관리하게 되어 삭제했다.)
   function getTotalTxCount() {
     const n = parseInt(document.getElementById('resultTotal').textContent);
     return isFinite(n) && n > 0 ? n : 6;
   }
-  function updateCombMMax() {
-    const dynamicMax = Math.max(3, getTotalTxCount());
-    combMInput.max = dynamicMax;
-    if (combMHint) combMHint.textContent = t('hint_combM', { max: dynamicMax });
-    // Keep the visible field in sync with what renderCombDiagram() will actually draw —
-    // it internally clamps to [3, max], so the input itself must match or the number shown
-    // and the diagram silently disagree (e.g. field says "1" but 3 rooms are drawn).
-    const current = parseInt(combMInput.value);
-    if (!isFinite(current) || current < 3 || current > dynamicMax) {
-      combMInput.value = Math.max(3, Math.min(dynamicMax, isFinite(current) ? current : 4));
-      combMInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+  // 조합형 배치는 짝을 지으려면 전기실이 최소 3개 필요하다.
+  function getCombM() {
+    return Math.max(3, lastRoomCount || 4);
   }
-
-  // ⑤의 전기실 개수(M)는 ④에서 정한 전기실 수량과 같은 물리적 방을 가리킨다.
-  // 연동이 켜져 있으면 ④ 값을 그대로 따라가고(조합형 배치는 최소 3개 필요), 끄면 직접 입력.
-  function syncCombMFromRooms() {
-    const sync = document.getElementById('combMSync');
-    const on = sync ? sync.checked : false;
-    combMInput.disabled = on;
-    combMInput.style.background = on ? 'var(--primary-bg)' : '';
-    if (!on || !lastRoomCount) return;
-    const target = Math.max(3, Math.min(parseInt(combMInput.max) || 20, lastRoomCount));
-    if (parseInt(combMInput.value) !== target) combMInput.value = target;
+  function getCombLoad() {
+    return parseFloat(loadInput.value);
   }
-
-  function syncCombLoadFromMain() {
-    if (combSyncLoadCheckbox.checked) {
-      combLoadInput.value = loadInput.value;
-    }
+  function updateCombSourceHint() {
+    const el = document.getElementById('combSourceHint');
+    if (!el) return;
+    const M = getCombM();
+    el.textContent = t('hint_combSource', {
+      m: M, rooms: lastRoomCount || M, mw: fmtN(getCombLoad() || 0),
+      pairs: M * (M - 1) / 2,
+    });
   }
-
-  combSyncLoadCheckbox.addEventListener('change', () => {
-    combLoadInput.disabled = combSyncLoadCheckbox.checked;
-    combLoadInput.style.background = combSyncLoadCheckbox.checked ? 'var(--primary-bg)' : 'var(--surface)';
-    if (combSyncLoadCheckbox.checked) {
-      syncCombLoadFromMain();
-      renderCombDiagram();
-    }
-  });
-
-  // keep comb load in sync whenever the main load field changes
-  loadInput.addEventListener('input', () => {
-    syncCombLoadFromMain();
-    renderCombDiagram();
-  });
+  // ①번 총부하가 바뀌면 ⑤도 다시 그린다
+  loadInput.addEventListener('input', renderCombDiagram);
 
 
   function combPairs(M) {
@@ -2047,7 +1949,7 @@
   }
 
   function refreshFailRoomOptions() {
-    const M = parseInt(combMInput.value) || 4;
+    const M = getCombM();
     const current = combFailRoomSelect.value;
     combFailRoomSelect.innerHTML = '';
     for (let i = 0; i < M; i++) {
@@ -2060,8 +1962,11 @@
   }
 
   function renderCombDiagram() {
-    const M = Math.max(3, Math.min(parseInt(combMInput.max) || 6, parseInt(combMInput.value) || 4));
-    const totalLoad = parseFloat(combLoadInput.value);
+    const M = getCombM();
+    const totalLoad = getCombLoad();
+    updateCombSourceHint();
+    // 전기실 수가 ④에서 바뀌면 상실 전기실 드롭다운도 같이 늘거나 줄어야 한다
+    if (combFailRoomSelect.options.length !== M) refreshFailRoomOptions();
     const svg = document.getElementById('combSvg');
     combZoom.clear();
     const svgTarget = combZoom.group;
@@ -2075,7 +1980,7 @@
     // 아래 줄의 블럭 1개 = POD 1개다. 입력한 수량만큼 그려지고, 전기실 조합(A+B, A+C …)에
     // 순서대로 배정되어 그 2곳에서 이중급전받는다. POD가 조합 수보다 많으면 같은 조합에
     // POD가 여러 개 붙고, 적으면 쓰이지 않는 조합은 그리지 않는다.
-    const podPlan = resolveCombPodPlan(totalLoad);
+    const podPlan = getPodPlan(totalLoad);
     const podCount = podPlan.count;
     const podPair = p => pairs[p % pairCount];
     const podLoadMW = totalLoad / podCount;
@@ -2205,6 +2110,7 @@
         // small MW label along the curve itself, so the split is readable at a glance in both
         // 평상시(50/50) and 비상시(0/100) — offset by side + a slight vertical stagger so the
         // two labels converging on the same zone don't sit on top of each other.
+        if (podCount > 12) return;   // POD가 많으면 회선 라벨이 겹쳐 도면만 지저분해진다
         const t = 0.4 + sideIdx * 0.14;
         const pt = smoothCurvePoint(t, x1, y1, x2, y2);
         const labelY = pt.y + (sideIdx === 0 ? -3 : 8);
@@ -2291,7 +2197,7 @@
     podSummary.style.width = '100%';
     podSummary.style.marginTop = '4px';
     podSummary.style.color = '#8A8072';
-    podSummary.textContent = t(podPlan.linked ? 'comb_pod_summary' : 'comb_pod_summary_manual', {
+    podSummary.textContent = t('comb_pod_summary', {
       n: podCount, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podLoadMW * 1000)),
       zones: usedPairs.size, pairs: pairCount,
       perZone: fmtN(Math.round(podCount / usedPairs.size * 10) / 10),
@@ -2305,25 +2211,6 @@
     combModeEmergencyBtn.classList.toggle('active', combMode === 'emergency');
   }
 
-  combMInput.addEventListener('input', () => {
-    // room count changed — a previously failed-room index/selection may no longer be valid
-    combMode = 'normal';
-    updateCombModeButtons();
-    refreshFailRoomOptions();
-    renderCombDiagram();
-  });
-  // On blur/Enter (not every keystroke, so typing isn't fought mid-edit), snap the field back
-  // into [3, max] so what's displayed always matches what renderCombDiagram() actually draws.
-  combMInput.addEventListener('change', () => {
-    const max = parseInt(combMInput.max) || 6;
-    const val = parseInt(combMInput.value);
-    const clamped = Math.max(3, Math.min(max, isFinite(val) ? val : 4));
-    if (clamped !== val) {
-      combMInput.value = clamped;
-      combMInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-  });
-  combLoadInput.addEventListener('input', renderCombDiagram);
   combFailRoomSelect.addEventListener('change', () => {
     combMode = 'emergency';
     updateCombModeButtons();
@@ -2340,26 +2227,7 @@
     renderCombDiagram();
   });
 
-  combApplyBtn.addEventListener('click', () => {
-    const M = Math.max(3, Math.min(parseInt(combMInput.max) || 6, parseInt(combMInput.value) || 4));
-    const totalLoad = parseFloat(combLoadInput.value);
-    if (!totalLoad || totalLoad <= 0) return;
-    const targetLoad = combMode === 'emergency' ? totalLoad / (M - 1) : totalLoad / M;
-    loadInput.value = Number(targetLoad.toFixed(2));
-    // main load changed -> keep comb sync consistent, then recalc everything
-    if (combSyncLoadCheckbox.checked) {
-      // avoid feedback loop: temporarily uncheck sync so comb diagram doesn't rescale to the room-level value
-      combSyncLoadCheckbox.checked = false;
-      combLoadInput.disabled = false;
-      combLoadInput.style.background = 'var(--surface)';
-    }
-    calculate();
-    combApplyHint.textContent = t('combApplyHint', { mw: fmtN(targetLoad) });
-    document.querySelector('.wrap').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
   refreshFailRoomOptions();
-  syncCombLoadFromMain();
   renderCombDiagram();
 
   // ===== ⓪ 전체 용량 계획 (수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할, 하이브리드) =====
@@ -2660,7 +2528,6 @@
     refreshMaxSetCapacityHint();
     renderSets();
   }));
-  maxSetCapacityInput.addEventListener('input', renderSets);
 
   // init: compute PUE, derive recommended max cap from ① defaults, set default hall count from it, auto-split once
   updatePueDisplay();

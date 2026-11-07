@@ -54,8 +54,8 @@
         <input type="text" id="hallCapacityDisplay" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
       </div>
       <div class="field">
-        <label for="maxSetCapacity" data-i18n="label_maxSetCapacity">권장 최대용량 (MW, 경고용)</label>
-        <input type="number" id="maxSetCapacity" value="9" step="0.5" min="1">
+        <label data-i18n="label_maxSetCapacity">권장 최대용량 (MW, 자동계산)</label>
+        <input type="text" id="maxSetCapacity" value="9" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
         <div class="hint" data-i18n="hint_maxSetCapacity">변압기 정격×안전율×3(N) 기준 — ①번 값에 따라 자동 재계산, 초과 시 표에 경고만 표시</div>
       </div>
     </div>
@@ -268,44 +268,15 @@
   </div>
 
   <div class="card">
-    <h2>⑤ <span data-i18n="h5_title">조합형 분배 배치도</span> <span class="desc" data-i18n="h5_desc">전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개</span></h2>
+    <h2>⑤ <span data-i18n="h5_title">조합형 분배 배치도</span> <span class="desc" data-i18n="h5_desc">전기실 2개씩 짝지어 POD에 이중급전 — 전기실 수와 POD 수량은 ①·④번 값을 그대로 사용</span></h2>
     <div class="topo-explain" data-i18n="h5_explain">
       <b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).
     </div>
     <div class="field-row">
       <div class="field">
-        <label for="combM" data-i18n="label_combM">전기실 개수 (M)</label>
-        <input type="number" id="combM" value="4" step="1" min="3" max="20" disabled style="background:var(--primary-bg);">
-        <div class="hint">
-          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="combMSync" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_combMSync">④번 전기실 수량과 연동</span>
-          </label>
-          <span id="combMHint" data-i18n="hint_combM"> — 3~6 지원 (조합 수 = M×(M-1)÷2)</span>
-        </div>
-      </div>
-      <div class="field">
-        <label for="combLoad" data-i18n="label_combLoad">이 배치도에 적용할 총 IT부하 (MW)</label>
-        <input type="number" id="combLoad" value="8.4" step="0.1" min="0" disabled style="background:var(--primary-bg);">
-        <div class="hint">
-          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="combSyncLoad" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_combSync">①번 데이터홀 IT부하와 연동</span>
-          </label>
-          <span id="combSyncNote" data-i18n="hint_combSync"> — 이 배치도가 데이터홀 전체를 대표할 때 사용(⓪번 홀당 용량 → ①번 총부하 → 이 값까지 자동 연계). 층/동 단위 일부만 담당하면 체크 해제 후 직접 입력.</span>
-        </div>
-      </div>
-      <div class="field">
-        <label for="combPodCount" data-i18n="label_combPodCount">POD 블럭 수량 (개)</label>
-        <input type="number" id="combPodCount" value="20" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
-        <div class="hint">
-          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="combPodSync" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_combPodSync">①번 POD 수량과 연동</span>
-          </label>
-          <span id="combPodHint"></span>
-        </div>
-      </div>
-      <div class="field">
         <label for="combFailRoom" data-i18n="label_combFailRoom">비상시 상실 전기실</label>
         <select id="combFailRoom"></select>
+        <div class="hint" id="combSourceHint"></div>
       </div>
     </div>
     <div class="mode-toggle">
@@ -323,10 +294,6 @@
       <svg id="combSvg" width="760" height="360"></svg>
     </div>
     <div class="diagram-legend" id="combLegend"></div>
-    <div style="margin-top:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-      <button id="combApplyBtn" class="quick-btn" style="border-style:solid;" data-i18n="btn_combApply">↑ 선택 전기실 부하를 ①~④ 계산기 총부하에 적용</button>
-      <span class="hint" id="combApplyHint" style="margin:0;"></span>
-    </div>
     <p class="footnote" style="margin-top:10px; text-align:left;" data-i18n="footnote_comb">
       전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.
     </p>
