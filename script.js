@@ -146,6 +146,57 @@
       alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomSets: '전기실 세트 수',
+      h_review_title: "시스템 검토 의견",
+      h_review_desc: "현재 입력값으로 구성된 계통을 용량·이중화·분배 관점에서 자동 점검합니다",
+      rv_unfed_h: "급전원을 모두 잃는 POD가 있습니다",
+      rv_unfed: "상실 조합에 따라 급전 전기실이 전부 끊기는 급전 블록이 {n}개 생깁니다. 이 구성으로는 해당 상실을 견디지 못합니다.",
+      rv_unfed_fix: "이중화 방식의 여유분(C)을 늘리거나, 분배 방식을 모선형으로 바꿔 세트 전체가 급전하도록 하세요.",
+      rv_emergency_over_h: "상실 시 전기실 용량이 부족합니다",
+      rv_emergency_over: "{lost}실 상실 시 남은 {n}실이 각각 용량의 {em}%를 떠안습니다. 100%를 넘으므로 실제로는 부하를 전부 받을 수 없습니다.",
+      rv_emergency_over_fix: "전기실 용량을 키우거나, 세트 수를 늘리거나, POD 급전 분할로 세트당 부하를 낮추세요.",
+      rv_emergency_tight_h: "상실 시 여유가 거의 없습니다",
+      rv_emergency_tight: "상실 시 부하율 {em}%로 한계에 근접합니다. 향후 증설이나 부하 편차를 흡수할 여지가 없습니다.",
+      rv_emergency_tight_fix: "증설 계획이 있다면 전기실 용량을 한 단계 키우는 쪽을 검토하세요.",
+      rv_emergency_low_h: "설비 여유가 과도합니다",
+      rv_emergency_low: "평상시 {normal}%, 상실 시에도 {em}%에 그칩니다. 변압기가 필요량보다 크게 잡혀 있습니다.",
+      rv_emergency_low_fix: "변압기 정격을 낮추거나, 세트 수를 줄이거나, POD 급전 분할을 조정해 설비를 줄일 수 있습니다.",
+      rv_emergency_ok_h: "이중화 용량이 적정합니다",
+      rv_emergency_ok: "평상시 {normal}% → 상실 시 {em}%로 용량 이내입니다. {topo} 설계 개념({design}%→100%)에 부합하며 적정 여유를 확보했습니다.",
+      rv_overbuilt_h: "변압기 정수 올림으로 여유가 큽니다",
+      rv_overbuilt: "상실 시 실당 {need}kW가 필요한데 {tx}대({got}kW)가 들어가 여유가 {head}%입니다. 변압기 1대 단위로 올림하면서 생긴 과설계입니다.",
+      rv_overbuilt_fix: "POD 급전 분할을 늘려 세트당 부하를 낮추거나, 변압기 정격을 낮춰 올림 손실을 줄이세요.",
+      rv_notight_h: "여유가 {head}%뿐입니다",
+      rv_notight: "설계 필요량과 실제 용량이 거의 같습니다. 부하 증가나 역률·효율 변동을 흡수할 여유가 없습니다.",
+      rv_notight_fix: "안전율을 낮춰 재검토하거나 전기실 용량을 한 단계 키우세요.",
+      rv_imbalance_h: "세트별 부하가 고르지 않습니다",
+      rv_imbalance: "{detail} — 가장 무거운 세트가 가장 가벼운 세트보다 {spread}% 큽니다. 세트마다 변압기 대수가 달라집니다.",
+      rv_imbalance_fix_split: "POD 급전 분할을 세트 수와 같게 두면 각 세트에 고르게 나뉩니다.",
+      rv_imbalance_fix_count: "POD 수량을 세트 수의 배수로 맞추거나 세트 수를 조정하세요.",
+      rv_balanced_h: "세트별 부하가 균등합니다",
+      rv_balanced: "세트 {sets}개가 각각 {mw}MW씩 동일하게 분담합니다. 전기실 사양을 한 가지로 통일할 수 있습니다.",
+      rv_comb_mismatch_h: "분배 방식이 이중화 방식과 맞지 않습니다",
+      rv_comb_mismatch: "조합형은 POD당 2회선 고정이라 세트 안 {perSet}개 중 2곳씩만 물립니다. {topo}의 'N개 중 M개' 구조를 표현하지 못합니다.",
+      rv_comb_mismatch_fix: "모선형 분배로 바꾸면 세트의 전기실 전부가 POD에 급전합니다.",
+      rv_split_sets_h: "POD 분할이 세트 수보다 많습니다",
+      rv_split_sets: "{split}분할인데 세트가 {sets}개뿐이라 같은 POD의 갈래가 같은 세트로 들어갑니다. 쪼갠 효과가 없습니다.",
+      rv_split_sets_fix: "세트 수를 {split}개 이상으로 늘리거나 분할 수를 {sets} 이하로 낮추세요.",
+      rv_rating_cap_h: "변압기 정격이 상한을 넘습니다",
+      rv_rating_cap: "{rating}kVA는 상한 {cap}kVA를 초과합니다. 표준 사양을 벗어난 값입니다.",
+      rv_rating_cap_fix: "정격을 {cap}kVA 이하로 낮추고 대수를 늘리는 쪽을 검토하세요.",
+      rv_many_tx_h: "전기실 1곳에 변압기가 {tx}대입니다",
+      rv_many_tx: "한 방에 변압기가 많이 모이면 실 면적·이격거리·발열 처리 부담이 커집니다.",
+      rv_many_tx_fix: "세트 수나 세트당 전기실 수를 늘려 분산하는 안을 비교해 보세요.",
+      rv_full_cost_h: "완전이중화는 설비가 2배입니다",
+      rv_full_cost: "각 트레인이 전체 부하를 단독으로 커버하므로 변압기 {total}대가 들어갑니다. 평상시 가동률이 낮습니다.",
+      rv_full_cost_fix: "무중단 요구가 절대적이지 않다면 분산이중화(2oo3·3oo4)로 설비를 크게 줄일 수 있습니다.",
+      rv_pue_low_h: "수전용량 여유가 적습니다",
+      rv_pue_low: "PUE {pue}는 냉방·손실분을 감안하면 빠듯합니다. IT 외 부하가 들어갈 여지가 작습니다.",
+      rv_pue_low_fix: "수전용량을 늘리거나 IT용량 목표를 재검토하세요.",
+      rv_pue_high_h: "수전용량이 과다합니다",
+      rv_pue_high: "PUE {pue}는 일반적인 설계값보다 높습니다. 수전 설비가 과투자일 수 있습니다.",
+      rv_pue_high_fix: "냉방 방식과 목표 PUE를 재확인하고 수전용량을 조정하세요.",
+      rv_summary_h: "구성 요약",
+      rv_summary: "POD {pods}개 × {podKW}kW = {mw}MW · {topo} {perSet}실 × {sets}세트 = 전기실 {rooms}개 · 변압기 {total}대({rating}kVA) · 급전 블록당 {feeds}회선.",
       label_roomsPerSet: '세트당 전기실 수',
       label_roomsPerSetAuto: '②번 N+C와 동일',
       hint_roomSets: '{topo} 1세트 = 전기실 {perSet}개 → 세트 {sets}개 = 총 전기실 {total}개. POD는 부하가 적은 세트부터 배정됩니다.',
@@ -312,6 +363,57 @@
       alloc_over_emergency: '⚠ Over capacity on a loss — {ratio}% is fine normally, but losing {lost} room(s) pushes the surviving {n} to {emergency}%. Raise room capacity or add a set.',
       alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
       label_roomSets: 'Room sets',
+      h_review_title: "System review",
+      h_review_desc: "Checks the current configuration for capacity, redundancy and distribution",
+      rv_unfed_h: "Some PODs lose every feeder",
+      rv_unfed: "{n} feed block(s) end up with every feeding room down. This configuration does not survive that loss.",
+      rv_unfed_fix: "Raise the spare count (C), or switch to bus distribution so the whole set feeds each POD.",
+      rv_emergency_over_h: "Rooms run out of capacity on a loss",
+      rv_emergency_over: "With {lost} room(s) lost the surviving {n} each carry {em}% of capacity, above 100%, so the load cannot actually be served.",
+      rv_emergency_over_fix: "Raise room capacity, add a set, or split the PODs further to lighten each set.",
+      rv_emergency_tight_h: "Almost no margin on a loss",
+      rv_emergency_tight: "Loss-case loading of {em}% sits close to the limit, leaving nothing for growth or load imbalance.",
+      rv_emergency_tight_fix: "If growth is planned, step the room capacity up one size.",
+      rv_emergency_low_h: "Substantially over-provisioned",
+      rv_emergency_low: "Only {normal}% normally and {em}% even on a loss. The transformers are far larger than needed.",
+      rv_emergency_low_fix: "Lower the transformer rating, reduce the set count, or adjust the POD split to cut plant.",
+      rv_emergency_ok_h: "Redundant capacity is sound",
+      rv_emergency_ok: "{normal}% normally, {em}% on a loss, within capacity. That matches the {topo} design point ({design}% to 100%) with sensible margin.",
+      rv_overbuilt_h: "Rounding transformers up leaves a large margin",
+      rv_overbuilt: "A loss needs {need}kW per room but {tx} transformer(s) give {got}kW, {head}% spare - over-provisioning created by rounding to whole units.",
+      rv_overbuilt_fix: "Split the PODs further to lighten each set, or drop the transformer rating to reduce the rounding loss.",
+      rv_notight_h: "Only {head}% spare",
+      rv_notight: "Installed capacity barely exceeds the design requirement, leaving nothing for load growth or power-factor drift.",
+      rv_notight_fix: "Re-check with a lower safety factor, or step the room capacity up.",
+      rv_imbalance_h: "Sets are unevenly loaded",
+      rv_imbalance: "{detail} - the heaviest set is {spread}% above the lightest, so transformer counts differ between sets.",
+      rv_imbalance_fix_split: "Setting the POD feed split equal to the set count spreads them evenly.",
+      rv_imbalance_fix_count: "Make the POD count a multiple of the set count, or adjust the set count.",
+      rv_balanced_h: "Sets are evenly loaded",
+      rv_balanced: "All {sets} sets carry {mw}MW each, so the rooms can share one specification.",
+      rv_comb_mismatch_h: "Distribution does not match the redundancy scheme",
+      rv_comb_mismatch: "Combinatorial is fixed at 2 feeders per POD, pairing 2 of the {perSet} rooms in a set. It cannot express the N-of-M structure of {topo}.",
+      rv_comb_mismatch_fix: "Switch to bus distribution so every room in the set feeds the POD.",
+      rv_split_sets_h: "More POD branches than sets",
+      rv_split_sets: "Split {split} ways with only {sets} set(s), so branches of the same POD share a set and the split achieves nothing.",
+      rv_split_sets_fix: "Raise the set count to at least {split}, or lower the split to {sets}.",
+      rv_rating_cap_h: "Transformer rating is above the cap",
+      rv_rating_cap: "{rating}kVA exceeds the {cap}kVA cap and falls outside standard sizing.",
+      rv_rating_cap_fix: "Drop to {cap}kVA or below and add units instead.",
+      rv_many_tx_h: "{tx} transformers in one room",
+      rv_many_tx: "Crowding transformers into one room drives up floor area, clearances and heat rejection.",
+      rv_many_tx_fix: "Compare against spreading them over more sets or more rooms per set.",
+      rv_full_cost_h: "Full redundancy doubles the plant",
+      rv_full_cost: "Each train covers the whole load on its own, so {total} transformers are installed and normal utilisation is low.",
+      rv_full_cost_fix: "Unless uninterrupted operation is absolute, a distributed scheme (2oo3, 3oo4) cuts the plant substantially.",
+      rv_pue_low_h: "Little headroom in the utility supply",
+      rv_pue_low: "A PUE of {pue} is tight once cooling and losses are counted, leaving little room for non-IT load.",
+      rv_pue_low_fix: "Increase the utility capacity or revisit the IT capacity target.",
+      rv_pue_high_h: "Utility supply looks oversized",
+      rv_pue_high: "A PUE of {pue} is above typical design values; the incoming supply may be over-invested.",
+      rv_pue_high_fix: "Re-check the cooling approach and target PUE, then adjust the utility capacity.",
+      rv_summary_h: "Configuration summary",
+      rv_summary: "{pods} PODs x {podKW}kW = {mw}MW - {topo}, {perSet} rooms x {sets} sets = {rooms} rooms - {total} transformers ({rating}kVA) - {feeds} feeders per block.",
       label_roomsPerSet: 'Rooms per set',
       label_roomsPerSetAuto: 'Same as N+C in ②',
       hint_roomSets: 'One {topo} set = {perSet} rooms → {sets} sets = {total} rooms in all. PODs go to the least loaded set first.',
@@ -697,6 +799,105 @@
   // 몇 개의 방에 나눠 담을지는 별도 설정이다 — 기본값은 모듈 1개 = 전기실 1개이고,
   // 전기실 수를 늘리면 각 모듈의 변압기가 여러 방으로 쪼개진다. 방마다 최소 변압기 1대는
   // 들어가야 하므로 상한은 총 변압기 대수다 (전기실 8개 = 총 8대면 방당 1대씩).
+  // ===== 시스템 검토 의견 =====
+  // 계산 결과를 규칙으로 훑어 "이 구성이 적절한가"를 항목별로 알려준다.
+  // 각 항목은 {level, key, vars, fix} — level은 bad(문제) / warn(주의) / good(양호) / info.
+  function buildReview(ctx) {
+    const items = [];
+    const add = (level, key, vars, fixKey) => items.push({ level, key, vars: vars || {}, fixKey });
+    const pct = v => fmtN(Math.round(v * 10) / 10);
+
+    // 1. 상실 시 전기실 부하율 — 3oo4 등 N-of-M 설계를 결정하는 숫자
+    const em = ctx.worstEmergency;
+    if (ctx.unfedPods > 0) {
+      add('bad', 'rv_unfed', { n: ctx.unfedPods }, 'rv_unfed_fix');
+    } else if (em > 100) {
+      add('bad', 'rv_emergency_over', { em: pct(em), lost: ctx.M - ctx.N, n: ctx.N }, 'rv_emergency_over_fix');
+    } else if (em > 95) {
+      add('warn', 'rv_emergency_tight', { em: pct(em) }, 'rv_emergency_tight_fix');
+    } else if (em < 55) {
+      add('warn', 'rv_emergency_low', { em: pct(em), normal: pct(ctx.worstNormal) }, 'rv_emergency_low_fix');
+    } else {
+      add('good', 'rv_emergency_ok', { em: pct(em), normal: pct(ctx.worstNormal), topo: ctx.topo, design: pct(ctx.N / ctx.M * 100) });
+    }
+
+    // 2. 변압기 정수 올림으로 생긴 여유 — 너무 크면 과설계
+    if (ctx.head > 55) {
+      add('warn', 'rv_overbuilt', { head: pct(ctx.head), need: fmtN(Math.round(ctx.needPerRoom)), tx: ctx.maxTx, got: fmtN(Math.round(ctx.gotPerRoom)) }, 'rv_overbuilt_fix');
+    } else if (ctx.head < 5) {
+      add('warn', 'rv_notight', { head: pct(ctx.head) }, 'rv_notight_fix');
+    }
+
+    // 3. 세트별 부하 불균형
+    if (ctx.sets > 1 && ctx.setSpread > 1.05) {
+      add('warn', 'rv_imbalance', {
+        spread: pct((ctx.setSpread - 1) * 100),
+        detail: ctx.setLoad.map((l, i) => 'S' + (i + 1) + ' ' + fmtN(Math.round(l / 100) / 10) + 'MW').join(' · '),
+      }, ctx.split < ctx.sets ? 'rv_imbalance_fix_split' : 'rv_imbalance_fix_count');
+    } else if (ctx.sets > 1) {
+      add('good', 'rv_balanced', { sets: ctx.sets, mw: fmtN(Math.round(ctx.setLoad[0] / 100) / 10) });
+    }
+
+    // 4. 분배 방식이 이중화 방식을 표현하는가
+    if (ctx.comb && ctx.perSet > 2) {
+      add('bad', 'rv_comb_mismatch', { topo: ctx.topo, perSet: ctx.perSet }, 'rv_comb_mismatch_fix');
+    }
+
+    // 5. POD 분할이 세트 수를 넘지 않는가
+    if (ctx.split > ctx.sets) {
+      add('bad', 'rv_split_sets', { split: ctx.split, sets: ctx.sets }, 'rv_split_sets_fix');
+    }
+
+    // 6. 변압기 정격 상한
+    if (ctx.rating > RATING_MAX_KVA) {
+      add('warn', 'rv_rating_cap', { rating: fmtN(ctx.rating), cap: fmtN(RATING_MAX_KVA) }, 'rv_rating_cap_fix');
+    }
+
+    // 7. 전기실 1곳에 변압기가 너무 많이 몰리는가
+    if (ctx.maxTx >= 4) {
+      add('warn', 'rv_many_tx', { tx: ctx.maxTx }, 'rv_many_tx_fix');
+    }
+
+    // 8. 완전이중화는 설비가 2배 — 의도한 선택인지 확인
+    if (ctx.topoKind === 'full') {
+      add('warn', 'rv_full_cost', { total: ctx.totalTx }, 'rv_full_cost_fix');
+    }
+
+    // 9. 수전용량 여유 (⓪번 기준)
+    if (ctx.utilityMW > 0 && ctx.itMW > 0) {
+      const pue = ctx.utilityMW / ctx.itMW;
+      if (pue < 1.15) add('warn', 'rv_pue_low', { pue: fmtN(Math.round(pue * 100) / 100) }, 'rv_pue_low_fix');
+      else if (pue > 1.6) add('warn', 'rv_pue_high', { pue: fmtN(Math.round(pue * 100) / 100) }, 'rv_pue_high_fix');
+    }
+
+    // 10. 총 설비 규모 요약 — 항상 마지막에
+    add('info', 'rv_summary', {
+      pods: ctx.pods, podKW: fmtN(Math.round(ctx.podKW)), mw: fmtN(Math.round(ctx.loadKW / 100) / 10),
+      topo: ctx.topo, sets: ctx.sets, perSet: ctx.perSet, rooms: ctx.rooms,
+      total: ctx.totalTx, rating: fmtN(ctx.rating), feeds: ctx.feedsPerPod,
+    });
+
+    const order = { bad: 0, warn: 1, good: 2, info: 3 };
+    items.sort((a, b) => order[a.level] - order[b.level]);
+    return items;
+  }
+
+  function renderReview(ctx) {
+    const box = document.getElementById('reviewList');
+    if (!box) return;
+    const marks = { bad: '⚠', warn: '⚠', good: '✓', info: 'ℹ' };
+    box.innerHTML = '';
+    buildReview(ctx).forEach(it => {
+      const div = document.createElement('div');
+      div.className = 'review-item ' + it.level;
+      const fix = it.fixKey ? `<div class="fix">→ ${t(it.fixKey, it.vars)}</div>` : '';
+      div.innerHTML = `<span class="mark">${marks[it.level]}</span><div class="body">`
+        + `<div class="head">${t(it.key + '_h')}</div>`
+        + `<div class="detail">${t(it.key, it.vars)}</div>${fix}</div>`;
+      box.appendChild(div);
+    });
+  }
+
   // 분배 결과 판정 — 용량을 넘기는 방이 있으면 경고, 급전원을 모두 잃은 POD가 있으면 더 강하게.
   function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, M, podPlan) {
     const el = document.getElementById('allocVerdict');
@@ -1251,6 +1452,23 @@
     }, 0);
     const unfedPods = podCarriers.filter(c => !c.length).length;
     updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C, podPlan);
+
+    // 검토 의견에 넘길 요약 — 위에서 이미 구한 값만 모은다
+    const needPerRoom = Math.max(...roomPlan.designPerRoom);
+    const gotPerRoom = Math.max(...rooms.map(r => r.capacityKW));
+    const minSetLoad = Math.min(...roomPlan.setLoad), maxSetLoad = Math.max(...roomPlan.setLoad);
+    renderReview({
+      worstNormal: worstRatio, worstEmergency, unfedPods,
+      N, M, perSet: roomPlan.perSet, sets: roomPlan.sets, rooms: rooms.length,
+      topo: topoShortName, topoKind: currentTopo, comb: combPossible,
+      split: podPlan.split, pods: podPlan.pods, podKW: podPlan.podKW, loadKW,
+      feedsPerPod, rating, totalTx: rooms.reduce((n, r) => n + r.txCount, 0),
+      maxTx: Math.max(...rooms.map(r => r.txCount)),
+      needPerRoom, gotPerRoom, head: (gotPerRoom / Math.max(1, needPerRoom) - 1) * 100,
+      setLoad: roomPlan.setLoad, setSpread: minSetLoad > 0 ? maxSetLoad / minSetLoad : 1,
+      utilityMW: parseFloat(document.getElementById('utilityCapacity').value) || 0,
+      itMW: parseFloat(document.getElementById('itCapacityInput').value) || 0,
+    });
 
     // POD가 많아지면 블럭을 좁혀서 도면 가로폭이 과도하게 늘어나지 않게 한다.
     let podW = 56, podGap = 6, podDetail = 2;   // 2: 이름+부하, 1: 이름만, 0: 번호만

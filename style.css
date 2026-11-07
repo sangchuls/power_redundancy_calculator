@@ -380,6 +380,29 @@
   .zoom-btn:hover { border-color: var(--primary); color: var(--primary); }
   .expand-btn { font-size: 13px; padding: 4px 10px; }
 
+  /* 시스템 검토 의견 */
+  .review-list { display: flex; flex-direction: column; gap: 9px; }
+  .review-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 11px 14px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-color);
+  }
+  .review-item .mark { font-size: 14px; line-height: 1.35; flex: 0 0 auto; }
+  .review-item .body { flex: 1 1 auto; min-width: 0; }
+  .review-item .head { font-weight: 800; font-size: 13px; margin-bottom: 3px; color: var(--text-main); }
+  .review-item .detail { font-size: 12px; line-height: 1.55; color: var(--text-muted); }
+  .review-item .fix { font-size: 12px; line-height: 1.55; margin-top: 4px; color: var(--primary); font-weight: 700; }
+  .review-item.bad { border-color: var(--warn); background: var(--warn-bg); }
+  .review-item.bad .head { color: var(--warn); }
+  .review-item.warn { border-color: #D0A96B; background: #FBF4E8; }
+  .review-item.warn .head { color: #8A6520; }
+  .review-item.good { border-color: var(--primary-light); background: var(--primary-bg); }
+  .review-item.good .head { color: var(--primary); }
+
   /* 설정 저장/불러오기 바 */
   .preset-bar {
     display: flex;
