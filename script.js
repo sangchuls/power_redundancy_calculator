@@ -104,15 +104,22 @@
       module_label_train: '트레인 {n}', module_label_catcher: '캐쳐 {n}', module_label_duty: 'Duty {n}', module_label_room: '전기실 {n}',
       state_offline: '⨯ 상실(OFFLINE)', state_idle: '평상시 대기(idle)', state_engaged: '투입(가동중)', state_active: '가동중',
       count_offline: '변압기 {n}대 (정지)', count_active: '{n}대 · {kw}kW',
-      design_ref_line: '설계 {mw}MW · 유효 {eff}kW',
       total_normal: '총 {m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대  (정격 {rating}kW, 유효 {eff}kW)',
       total_emergency: '모듈 {m}개 중 {active}개 가동으로 전체부하 대응 · 변압기 총 {total}대 중 {activeTx}대 가동',
       total_normal_rooms: '{m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대 → 전기실 {rooms}개에 배치  (정격 {rating}kW, 유효 {eff}kW)',
       total_emergency_rooms: '모듈 {m}개 기준 · 전기실 {rooms}개 중 {activeRooms}개 가동 · 변압기 총 {total}대 중 {activeTx}대 가동',
       module_label_group: '{n}그룹',
       label_roomCount: '전기실 수량 (개)',
+      label_roomCapacity: '전기실 1개 용량 (kW)',
+      room_cap_line: '용량 {cap}kW · 부하율 {pct}%',
+      label_roomCapAuto: '실당 변압기 대수 × 유효용량',
+      hint_roomCapAuto: ' — 변압기 1대당 유효용량 {eff}kW 기준으로 자동 산출. 직접 정하려면 체크 해제.',
+      hint_roomCapManual: ' — 이 용량이면 실당 변압기 {tx}대(유효 {eff}kW/대), 전체 {total}대가 필요합니다.',
+      alloc_ok: '✓ 분배 결과 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 최대 전기실 부하율 {ratio}% (용량 이내)',
+      alloc_over: '⚠ 분배 결과 — 전기실 {over}개가 용량 초과 (최대 부하율 {ratio}%). 전기실 용량·수량을 늘리거나 POD 부하를 줄이세요.',
+      alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomAuto: '이중화 모듈 수(N+C)와 동일',
-      hint_roomCount: ' — {min}~{max}개 (전기실 1개당 변압기 최소 1대 → 상한 = 총 변압기 대수). 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
+      hint_roomCount: ' — {min}~{max}개. 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
       diagramDesc: '({topo} · {mode} 구성)',
@@ -234,15 +241,22 @@
       module_label_train: 'Train {n}', module_label_catcher: 'Catcher {n}', module_label_duty: 'Duty {n}', module_label_room: 'Room {n}',
       state_offline: '⨯ Lost (OFFLINE)', state_idle: 'Standing by (idle)', state_engaged: 'Engaged (running)', state_active: 'Running',
       count_offline: '{n} tx (stopped)', count_active: '{n} tx · {kw}kW',
-      design_ref_line: 'Design {mw}MW · effective {eff}kW',
       total_normal: '{m} modules × {units} tx/module = {total} transformers total  (rating {rating}kW, effective {eff}kW)',
       total_emergency: '{active} of {m} modules running to cover full load · {activeTx} of {total} transformers running',
       total_normal_rooms: '{m} modules × {units} tx/module = {total} transformers → placed in {rooms} electrical rooms  (rating {rating}kW, effective {eff}kW)',
       total_emergency_rooms: '{m} modules · {activeRooms} of {rooms} rooms running · {activeTx} of {total} transformers running',
       module_label_group: 'Group {n}',
       label_roomCount: 'Electrical rooms',
+      label_roomCapacity: 'Capacity per room (kW)',
+      room_cap_line: 'capacity {cap}kW · {pct}% loaded',
+      label_roomCapAuto: 'Transformers per room × effective capacity',
+      hint_roomCapAuto: ' — derived from {eff}kW effective per transformer. Uncheck to set it yourself.',
+      hint_roomCapManual: ' — that capacity needs {tx} transformers per room ({eff}kW each), {total} in total.',
+      alloc_ok: '✓ Allocation — {pods} PODs shared across {rooms} rooms, {feeds} feeders each. Highest room loading {ratio}% (within capacity)',
+      alloc_over: '⚠ Allocation — {over} room(s) over capacity (peak loading {ratio}%). Raise room capacity or count, or lower the POD load.',
+      alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
       label_roomAuto: 'Same as module count (N+C)',
-      hint_roomCount: ' — {min}–{max} (at least one transformer per room, so the cap is the total transformer count). Raising it splits a module’s transformers across several rooms.',
+      hint_roomCount: ' — {min}–{max}. Raising it splits a module’s transformers across several rooms.',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
       diagramDesc: '({topo} · {mode})',
@@ -586,15 +600,49 @@
   }
   // modules: ④에서 만든 모듈 배열, perModuleUnits: 모듈당 변압기 대수
   // → 각 전기실이 어느 모듈 소속이고 변압기를 몇 대 갖는지 돌려준다.
-  function buildRooms(modules, perModuleUnits) {
+  function isRoomCapAuto() {
+    const el = document.getElementById('roomCapAuto');
+    return el ? el.checked : true;
+  }
+  // 전기실 1개의 용량. 자동이면 "그 방의 변압기 대수 × 유효용량", 수동이면 입력값이
+  // 기준이 되고 거기서 실당 변압기 대수를 거꾸로 산출한다(⌈용량 ÷ 유효용량⌉).
+  function getRoomCapacityKW(effectiveCap) {
+    if (isRoomCapAuto()) return null;
+    const el = document.getElementById('roomCapacity');
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : (effectiveCap || null);
+  }
+  // 분배 결과 판정 — 어떤 방이든 용량을 넘기면 경고, 급전 못 받는 POD가 있으면 더 강한 경고.
+  function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod) {
+    const el = document.getElementById('allocVerdict');
+    if (!el) return;
+    const over = rooms.filter(r => r.capacityKW > 0 && r.loadKW > r.capacityKW + 0.5).length;
+    let key, color;
+    if (unfedPods > 0) { key = 'alloc_unfed'; color = 'var(--warn)'; }
+    else if (over > 0) { key = 'alloc_over'; color = 'var(--warn)'; }
+    else { key = 'alloc_ok'; color = 'var(--primary)'; }
+    el.textContent = t(key, {
+      pods: podCount, feeds: feedsPerPod, rooms: rooms.length,
+      ratio: fmtN(Math.round(worstRatio * 10) / 10), over, unfed: unfedPods,
+    });
+    el.style.color = color;
+    el.style.fontWeight = '700';
+  }
+
+  function buildRooms(modules, perModuleUnits, effectiveCap) {
     const M = modules.length;
     const totalTx = M * perModuleUnits;
+    const fixedCap = getRoomCapacityKW(effectiveCap);
+    // 용량을 직접 정하면 실당 변압기 대수가 거기서 나오므로, 전기실 수의 상한이
+    // "총 변압기 대수"에 묶이지 않는다.
+    const maxRooms = fixedCap ? 60 : totalTx;
     let R = M;
     if (!isRoomCountAuto()) {
       const el = document.getElementById('roomCount');
       const v = el ? parseInt(el.value, 10) : NaN;
-      if (isFinite(v)) R = Math.max(M, Math.min(totalTx, v));
+      if (isFinite(v)) R = Math.max(M, Math.min(maxRooms, v));
     }
+    const fixedTx = fixedCap ? Math.max(1, Math.ceil(fixedCap / Math.max(1, effectiveCap))) : 0;
     const base = Math.floor(R / M), rem = R % M;
     const rooms = [];
     const roomsPerModule = [];
@@ -603,33 +651,46 @@
       roomsPerModule.push(rc);
       const txBase = Math.floor(perModuleUnits / rc), txRem = perModuleUnits % rc;
       for (let k = 0; k < rc; k++) {
-        const txCount = txBase + (k < txRem ? 1 : 0);
+        const txCount = fixedTx || (txBase + (k < txRem ? 1 : 0));
         rooms.push({
           moduleIndex: mi, indexInModule: k, roomsInModule: rc, txCount,
           role: mod.role, state: mod.state,
-          // 방 부하는 그 방이 가진 변압기 비율만큼 모듈 부하를 나눠 갖는다
-          loadKW: mod.loadKW * (txCount / perModuleUnits),
+          capacityKW: fixedCap || txCount * effectiveCap,
+          loadKW: 0,   // 아래에서 POD 분배 결과로 채운다
         });
       }
     });
-    return { rooms, roomsPerModule, requested: R, min: M, max: totalTx };
+    return { rooms, roomsPerModule, requested: R, min: M, max: maxRooms, fixedCap, fixedTx, totalTx };
   }
-  function updateRoomControls(plan) {
+  function updateRoomControls(plan, effectiveCap) {
     const input = document.getElementById('roomCount');
     const hint = document.getElementById('roomHint');
-    if (!input) return;
-    const auto = isRoomCountAuto();
-    input.disabled = auto;
-    input.style.background = auto ? 'var(--primary-bg)' : '';
-    input.min = plan.min;
-    input.max = plan.max;
-    if (auto) input.value = plan.min;
-    else if (String(plan.requested) !== input.value) input.value = plan.requested;
-    if (hint) {
-      hint.textContent = ' ' + t('hint_roomCount', {
-        min: plan.min, max: plan.max,
-        perRoom: plan.rooms.length ? fmtN(Math.round(plan.max / plan.rooms.length * 10) / 10) : 0,
-      });
+    if (input) {
+      const auto = isRoomCountAuto();
+      input.disabled = auto;
+      input.style.background = auto ? 'var(--primary-bg)' : '';
+      input.min = plan.min;
+      input.max = plan.max;
+      if (auto) input.value = plan.min;
+      else if (String(plan.requested) !== input.value) input.value = plan.requested;
+      if (hint) hint.textContent = ' ' + t('hint_roomCount', { min: plan.min, max: plan.max });
+    }
+    const capInput = document.getElementById('roomCapacity');
+    const capHint = document.getElementById('roomCapHint');
+    if (capInput) {
+      const auto = isRoomCapAuto();
+      capInput.disabled = auto;
+      capInput.style.background = auto ? 'var(--primary-bg)' : '';
+      if (auto) {
+        const caps = [...new Set(plan.rooms.map(r => Math.round(r.capacityKW)))];
+        capInput.value = caps[0] || Math.round(effectiveCap);
+        if (capHint) capHint.textContent = ' ' + t('hint_roomCapAuto', { eff: fmtN(Math.round(effectiveCap)) });
+      } else if (capHint) {
+        capHint.textContent = ' ' + t('hint_roomCapManual', {
+          tx: plan.fixedTx, eff: fmtN(Math.round(effectiveCap)),
+          total: plan.rooms.length * plan.fixedTx,
+        });
+      }
     }
   }
   function roomColor(i) { return ROOM_COLORS[i % ROOM_COLORS.length]; }
@@ -915,9 +976,9 @@
 
     // ----- 전기실 구성 -----
     // 모듈(이중화 단위)의 변압기를 실제 방 몇 개에 나눠 담을지 — 기본은 모듈 1개 = 방 1개.
-    const roomPlan = buildRooms(modules, perModuleUnits);
+    const roomPlan = buildRooms(modules, perModuleUnits, effectiveCap);
     const rooms = roomPlan.rooms;
-    updateRoomControls(roomPlan);
+    updateRoomControls(roomPlan, effectiveCap);
     // ⑤는 같은 전기실을 조합형으로 배치하므로 방 개수를 그대로 넘긴다
     // (⑤ 섹션은 이 함수보다 아래에서 초기화되므로 존재 확인 후 호출한다).
     lastRoomCount = rooms.length;
@@ -946,6 +1007,24 @@
       }));
     }
     const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
+
+    // ----- 분배 -----
+    // 선택한 이중화 방식이 POD마다 급전 전기실을 정하고, 그중 '살아 있는' 방들이 그 POD의
+    // 부하를 똑같이 나눠 받는다. 전기실의 실제 부하는 이 분배 결과의 합이다.
+    //  · 분산/완전이중화 평상시 M방 → 방당 1/M, 1방 상실 → 남은 방이 1/(M-1)
+    //  · 대기이중화 평상시 Duty가 전량, Duty 상실 → 투입된 캐쳐가 전량
+    const podLoadKW = podCount ? loadKW / podCount : 0;
+    const podCarriers = [];
+    for (let p = 0; p < podCount; p++) {
+      const live = podFeeds[p].filter(r => rooms[r] && rooms[r].state === 'active');
+      podCarriers.push(live);
+      const each = live.length ? podLoadKW / live.length : 0;
+      live.forEach(r => { rooms[r].loadKW += each; });
+    }
+    const roomRatio = r => (r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0);
+    const worstRatio = rooms.reduce((m, r) => Math.max(m, roomRatio(r)), 0);
+    const unfedPods = podCarriers.filter(c => !c.length).length;
+    updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod);
 
     // POD가 많아지면 블럭을 좁혀서 도면 가로폭이 과도하게 늘어나지 않게 한다.
     let podW = 56, podGap = 6, podDetail = 2;   // 2: 이름+부하, 1: 이름만, 0: 번호만
@@ -1030,7 +1109,6 @@
     }
 
     // POD 블럭
-    const podLoadKW = podPlan.perPodKW;
     for (let p = 0; p < podCount; p++) {
       svgTarget.appendChild(svgEl('rect', {
         x: podX(p), y: podY, width: podW, height: podH, rx: 5,
@@ -1219,13 +1297,15 @@
       // module summary caption
       const capY = moduleY + (ownerLabel ? 64 : 57) + txRowsNeeded * (22 + 34) + 6;
       const countText = svgEl('text', { x: x + boxW / 2, y: capY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: labelColor, 'font-family': 'sans-serif' });
-      countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(mod.loadKW) });
+      countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(Math.round(mod.loadKW)) });
       moduleGroup.appendChild(countText);
 
-      // 설계기준 참고선 — 실제 평상시/비상시 부하(위 줄)와 바로 비교할 수 있도록 모듈마다 반복 표기
-      const designText = svgEl('text', { x: x + boxW / 2, y: capY + 13, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#9A90BB', 'font-family': 'sans-serif' });
-      designText.textContent = t('design_ref_line', { mw: fmtN(designLoadKW / 1000), eff: fmtN(effectiveCap) });
-      moduleGroup.appendChild(designText);
+      // 분배 결과 — 이 방에 배정된 부하가 방 용량의 몇 %인지. 넘치면 붉게.
+      const ratio = roomRatio(mod);
+      const overCap = mod.capacityKW > 0 && mod.loadKW > mod.capacityKW + 0.5;
+      const ratioText = svgEl('text', { x: x + boxW / 2, y: capY + 13, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: overCap ? '#C8604F' : '#9A90BB', 'font-family': 'sans-serif' });
+      ratioText.textContent = t('room_cap_line', { cap: fmtN(Math.round(mod.capacityKW)), pct: fmtN(Math.round(ratio * 10) / 10) });
+      moduleGroup.appendChild(ratioText);
 
       svgTarget.appendChild(moduleGroup);
     });
@@ -1837,6 +1917,10 @@
   if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
   const roomAutoCheckbox = document.getElementById('roomAuto');
   if (roomAutoCheckbox) roomAutoCheckbox.addEventListener('change', onRoomSettingChange);
+  const roomCapacityInput = document.getElementById('roomCapacity');
+  if (roomCapacityInput) roomCapacityInput.addEventListener('input', onRoomSettingChange);
+  const roomCapAutoCheckbox = document.getElementById('roomCapAuto');
+  if (roomCapAutoCheckbox) roomCapAutoCheckbox.addEventListener('change', onRoomSettingChange);
 
   renderSldPalette();
   setSldMode(sldMode);

@@ -249,7 +249,18 @@
           <span id="roomHint"></span>
         </div>
       </div>
+      <div class="field">
+        <label for="roomCapacity" data-i18n="label_roomCapacity">전기실 1개 용량 (kW)</label>
+        <input type="number" id="roomCapacity" value="3421" step="100" min="1" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="roomCapAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_roomCapAuto">실당 변압기 대수 × 유효용량</span>
+          </label>
+          <span id="roomCapHint"></span>
+        </div>
+      </div>
     </div>
+    <div class="hint" id="allocVerdict" style="margin:-2px 0 10px;"></div>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="modeNormalBtn" data-mode="normal" data-i18n="mode_normal">평상시</button>
       <button class="mode-btn" id="modeEmergencyBtn" data-mode="emergency" data-i18n="mode_emergency">비상시</button>
