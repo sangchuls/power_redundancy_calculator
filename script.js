@@ -138,11 +138,11 @@
       label_roomCapacity: '전기실 1개 용량 (kW)',
       room_cap_line: '용량 {cap}kW · 부하율 {pct}%',
       label_roomCapAuto: '실당 변압기 대수 × 유효용량',
-      hint_roomCapAuto: ' — 세트 설계부하 ÷ N을 유효용량 {eff}kW/대로 올림해 산출 (세트별 {caps}kW). 직접 정하려면 체크 해제.',
+      hint_roomCapAuto: ' — 상실 시 실당 필요 {need}kW ÷ 유효 {eff}kW/대 → {tx}대({got}kW)로 올림, 여유 {head}%. 정수 올림 때문에 상실 시 부하율이 100%가 아니라 그보다 낮게 나옵니다. 직접 정하려면 체크 해제.',
       hint_roomCapManual: ' — 이 용량이면 실당 변압기 {tx}대(유효 {eff}kW/대), 전체 {total}대가 필요합니다.',
-      alloc_ok: '✓ 분배 가능 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (남은 {n}실이 전량 부담, 용량 이내)',
+      alloc_ok: '✓ 분배 가능 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (설계 개념상 {N}oo{M} = {designNormal}%→100%, 변압기 정수 올림으로 그보다 낮음)',
       alloc_over: '⚠ 분배 불가 — 평상시부터 전기실 {over}개가 용량 초과 (최대 {ratio}%). 전기실 용량·세트 수를 늘리거나 POD 부하를 줄이세요.',
-      alloc_ok_split: '✓ 분배 가능 — POD {realPods}개를 {split}분할한 급전 블록 {pods}개를 전기실 {rooms}개가 블록당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (남은 {n}실이 전량 부담, 용량 이내)',
+      alloc_ok_split: '✓ 분배 가능 — POD {realPods}개를 {split}분할한 급전 블록 {pods}개를 전기실 {rooms}개가 블록당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (설계 개념상 {N}oo{M} = {designNormal}%→100%, 변압기 정수 올림으로 그보다 낮음)',
       alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomSets: '전기실 세트 수',
@@ -304,7 +304,7 @@
       label_roomCapacity: 'Capacity per room (kW)',
       room_cap_line: 'capacity {cap}kW · {pct}% loaded',
       label_roomCapAuto: 'Transformers per room × effective capacity',
-      hint_roomCapAuto: ' — set design load ÷ N rounded up at {eff}kW per transformer (per set: {caps}kW). Uncheck to set it yourself.',
+      hint_roomCapAuto: ' — {need}kW needed per room on a loss ÷ {eff}kW effective → rounded up to {tx} ({got}kW), {head}% spare. That rounding is why the loss-case loading lands below 100%. Uncheck to set it yourself.',
       hint_roomCapManual: ' — that capacity needs {tx} transformers per room ({eff}kW each), {total} in total.',
       alloc_ok: '✓ Feasible — {pods} PODs across {rooms} rooms, {feeds} feeders each. Peak room loading {ratio}% normally, {emergency}% with {lost} room(s) lost (the surviving {n} carry it all, within capacity)',
       alloc_over: '⚠ Not feasible — {over} room(s) already over capacity in normal operation (peak {ratio}%). Raise room capacity or set count, or lower the POD load.',
@@ -709,11 +709,14 @@
     if (key === 'alloc_ok' && worstEmergency > 100.5) { key = 'alloc_over_emergency'; color = 'var(--warn)'; }
     // 분할했으면 '블록'이 급전 단위다 — POD 개수와 혼동되지 않게 문구를 바꾼다
     if (key === 'alloc_ok' && podPlan && podPlan.split > 1) key = 'alloc_ok_split';
+    // 교과서 설계점: 평상시 N/M, 상실 시 100%. 실제 값과 나란히 보여 개념과 숫자를 잇는다.
+    const designNormal = M > 0 ? Math.round(N / M * 1000) / 10 : 0;
     el.textContent = t(key, {
       pods: podCount, feeds: feedsPerPod, rooms: rooms.length,
       ratio: fmtN(Math.round(worstRatio * 10) / 10), over, unfed: unfedPods,
       emergency: fmtN(Math.round(worstEmergency * 10) / 10), lost: M - N, n: N,
       realPods: podPlan ? podPlan.pods : podCount, split: podPlan ? podPlan.split : 1,
+      designNormal: fmtN(designNormal), N, M,
     });
     el.style.color = color;
     el.style.fontWeight = '700';
@@ -823,9 +826,15 @@
       const caps = [...new Set(plan.rooms.map(r => Math.round(r.capacityKW)))].sort((a, b) => a - b);
       if (auto) {
         capInput.value = caps[caps.length - 1] || Math.round(effectiveCap);
+        // "상실 시 필요한 용량"에서 변압기 대수를 정수로 올리기 때문에 실제 부하율은
+        // 교과서적인 100%가 아니라 그보다 낮게 나온다. 그 간극을 여기서 밝힌다.
+        const need = Math.max(...plan.designPerRoom);
+        const tx = Math.max(...plan.txPerSet);
+        const got = plan.fixedCap || tx * effectiveCap;
         if (capHint) capHint.textContent = ' ' + t('hint_roomCapAuto', {
           eff: fmtN(Math.round(effectiveCap)),
-          caps: caps.map(c => fmtN(c)).join(' / '),
+          need: fmtN(Math.round(need)), tx, got: fmtN(Math.round(got)),
+          head: fmtN(Math.round((got / Math.max(1, need) - 1) * 1000) / 10),
         });
       } else if (capHint) {
         const tx = plan.rooms[0] ? plan.rooms[0].txCount : 1;
