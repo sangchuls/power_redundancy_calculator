@@ -24,7 +24,7 @@
       label_totalModules: '총 모듈(전기실) 수 (N + C)',
       h3_title: '계산 결과', step_effCap_label: '유효용량', step_effCap_formula: '정격 × 안전율',
       h4_title: '구성 다이어그램', mode_normal: '평상시', mode_emergency: '비상시',
-      hint_diagram4: '휠로 확대/축소 · 드래그로 이동 · 블럭 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
+      hint_diagram4: '휠로 확대/축소 · 전기실 클릭: 급전 회선 하이라이트 · 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
       btn_zoomReset: '리셋',
       btn_expand: '크게 보기',
       btn_modalClose: '닫기 ✕',
@@ -34,7 +34,7 @@
       hint_podCapacity: '랙 그룹(POD) 1개가 쓰는 전력 — 이 블럭이 이중급전 단위가 됩니다',
       hint_pod_manual: '— POD {n}개 × {cap}kW = 데이터홀 {total}MW (이 합계가 ①번 총부하가 됩니다)',
       hint_pod_auto: '— 총부하 기준 POD {n}개, POD당 실부하 약 {kw}kW. 6MW POD 같은 고정 블럭으로 보려면 체크 해제.',
-      pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}개',
+      pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}',
       set_label: 'S{n}',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
@@ -184,7 +184,7 @@
       label_totalModules: 'Total modules/rooms (N + C)',
       h3_title: 'Calculation result', step_effCap_label: 'Effective capacity', step_effCap_formula: 'Rating × safety factor',
       h4_title: 'Configuration diagram', mode_normal: 'Normal', mode_emergency: 'Emergency',
-      hint_diagram4: 'Wheel to zoom · drag to pan · double-click a block: mark lost / double-click empty space: back to normal',
+      hint_diagram4: 'Wheel to zoom · click a room: highlight its feeders · double-click: mark lost / double-click empty space: back to normal',
       btn_zoomReset: 'Reset',
       btn_expand: 'Expand',
       btn_modalClose: 'Close ✕',
@@ -635,6 +635,12 @@
   const ROOM_COLORS = ['#6F5FBF', '#0F6E56', '#993C1D', '#185FA5', '#993556', '#3B6D11', '#854F0B', '#A32D2D'];
   const ROOM_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
   let lastRoomCount = 0;
+  // 전기실 블럭을 클릭하면 그 전기실이 급전하는 POD와 회선만 또렷하게 남기고 나머지는 흐려진다.
+  let highlightRoom = null;
+  function setHighlightRoom(i) {
+    highlightRoom = (highlightRoom === i) ? null : i;
+    calculate();
+  }
   let lastPerModuleUnits = 1;   // ③이 산정한 모듈당 변압기 대수 — ⓪ 권장 최대용량에 쓰인다
 
   // ===== ④ 분배 방식 =====
@@ -1016,6 +1022,10 @@
     updateDiagramModeButtons();
     calculate();
   });
+  // 빈 곳을 클릭하면 회선 하이라이트 해제 (드래그로 화면을 옮긴 경우는 제외)
+  document.getElementById('diagramSvg').addEventListener('click', () => {
+    if (highlightRoom !== null) setHighlightRoom(highlightRoom);
+  });
 
   function renderDiagram(N, C, perModuleUnits, load, rating, effectiveCap) {
     const svg = document.getElementById('diagramSvg');
@@ -1106,6 +1116,7 @@
       : (currentTopo === 'standby' ? `N+${C}` : (C ? '2N+1' : '2N'));
     const roomPlan = buildRoomSets(modules, planRoomSets(podPlan, N, M, effectiveCap), effectiveCap);
     const rooms = roomPlan.rooms;
+    if (highlightRoom !== null && highlightRoom >= rooms.length) highlightRoom = null;
     updateRoomControls(roomPlan, effectiveCap, topoShortName);
     lastRoomCount = rooms.length;
     lastPerModuleUnits = rooms.length ? rooms[0].txCount : perModuleUnits;
@@ -1242,7 +1253,10 @@
     const podTitle = svgEl('text', { x: svgW / 2, y: podY - 20, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
     podTitle.textContent = t('pod_row_title', {
       n: podCount, cap: fmtN(podPlan.cap), mw: fmtN(Math.round(podPlan.loadKW / 100) / 10),
-      sets: roomPlan.setPods.map(list => list.length).join('/'),
+      // 세트별로 POD 몇 개가 몇 MW 들어갔는지 — POD 수가 세트 수로 나눠떨어지지 않으면
+      // 한쪽 세트가 더 무거워지므로 그 결과를 숨기지 않고 그대로 보여준다.
+      sets: roomPlan.setPods.map((list, si) =>
+        t('set_label', { n: si + 1 }) + ' ' + list.length + '개/' + fmtN(Math.round(roomPlan.setLoad[si] / 100) / 10) + 'MW').join(' · '),
     });
     svgTarget.appendChild(podTitle);
 
@@ -1265,22 +1279,28 @@
       }));
     }
 
-    // POD 블럭
+    // POD 블럭 — 하이라이트된 전기실이 급전하지 않는 POD는 흐리게
+    const podLit = p => highlightRoom === null || podFeeds[p].indexOf(highlightRoom) >= 0;
     for (let p = 0; p < podCount; p++) {
-      svgTarget.appendChild(svgEl('rect', {
+      const lit = podLit(p);
+      const grp = svgEl('g', lit ? {} : { opacity: 0.22 });
+      svgTarget.appendChild(grp);
+      grp.appendChild(svgEl('rect', {
         x: podX(p), y: podY, width: podW, height: podH, rx: 5,
-        fill: hexToRgba(navy, 0.07), stroke: accent, 'stroke-width': 1.2,
+        fill: lit && highlightRoom !== null ? hexToRgba(roomColor(highlightRoom), 0.18) : hexToRgba(navy, 0.07),
+        stroke: lit && highlightRoom !== null ? roomColor(highlightRoom) : accent,
+        'stroke-width': lit && highlightRoom !== null ? 2 : 1.2,
       }));
       const label = svgEl('text', {
         x: podCx(p), y: podDetail === 2 ? podY + 15 : podY + 16, 'text-anchor': 'middle',
         'font-size': podDetail === 0 ? 8.5 : 9.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
       });
       label.textContent = podDetail === 2 ? t('pod_chip', { n: p + 1 }) : (podDetail === 1 ? 'P' + (p + 1) : String(p + 1));
-      svgTarget.appendChild(label);
+      grp.appendChild(label);
       if (podDetail === 2) {
         const sub = svgEl('text', { x: podCx(p), y: podY + 27, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
         sub.textContent = fmtN(Math.round(podLoadKW)) + 'kW · ' + t('set_label', { n: podSet[p] + 1 });
-        svgTarget.appendChild(sub);
+        grp.appendChild(sub);
       }
     }
 
@@ -1300,14 +1320,15 @@
           const solo = live.length === 1 && carries > 0;
           const x1 = podCx(p), y1 = podY + podH;
           const x2 = startX + k * (boxW + gap) + boxW / 2, y2 = moduleY;
+          const lit = highlightRoom === null || highlightRoom === k;
           svgTarget.appendChild(svgEl('path', {
             d: smoothCurvePath(x1, y1, x2, y2),
             fill: 'none', stroke: color,
-            'stroke-width': carries === 0 ? 1.2 : (solo ? 2.6 : 1.6),
-            opacity: carries === 0 ? 0.4 : (solo ? 0.95 : 0.6),
+            'stroke-width': !lit ? 1 : (carries === 0 ? 1.2 : (solo ? 2.6 : 1.6)) * (highlightRoom === k ? 1.8 : 1),
+            opacity: !lit ? 0.12 : (carries === 0 ? 0.4 : (solo ? 0.95 : 0.6)),
             'stroke-dasharray': carries === 0 ? '4,4' : 'none',
           }));
-          if (podCount <= 12) {
+          if (podCount <= 12 && lit) {
             const pt = smoothCurvePoint(0.42 + j * 0.13, x1, y1, x2, y2);
             const lbl = svgEl('text', {
               x: pt.x, y: pt.y + (j === 0 ? -3 : 8), 'text-anchor': 'middle', 'font-size': 7.5,
@@ -1347,22 +1368,25 @@
       const span = busSpan[k] || [cx, cx];
       const x1 = Math.min(span[0], cx) - 8;
       const x2 = Math.max(span[1], cx) + 8;
+      const lit = highlightRoom === null || highlightRoom === k;
+      const op = v => (lit ? v : 0.1);
+      const wide = highlightRoom === k ? 1.7 : 1;
       svgTarget.appendChild(svgEl('path', {
         d: `M${x1},${busY(k)} L${x2},${busY(k)}`,
-        fill: 'none', stroke: color, 'stroke-width': 2, 'stroke-dasharray': dash,
-        opacity: isOff ? 0.55 : 1,
+        fill: 'none', stroke: color, 'stroke-width': 2 * wide, 'stroke-dasharray': dash,
+        opacity: op(isOff ? 0.55 : 1),
       }));
       // 모선 → 전기실 인입
       svgTarget.appendChild(svgEl('path', {
         d: `M${cx},${busY(k)} L${cx},${moduleY}`,
-        fill: 'none', stroke: color, 'stroke-width': 2.25, 'stroke-dasharray': dash,
-        opacity: isOff ? 0.55 : 1,
+        fill: 'none', stroke: color, 'stroke-width': 2.25 * wide, 'stroke-dasharray': dash,
+        opacity: op(isOff ? 0.55 : 1),
       }));
-      svgTarget.appendChild(svgEl('circle', { cx, cy: busY(k), r: 3, fill: color, opacity: isOff ? 0.55 : 1 }));
+      svgTarget.appendChild(svgEl('circle', { cx, cy: busY(k), r: 3, fill: color, opacity: op(isOff ? 0.55 : 1) }));
       // 모선 이름 (회선 식별)
       const busLabel = svgEl('text', {
         x: x2 + 5, y: busY(k) + 3.2, 'text-anchor': 'start', 'font-size': 7.5, 'font-weight': 700,
-        fill: color, 'font-family': 'sans-serif', opacity: isOff ? 0.6 : 1,
+        fill: color, 'font-family': 'sans-serif', opacity: op(isOff ? 0.6 : 1),
       });
       busLabel.textContent = ROOM_LETTERS[k] || String(k + 1);
       svgTarget.appendChild(busLabel);
@@ -1373,14 +1397,16 @@
       const isOff = mod.state === 'offline';
       const isIdleMod = mod.state === 'idle';
       const color = isOff ? offlineBorder : (isIdleMod ? standbyBorder : roomColor(tap.k));
+      const lit = highlightRoom === null || highlightRoom === tap.k;
       svgTarget.appendChild(svgEl('path', {
         d: `M${tap.x},${podY + podH} L${tap.x},${busY(tap.k)}`,
-        fill: 'none', stroke: color, 'stroke-width': 1.4,
+        fill: 'none', stroke: color, 'stroke-width': highlightRoom === tap.k ? 2.6 : 1.4,
         'stroke-dasharray': (isOff || isIdleMod) ? '3,3' : 'none',
-        opacity: isOff ? 0.5 : (isIdleMod ? 0.75 : 0.95),
+        opacity: !lit ? 0.1 : (isOff ? 0.5 : (isIdleMod ? 0.75 : 0.95)),
       }));
       svgTarget.appendChild(svgEl('circle', {
-        cx: tap.x, cy: busY(tap.k), r: 2.1, fill: color, opacity: isOff ? 0.5 : 1,
+        cx: tap.x, cy: busY(tap.k), r: highlightRoom === tap.k ? 3 : 2.1, fill: color,
+        opacity: !lit ? 0.1 : (isOff ? 0.5 : 1),
       }));
     });
 
@@ -1407,9 +1433,19 @@
       // block (box, strip, labels, transformer icons) toggles its 상실 state as a single unit.
       // 상실은 이중화 단위인 '모듈' 기준이므로, 한 모듈이 여러 방으로 쪼개져 있으면 그 모듈의
       // 방들이 함께 상실된다.
-      const moduleGroup = svgEl('g', { cursor: 'pointer' });
+      const roomLit = highlightRoom === null || highlightRoom === i;
+      const moduleGroup = svgEl('g', roomLit ? { cursor: 'pointer' } : { cursor: 'pointer', opacity: 0.3 });
+      // 한 번 클릭하면 이 전기실의 급전 회선만 또렷해지고, 두 번 클릭하면 상실 지정이다.
+      // 더블클릭의 첫 클릭이 하이라이트를 켜버리지 않도록 약간 늦춰서 처리한다.
+      let clickTimer = null;
+      moduleGroup.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (clickTimer) return;
+        clickTimer = setTimeout(() => { clickTimer = null; setHighlightRoom(i); }, 220);
+      });
       moduleGroup.addEventListener('dblclick', (e) => {
         e.stopPropagation();
+        if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
         if (manualFail4.has(mi)) manualFail4.delete(mi); else manualFail4.add(mi);
         diagramMode = manualFail4.size > 0 ? 'emergency' : 'normal';
         updateDiagramModeButtons();
