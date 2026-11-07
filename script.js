@@ -113,6 +113,13 @@
       design_ref_line: '설계 {mw}MW · 유효 {eff}kW',
       total_normal: '총 {m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대  (정격 {rating}kW, 유효 {eff}kW)',
       total_emergency: '모듈 {m}개 중 {active}개 가동으로 전체부하 대응 · 변압기 총 {total}대 중 {activeTx}대 가동',
+      total_normal_rooms: '{m}개 모듈 × 모듈당 {units}대 = 총 변압기 {total}대 → 전기실 {rooms}개에 배치  (정격 {rating}kW, 유효 {eff}kW)',
+      total_emergency_rooms: '모듈 {m}개 기준 · 전기실 {rooms}개 중 {activeRooms}개 가동 · 변압기 총 {total}대 중 {activeTx}대 가동',
+      module_label_group: '{n}그룹',
+      label_roomCount: '전기실 수량 (개)',
+      label_roomAuto: '이중화 모듈 수(N+C)와 동일',
+      hint_roomCount: ' — {min}~{max}개 (전기실 1개당 변압기 최소 1대 → 상한 = 총 변압기 대수). 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
+      label_combMSync: '④번 전기실 수량과 연동',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
       diagramDesc: '({topo} · {mode} 구성)',
@@ -242,6 +249,13 @@
       design_ref_line: 'Design {mw}MW · effective {eff}kW',
       total_normal: '{m} modules × {units} tx/module = {total} transformers total  (rating {rating}kW, effective {eff}kW)',
       total_emergency: '{active} of {m} modules running to cover full load · {activeTx} of {total} transformers running',
+      total_normal_rooms: '{m} modules × {units} tx/module = {total} transformers → placed in {rooms} electrical rooms  (rating {rating}kW, effective {eff}kW)',
+      total_emergency_rooms: '{m} modules · {activeRooms} of {rooms} rooms running · {activeTx} of {total} transformers running',
+      module_label_group: 'Group {n}',
+      label_roomCount: 'Electrical rooms',
+      label_roomAuto: 'Same as module count (N+C)',
+      hint_roomCount: ' — {min}–{max} (at least one transformer per room, so the cap is the total transformer count). Raising it splits a module’s transformers across several rooms.',
+      label_combMSync: 'Follow the room count in ④',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
       diagramDesc: '({topo} · {mode})',
@@ -573,6 +587,65 @@
   // Shared color palette for rooms/modules (distinct hues so cross-connections read intuitively)
   const ROOM_COLORS = ['#6F5FBF', '#0F6E56', '#993C1D', '#185FA5', '#993556', '#3B6D11', '#854F0B', '#A32D2D'];
   const ROOM_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+  let lastRoomCount = 0;   // ④가 정한 전기실 수 — ⑤의 M 연동에 쓰인다
+
+  // ===== 전기실(물리적 방) 구성 =====
+  // 이중화 방식은 "모듈(트레인/Duty/캐쳐)"을 몇 개 둘지만 정한다. 그 모듈의 변압기를 실제로
+  // 몇 개의 방에 나눠 담을지는 별도 설정이다 — 기본값은 모듈 1개 = 전기실 1개이고,
+  // 전기실 수를 늘리면 각 모듈의 변압기가 여러 방으로 쪼개진다. 방마다 최소 변압기 1대는
+  // 들어가야 하므로 상한은 총 변압기 대수다 (전기실 8개 = 총 8대면 방당 1대씩).
+  function isRoomCountAuto() {
+    const el = document.getElementById('roomAuto');
+    return el ? el.checked : true;
+  }
+  // modules: ④에서 만든 모듈 배열, perModuleUnits: 모듈당 변압기 대수
+  // → 각 전기실이 어느 모듈 소속이고 변압기를 몇 대 갖는지 돌려준다.
+  function buildRooms(modules, perModuleUnits) {
+    const M = modules.length;
+    const totalTx = M * perModuleUnits;
+    let R = M;
+    if (!isRoomCountAuto()) {
+      const el = document.getElementById('roomCount');
+      const v = el ? parseInt(el.value, 10) : NaN;
+      if (isFinite(v)) R = Math.max(M, Math.min(totalTx, v));
+    }
+    const base = Math.floor(R / M), rem = R % M;
+    const rooms = [];
+    const roomsPerModule = [];
+    modules.forEach((mod, mi) => {
+      const rc = base + (mi < rem ? 1 : 0);
+      roomsPerModule.push(rc);
+      const txBase = Math.floor(perModuleUnits / rc), txRem = perModuleUnits % rc;
+      for (let k = 0; k < rc; k++) {
+        const txCount = txBase + (k < txRem ? 1 : 0);
+        rooms.push({
+          moduleIndex: mi, indexInModule: k, roomsInModule: rc, txCount,
+          role: mod.role, state: mod.state,
+          // 방 부하는 그 방이 가진 변압기 비율만큼 모듈 부하를 나눠 갖는다
+          loadKW: mod.loadKW * (txCount / perModuleUnits),
+        });
+      }
+    });
+    return { rooms, roomsPerModule, requested: R, min: M, max: totalTx };
+  }
+  function updateRoomControls(plan) {
+    const input = document.getElementById('roomCount');
+    const hint = document.getElementById('roomHint');
+    if (!input) return;
+    const auto = isRoomCountAuto();
+    input.disabled = auto;
+    input.style.background = auto ? 'var(--primary-bg)' : '';
+    input.min = plan.min;
+    input.max = plan.max;
+    if (auto) input.value = plan.min;
+    else if (String(plan.requested) !== input.value) input.value = plan.requested;
+    if (hint) {
+      hint.textContent = ' ' + t('hint_roomCount', {
+        min: plan.min, max: plan.max,
+        perRoom: plan.rooms.length ? fmtN(Math.round(plan.max / plan.rooms.length * 10) / 10) : 0,
+      });
+    }
+  }
   function roomColor(i) { return ROOM_COLORS[i % ROOM_COLORS.length]; }
 
   // ===== POD(랙 그룹) 공통 설정 =====
@@ -854,6 +927,17 @@
       }
     }
 
+    // ----- 전기실 구성 -----
+    // 모듈(이중화 단위)의 변압기를 실제 방 몇 개에 나눠 담을지 — 기본은 모듈 1개 = 방 1개.
+    const roomPlan = buildRooms(modules, perModuleUnits);
+    const rooms = roomPlan.rooms;
+    updateRoomControls(roomPlan);
+    // ⑤는 같은 전기실을 조합형으로 배치하므로 방 개수를 그대로 넘긴다
+    // (⑤ 섹션은 이 함수보다 아래에서 초기화되므로 존재 확인 후 호출한다).
+    if (typeof syncCombMFromRooms === 'function') {
+      try { lastRoomCount = rooms.length; syncCombMFromRooms(); } catch (e) {}
+    }
+
     // ----- POD 구성 (①번 공통 설정) -----
     // 데이터홀은 단일 덩어리가 아니라 POD(랙 그룹) 단위로 쪼개지고, 각 POD는 이중화 방식이
     // 정하는 수만큼의 회선으로 전기실에서 급전받는다. POD 수량·용량을 바꾸면 블럭과 회선이
@@ -863,16 +947,19 @@
     // POD마다 급전받는 전기실 목록 — 이중화 방식이 그대로 회선 구성이 된다.
     //  · 분산/완전이중화: 모든 모듈이 모든 POD에 병렬 급전 (M회선)
     //  · 대기(캐쳐)이중화: 담당 Duty 1회선 + 캐쳐 C회선(대기)
+    // 모듈별 첫 전기실의 인덱스 — 모듈이 여러 방으로 쪼개졌을 때 POD를 방에 돌려 배분한다.
+    const firstRoomOfModule = [];
+    { let acc = 0; roomPlan.roomsPerModule.forEach(rc => { firstRoomOfModule.push(acc); acc += rc; }); }
     const podFeeds = [];
     for (let p = 0; p < podCount; p++) {
-      if (currentTopo === 'standby') {
-        const duty = p % Math.max(1, N);
-        const feeds = [duty];
-        for (let c = 0; c < C; c++) feeds.push(N + c);
-        podFeeds.push(feeds);
-      } else {
-        podFeeds.push(modules.map((_, k) => k));
-      }
+      const feedModules = currentTopo === 'standby'
+        ? [p % Math.max(1, N)].concat(Array.from({ length: C }, (_, c) => N + c))
+        : modules.map((_, k) => k);
+      // 같은 모듈 안에 방이 여러 개면 POD를 방마다 돌려가며 물린다
+      podFeeds.push(feedModules.map(mi => {
+        const rc = roomPlan.roomsPerModule[mi] || 1;
+        return firstRoomOfModule[mi] + (p % rc);
+      }));
     }
     const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
 
@@ -884,9 +971,9 @@
     const podH = podDetail === 2 ? 34 : 24;
     const podRowW = podCount * podW + (podCount - 1) * podGap;
 
-    const moduleCount = M;
-    const boxW = 118;
-    const gap = 22;
+    const moduleCount = rooms.length;
+    const boxW = moduleCount > 8 ? 92 : 118;
+    const gap = moduleCount > 8 ? 14 : 22;
     const totalW = moduleCount * boxW + (moduleCount - 1) * gap;
     const svgW = Math.max(760, totalW + 80, podRowW + 80);
     const startX = (svgW - totalW) / 2;
@@ -905,8 +992,11 @@
     const busY = k => busY0 + k * busGap;
     const moduleY = busY(moduleCount - 1) + 30;
 
-    const txRowsNeeded = Math.ceil(perModuleUnits / 3);
-    const moduleH = 144 + txRowsNeeded * 46; // +14 for the per-module 설계부하/유효용량 reference line, +12/row for the per-tx rating line
+    const maxRoomTx = rooms.reduce((m, r) => Math.max(m, r.txCount), 1);
+    const txRowsNeeded = Math.ceil(maxRoomTx / 3);
+    // 전기실 박스 안에 소속 모듈(트레인/Duty/캐쳐) 줄이 한 줄 더 들어가면 그만큼 키운다
+    const hasOwnerLine = currentTopo !== 'distributed' || rooms.some(r => r.roomsInModule > 1);
+    const moduleH = 144 + (hasOwnerLine ? 9 : 0) + txRowsNeeded * 46; // +14 for the per-module 설계부하/유효용량 reference line, +12/row for the per-tx rating line
     let svgH = moduleY + moduleH + 80;
     svg.setAttribute('width', svgW);
     svg.setAttribute('height', svgH);
@@ -994,7 +1084,7 @@
     }
 
     for (let k = 0; k < moduleCount; k++) {
-      const mod = modules[k];
+      const mod = rooms[k];
       const isOff = mod.state === 'offline';
       const isIdleMod = mod.state === 'idle';
       const color = isOff ? offlineBorder : (isIdleMod ? standbyBorder : roomColor(k));
@@ -1025,7 +1115,7 @@
     }
 
     taps.forEach(tap => {
-      const mod = modules[tap.k];
+      const mod = rooms[tap.k];
       const isOff = mod.state === 'offline';
       const isIdleMod = mod.state === 'idle';
       const color = isOff ? offlineBorder : (isIdleMod ? standbyBorder : roomColor(tap.k));
@@ -1045,19 +1135,22 @@
     feedCaption.textContent = t('pod_feed_caption', { feeds: feedsPerPod, topo: topoShort });
     svgTarget.appendChild(feedCaption);
 
-    modules.forEach((mod, i) => {
+    rooms.forEach((mod, i) => {
       const x = startX + i * (boxW + gap);
       const isOffline = mod.state === 'offline';
       const isIdle = mod.state === 'idle';
       const isActive = mod.state === 'active';
       const mColor = roomColor(i);
+      const mi = mod.moduleIndex;
 
-      // All of this module's own visuals live in one group so a double-click anywhere on the
+      // All of this room's own visuals live in one group so a double-click anywhere on the
       // block (box, strip, labels, transformer icons) toggles its 상실 state as a single unit.
+      // 상실은 이중화 단위인 '모듈' 기준이므로, 한 모듈이 여러 방으로 쪼개져 있으면 그 모듈의
+      // 방들이 함께 상실된다.
       const moduleGroup = svgEl('g', { cursor: 'pointer' });
       moduleGroup.addEventListener('dblclick', (e) => {
         e.stopPropagation();
-        if (manualFail4.has(i)) manualFail4.delete(i); else manualFail4.add(i);
+        if (manualFail4.has(mi)) manualFail4.delete(mi); else manualFail4.add(mi);
         diagramMode = manualFail4.size > 0 ? 'emergency' : 'normal';
         updateDiagramModeButtons();
         calculate();
@@ -1079,19 +1172,21 @@
         moduleGroup.appendChild(headerStrip);
       }
 
-      // module label
-      let label;
-      if (currentTopo === 'full') {
-        label = t('module_label_train', { n: i + 1 });
-      } else if (currentTopo === 'standby') {
-        label = mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 });
-      } else {
-        label = t('module_label_room', { n: i + 1 });
-      }
+      // 전기실 이름은 늘 통번호(전기실 1..R), 그 아래에 소속 모듈(트레인/Duty/캐쳐)을 적는다.
+      const label = t('module_label_room', { n: i + 1 });
+      let ownerLabel = null;
+      if (currentTopo === 'full') ownerLabel = t('module_label_train', { n: mi + 1 });
+      else if (currentTopo === 'standby') ownerLabel = mod.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 });
+      else if (mod.roomsInModule > 1) ownerLabel = t('module_label_group', { n: mi + 1 });
       const labelColor = isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor);
-      const labelText = svgEl('text', { x: x + boxW / 2, y: moduleY + 25, 'text-anchor': 'middle', 'font-size': 12, 'font-weight': 800, fill: labelColor, 'font-family': 'sans-serif' });
+      const labelText = svgEl('text', { x: x + boxW / 2, y: moduleY + 25, 'text-anchor': 'middle', 'font-size': moduleCount > 8 ? 10.5 : 12, 'font-weight': 800, fill: labelColor, 'font-family': 'sans-serif' });
       labelText.textContent = label;
       moduleGroup.appendChild(labelText);
+      if (ownerLabel) {
+        const ownerText = svgEl('text', { x: x + boxW / 2, y: moduleY + 36, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 700, fill: labelColor, opacity: 0.8, 'font-family': 'sans-serif' });
+        ownerText.textContent = ownerLabel;
+        moduleGroup.appendChild(ownerText);
+      }
 
       let stateLabel;
       if (isOffline) stateLabel = t('state_offline');
@@ -1099,15 +1194,15 @@
       else if (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') stateLabel = t('state_engaged');
       else stateLabel = t('state_active');
       const stateColor = isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : '#8A8072');
-      const stateText = svgEl('text', { x: x + boxW / 2, y: moduleY + 41, 'text-anchor': 'middle', 'font-size': 9.5, fill: stateColor, 'font-family': 'sans-serif' });
+      const stateText = svgEl('text', { x: x + boxW / 2, y: moduleY + (ownerLabel ? 49 : 41), 'text-anchor': 'middle', 'font-size': 9.5, fill: stateColor, 'font-family': 'sans-serif' });
       stateText.textContent = stateLabel;
       moduleGroup.appendChild(stateText);
 
-      // per-transformer load
-      const txCount = perModuleUnits;
-      const perTxKW = isActive ? mod.loadKW / txCount : 0;
+      // per-transformer load — 방마다 가진 변압기 대수가 다를 수 있다
+      const txCount = mod.txCount;
+      const perTxKW = isActive && txCount ? mod.loadKW / txCount : 0;
       const perTxPct = isActive ? (perTxKW / effectiveCap * 100) : 0;
-      const startTxY = moduleY + 57;
+      const startTxY = moduleY + (ownerLabel ? 64 : 57);
 
       const txW = 30;
       for (let t = 0; t < txCount; t++) {
@@ -1138,7 +1233,7 @@
       }
 
       // module summary caption
-      const capY = startTxY + txRowsNeeded * (22 + 34) + 6;
+      const capY = moduleY + (ownerLabel ? 64 : 57) + txRowsNeeded * (22 + 34) + 6;
       const countText = svgEl('text', { x: x + boxW / 2, y: capY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: labelColor, 'font-family': 'sans-serif' });
       countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(mod.loadKW) });
       moduleGroup.appendChild(countText);
@@ -1152,11 +1247,13 @@
     });
 
     // total caption at bottom
-    const activeModuleCount = modules.filter(m => m.state === 'active').length;
+    const totalTx = M * perModuleUnits;
+    const activeRooms = rooms.filter(r => r.state === 'active');
+    const activeTx = activeRooms.reduce((n, r) => n + r.txCount, 0);
     const totalCaption = svgEl('text', { x: svgW / 2, y: svgH - 12, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
     totalCaption.textContent = diagramMode === 'normal'
-      ? t('total_normal', { m: moduleCount, units: perModuleUnits, total: moduleCount * perModuleUnits, rating: fmtN(rating), eff: fmtN(effectiveCap) })
-      : t('total_emergency', { m: moduleCount, active: activeModuleCount, total: moduleCount * perModuleUnits, activeTx: activeModuleCount * perModuleUnits });
+      ? t('total_normal_rooms', { m: M, units: perModuleUnits, total: totalTx, rooms: moduleCount, rating: fmtN(rating), eff: fmtN(effectiveCap) })
+      : t('total_emergency_rooms', { m: M, rooms: moduleCount, activeRooms: activeRooms.length, total: totalTx, activeTx });
     svgTarget.appendChild(totalCaption);
 
     if (overloadWarning) {
@@ -1170,9 +1267,13 @@
     legend.innerHTML = '';
     const legendItems = [];
     for (let i = 0; i < moduleCount; i++) {
-      const mod = modules[i];
-      const nm = currentTopo === 'full' ? t('module_label_train', { n: i + 1 }) : (currentTopo === 'standby' ? (mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 })) : t('module_label_room', { n: i + 1 }));
-      legendItems.push({ color: mod.state === 'offline' ? '#FBEDE7' : roomColor(i), label: nm });
+      const room = rooms[i];
+      const mi = room.moduleIndex;
+      const owner = currentTopo === 'full' ? t('module_label_train', { n: mi + 1 })
+        : currentTopo === 'standby' ? (room.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 }))
+        : (room.roomsInModule > 1 ? t('module_label_group', { n: mi + 1 }) : null);
+      const nm = t('module_label_room', { n: i + 1 }) + (owner ? ` (${owner})` : '');
+      legendItems.push({ color: room.state === 'offline' ? '#FBEDE7' : roomColor(i), label: nm });
     }
     legendItems.forEach(it => {
       const div = document.createElement('div');
@@ -1198,7 +1299,7 @@
 
     // ⑥번 SLD 자동 작성 모드는 별도 상태를 갖지 않고, 방금 ④번에서 계산한 modules 배열
     // (가동/대기/상실)을 그대로 그래프로 변환해 같은 상태를 단선결선도로 다시 그린다.
-    buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap);
+    buildAutoSLD(rooms, N, C, perModuleUnits, load, rating, effectiveCap);
   }
 
   // ===== ⑥ SLD 에디터 =====
@@ -1291,6 +1392,7 @@
   }
 
   // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → PDU → POD.
+  // modules: ④에서 만든 '전기실' 배열 (각 방의 소속 모듈·상태·변압기 대수를 들고 있다)
   function buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
     const nodes = [], edges = [], notes = [];
     const M = modules.length;
@@ -1301,7 +1403,12 @@
     // 데이터홀 전체 POD 수(①번 공통 설정)를 설계기준으로 모듈에 나눠 담는다 —
     // 완전이중화는 트레인 1개가 전체 POD를 100% 커버하고, 그 외에는 N개 모듈이 분담한다.
     const hallPlan = getPodPlan(load);
-    const podCount = currentTopo === 'full' ? hallPlan.count : Math.max(1, Math.ceil(hallPlan.count / Math.max(1, N)));
+    // 설계기준으로 전체 POD를 떠받치는 전기실 수 — 완전이중화는 트레인 1개의 방들이,
+    // 그 외에는 Duty 모듈(N개)에 속한 방들이 전체 POD를 나눠 받는다.
+    const designRooms = currentTopo === 'full'
+      ? ((modules[0] && modules[0].roomsInModule) || 1)
+      : (modules.filter(r => (r.moduleIndex === undefined ? 0 : r.moduleIndex) < N).length || 1);
+    const podCount = Math.max(1, Math.ceil(hallPlan.count / designRooms));
     const podW = 56, podH = 38, podGap = 6, podRowGap = 10;
     // POD 용량을 작게 잡으면 개수가 많아지므로 한 줄에 최대 6개씩 줄바꿈해 가로폭을 유지한다.
     const podPerRow = Math.min(podCount, 6);
@@ -1327,16 +1434,17 @@
       const x = startX + i * (colW + gap);
       const isActive = mod.state === 'active';
       const kind = mod.state === 'offline' ? 'lost' : (isActive ? 'main' : 'standby');
-      let roleLabel;
-      if (currentTopo === 'full') roleLabel = t('module_label_train', { n: i + 1 });
-      else if (currentTopo === 'standby') roleLabel = mod.role === 'catcher' ? t('module_label_catcher', { n: i - N + 1 }) : t('module_label_duty', { n: i + 1 });
-      else roleLabel = t('module_label_room', { n: i + 1 });
+      const mi = mod.moduleIndex === undefined ? i : mod.moduleIndex;
+      let roleLabel = t('module_label_room', { n: i + 1 });
+      if (currentTopo === 'full') roleLabel += ' (' + t('module_label_train', { n: mi + 1 }) + ')';
+      else if (currentTopo === 'standby') roleLabel += ' (' + (mod.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 })) + ')';
       const stateLabel = mod.state === 'offline' ? t('state_offline') : mod.state === 'idle' ? t('state_idle')
         : (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') ? t('state_engaged') : t('state_active');
       notes.push({ x: x + colW / 2, y: 224, text: roleLabel, size: 10.5, weight: 800, color: sldNodeColor({ type: 'tr', state: mod.state }) });
       notes.push({ x: x + colW / 2, y: 236, text: stateLabel, size: 8, weight: 600, color: mod.state === 'active' ? '#8A8072' : sldNodeColor({ type: 'tr', state: mod.state }) });
 
-      const tr = add(makeSldNode('tr', x, 244, { w: colW, label: `TR ${fmtN(rating)}kVA`, sub: '×' + t('unit_dae', { n: perModuleUnits }), state: mod.state }));
+      const roomTx = mod.txCount === undefined ? perModuleUnits : mod.txCount;
+      const tr = add(makeSldNode('tr', x, 244, { w: colW, label: `TR ${fmtN(rating)}kVA`, sub: '×' + t('unit_dae', { n: roomTx }), state: mod.state }));
       const ups = add(makeSldNode('ups', x, 318, { w: colW, sub: isActive ? `${fmtN(mod.loadKW)}kW` : '-', state: mod.state }));
       const pdu = add(makeSldNode('pdu', x, 392, { w: colW, label: 'PDU', state: mod.state }));
       link(bus, tr, kind);
@@ -1736,6 +1844,21 @@
   const podAutoCheckbox = document.getElementById('podAuto');
   if (podAutoCheckbox) podAutoCheckbox.addEventListener('change', onPodSettingChange);
 
+  // 전기실 수량 — ④의 방 분할을 바꾸고, 연동 체크 시 ⑤의 M도 따라간다.
+  function onRoomSettingChange() {
+    calculate();          // ④ 재계산 → lastRoomCount 갱신 → ⑤ M 연동
+    renderCombDiagram();  // 갱신된 M으로 ⑤도 다시 그린다
+  }
+  const roomCountInput = document.getElementById('roomCount');
+  if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
+  const roomAutoCheckbox = document.getElementById('roomAuto');
+  if (roomAutoCheckbox) roomAutoCheckbox.addEventListener('change', onRoomSettingChange);
+  const combMSyncCheckbox = document.getElementById('combMSync');
+  if (combMSyncCheckbox) combMSyncCheckbox.addEventListener('change', () => {
+    syncCombMFromRooms();
+    renderCombDiagram();
+  });
+
   renderSldPalette();
   setSldMode(sldMode);
 
@@ -1837,6 +1960,18 @@
     }
   }
 
+  // ⑤의 전기실 개수(M)는 ④에서 정한 전기실 수량과 같은 물리적 방을 가리킨다.
+  // 연동이 켜져 있으면 ④ 값을 그대로 따라가고(조합형 배치는 최소 3개 필요), 끄면 직접 입력.
+  function syncCombMFromRooms() {
+    const sync = document.getElementById('combMSync');
+    const on = sync ? sync.checked : false;
+    combMInput.disabled = on;
+    combMInput.style.background = on ? 'var(--primary-bg)' : '';
+    if (!on || !lastRoomCount) return;
+    const target = Math.max(3, Math.min(parseInt(combMInput.max) || 20, lastRoomCount));
+    if (parseInt(combMInput.value) !== target) combMInput.value = target;
+  }
+
   function syncCombLoadFromMain() {
     if (combSyncLoadCheckbox.checked) {
       combLoadInput.value = loadInput.value;
@@ -1910,7 +2045,8 @@
     const roomGap = Math.max(16, 700 / M - roomW);
     const roomsTotalW = M * roomW + (M - 1) * roomGap;
 
-    const zonesPerRow = zoneCount > 8 ? Math.ceil(zoneCount / 2) : zoneCount;
+    // 전기실이 많아지면 조합 수가 급격히 늘어나므로(M=10 → 45존) 한 줄 최대 8개로 접는다
+    const zonesPerRow = Math.min(8, zoneCount > 8 ? Math.ceil(zoneCount / 2) : zoneCount);
     const zoneW = 132, zoneGapX = 16, zoneGapY = 22;
     // POD 칩이 들어갈 자리만큼 존 박스를 키운다
     const podChipW = 28, podChipH = 13, podChipGap = 3;

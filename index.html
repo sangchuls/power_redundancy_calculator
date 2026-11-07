@@ -238,6 +238,18 @@
 
   <div class="card">
     <h2>④ <span data-i18n="h4_title">구성 다이어그램</span> <span class="desc" id="diagramDesc"></span></h2>
+    <div class="field-row">
+      <div class="field">
+        <label for="roomCount" data-i18n="label_roomCount">전기실 수량 (개)</label>
+        <input type="number" id="roomCount" value="4" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="roomAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_roomAuto">이중화 모듈 수(N+C)와 동일</span>
+          </label>
+          <span id="roomHint"></span>
+        </div>
+      </div>
+    </div>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="modeNormalBtn" data-mode="normal" data-i18n="mode_normal">평상시</button>
       <button class="mode-btn" id="modeEmergencyBtn" data-mode="emergency" data-i18n="mode_emergency">비상시</button>
@@ -263,8 +275,13 @@
     <div class="field-row">
       <div class="field">
         <label for="combM" data-i18n="label_combM">전기실 개수 (M)</label>
-        <input type="number" id="combM" value="4" step="1" min="3" max="20">
-        <div class="hint" id="combMHint" data-i18n="hint_combM">3~6 지원 (조합 수 = M×(M-1)÷2)</div>
+        <input type="number" id="combM" value="4" step="1" min="3" max="20" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="combMSync" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_combMSync">④번 전기실 수량과 연동</span>
+          </label>
+          <span id="combMHint" data-i18n="hint_combM"> — 3~6 지원 (조합 수 = M×(M-1)÷2)</span>
+        </div>
       </div>
       <div class="field">
         <label for="combLoad" data-i18n="label_combLoad">이 배치도에 적용할 총 IT부하 (MW)</label>
