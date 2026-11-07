@@ -39,6 +39,7 @@
       legend_pod_note: 'POD(랙 그룹) — 데이터홀을 POD 단위로 분할하고, 각 POD는 위 급전모선에서 {feeds}회선으로 이중급전',
       zone_pod_label: 'POD {n}개 · {mw}MW',
       warn_podOver: '⚠ POD당 실부하가 설정 용량을 초과합니다 — 수량을 늘리거나 용량을 키우세요.',
+      comb_pod_summary_manual: 'POD {n}개 (직접 입력) — POD당 실부하 {kw}kW, 전기실 2곳에서 {zones}개 존으로 이중급전. 평상시 회선당 절반씩, 1곳 상실 시 남은 1곳이 전량 부담.',
       comb_pod_summary: 'POD {n}개 × {cap}kW (POD당 실부하 {kw}kW) — IT존 {zones}개에 평균 {perZone}개씩 배분. POD 수량·용량은 ①번에서 조절합니다.',
       h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
       h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
@@ -120,6 +121,9 @@
       label_roomAuto: '이중화 모듈 수(N+C)와 동일',
       hint_roomCount: ' — {min}~{max}개 (전기실 1개당 변압기 최소 1대 → 상한 = 총 변압기 대수). 수를 늘리면 모듈의 변압기가 여러 방으로 쪼개집니다.',
       label_combMSync: '④번 전기실 수량과 연동',
+      label_combPodCount: 'POD 블럭 수량 (개)',
+      label_combPodSync: '①번 POD 수량과 연동',
+      hint_combPod: ' — POD당 {kw}kW (설정 용량 {cap}kW), 각 POD는 전기실 2곳에서 절반씩 이중급전',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
       diagramDesc: '({topo} · {mode} 구성)',
@@ -175,6 +179,7 @@
       legend_pod_note: 'POD (rack group) — the hall is split into PODs, each dual-fed by {feeds} feeders from the buses above',
       zone_pod_label: '{n} PODs · {mw}MW',
       warn_podOver: '⚠ Actual load per POD exceeds the configured capacity — raise the count or the capacity.',
+      comb_pod_summary_manual: '{n} PODs (entered manually) — {kw}kW actual each, dual-fed from two rooms across {zones} zones. Half per feeder normally; the surviving room carries all of it when one is lost.',
       comb_pod_summary: '{n} PODs × {cap}kW ({kw}kW actual each) — about {perZone} per zone across {zones} zones. Adjust POD count and capacity in section ①.',
       h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
       h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
@@ -256,6 +261,9 @@
       label_roomAuto: 'Same as module count (N+C)',
       hint_roomCount: ' — {min}–{max} (at least one transformer per room, so the cap is the total transformer count). Raising it splits a module’s transformers across several rooms.',
       label_combMSync: 'Follow the room count in ④',
+      label_combPodCount: 'POD blocks',
+      label_combPodSync: 'Follow the POD count in ①',
+      hint_combPod: ' — {kw}kW per POD (configured {cap}kW), each dual-fed at half from two rooms',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
       diagramDesc: '({topo} · {mode})',
@@ -679,6 +687,36 @@
     return { cap, count, loadKW, perPodKW: loadKW / count, auto: isPodCountAuto() };
   }
   // ①번 총부하가 바뀌면 자동 모드의 수량 칸과 안내 문구를 다시 채운다.
+  // ⑤ 전용 POD 수량 — 기본은 ①번 공통 수량을 그대로 쓰고, 연동을 풀면 이 배치도에만
+  // 적용할 POD 블럭 수를 직접 입력한다 (전기실 수나 존 수에 따라 자동으로 쪼개지지 않는다).
+  function resolveCombPodPlan(loadMW) {
+    const base = getPodPlan(loadMW);
+    const sync = document.getElementById('combPodSync');
+    const input = document.getElementById('combPodCount');
+    const linked = sync ? sync.checked : true;
+    let count = base.count;
+    if (!linked && input) {
+      const v = parseInt(input.value, 10);
+      if (isFinite(v) && v > 0) count = Math.min(POD_COUNT_MAX, v);
+    }
+    const loadKW = (loadMW || 0) * 1000;
+    const plan = { cap: base.cap, count, loadKW, perPodKW: count ? loadKW / count : 0, linked };
+    if (input) {
+      input.disabled = linked;
+      input.style.background = linked ? 'var(--primary-bg)' : '';
+      if (linked) input.value = count;
+    }
+    const hint = document.getElementById('combPodHint');
+    if (hint) {
+      const over = plan.perPodKW > plan.cap + 0.5;
+      hint.textContent = ' ' + t('hint_combPod', { kw: fmtN(Math.round(plan.perPodKW)), cap: fmtN(plan.cap) })
+        + (over ? ' ' + t('warn_podOver') : '');
+      hint.style.color = over ? 'var(--warn)' : '';
+      hint.style.fontWeight = over ? '700' : '';
+    }
+    return plan;
+  }
+
   function updatePodControls() {
     const countInput = document.getElementById('podCount');
     const hint = document.getElementById('podHint');
@@ -1853,6 +1891,12 @@
   if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
   const roomAutoCheckbox = document.getElementById('roomAuto');
   if (roomAutoCheckbox) roomAutoCheckbox.addEventListener('change', onRoomSettingChange);
+  ['combPodCount'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', renderCombDiagram);
+  });
+  const combPodSyncCheckbox = document.getElementById('combPodSync');
+  if (combPodSyncCheckbox) combPodSyncCheckbox.addEventListener('change', renderCombDiagram);
   const combMSyncCheckbox = document.getElementById('combMSync');
   if (combMSyncCheckbox) combMSyncCheckbox.addEventListener('change', () => {
     syncCombMFromRooms();
@@ -2031,7 +2075,7 @@
     // IT존은 전기실 2개가 짝지어 이중급전하는 '급전 그룹'이고, 그 안에 실제 부하 단위인
     // POD(랙 그룹)가 들어간다. POD 총 수량·용량은 ①번 공통 설정에서 오고, 존에 순서대로
     // 돌려 배분한다. 따라서 POD 수량을 바꾸면 존별 POD 개수와 부하, 급전 회선이 함께 바뀐다.
-    const podPlan = getPodPlan(totalLoad);
+    const podPlan = resolveCombPodPlan(totalLoad);
     const zonePods = pairs.map(() => []);
     for (let p = 0; p < podPlan.count; p++) zonePods[p % zoneCount].push(p);
     const podLoadMW = totalLoad / podPlan.count;
@@ -2049,9 +2093,13 @@
     const zonesPerRow = Math.min(8, zoneCount > 8 ? Math.ceil(zoneCount / 2) : zoneCount);
     const zoneW = 132, zoneGapX = 16, zoneGapY = 22;
     // POD 칩이 들어갈 자리만큼 존 박스를 키운다
-    const podChipW = 28, podChipH = 13, podChipGap = 3;
-    const podChipsPerRow = Math.max(1, Math.floor((zoneW - 12 + podChipGap) / (podChipW + podChipGap)));
     const maxPodsInZone = zonePods.reduce((m, arr) => Math.max(m, arr.length), 0);
+    // POD가 적으면 칩 안에 급전 용량(POD당 kW, 회선당 kW)까지 적고, 많아지면 번호만 남긴다
+    const podChipDetail = maxPodsInZone <= 6;
+    const podChipW = podChipDetail ? 44 : 28;
+    const podChipH = podChipDetail ? 25 : 13;
+    const podChipGap = 3;
+    const podChipsPerRow = Math.max(1, Math.floor((zoneW - 12 + podChipGap) / (podChipW + podChipGap)));
     const podChipRows = Math.ceil(maxPodsInZone / podChipsPerRow);
     const zoneH = 58 + podChipRows * (podChipH + podChipGap) + 4;
     const zoneRows = Math.ceil(zoneCount / zonesPerRow);
@@ -2225,6 +2273,17 @@
         });
         chipLabel.textContent = 'P' + (podIdx + 1);
         svgTarget.appendChild(chipLabel);
+        if (podChipDetail) {
+          // POD 1개가 받는 총량과, 그걸 전기실 2곳이 어떻게 나눠 메우는지 (평상시 ½+½, 상실 시 0+전량)
+          const podKW = podLoadMW * 1000;
+          const line1 = svgEl('text', { x: cx0 + podChipW / 2, y: cy0 + 17.5, 'text-anchor': 'middle', 'font-size': 6.5, 'font-weight': 700, fill: zoneAffected ? '#C8604F' : '#8A8072', 'font-family': 'sans-serif' });
+          line1.textContent = fmtN(Math.round(podKW)) + 'kW';
+          svgTarget.appendChild(line1);
+          const share = zoneAffected ? podKW : podKW / 2;
+          const line2 = svgEl('text', { x: cx0 + podChipW / 2, y: cy0 + 23.5, 'text-anchor': 'middle', 'font-size': 6, 'font-weight': 600, fill: zoneAffected ? '#C8604F' : '#9A90BB', 'font-family': 'sans-serif' });
+          line2.textContent = (zoneAffected ? '1×' : '2×') + fmtN(Math.round(share));
+          svgTarget.appendChild(line2);
+        }
       });
 
     });
@@ -2255,7 +2314,7 @@
     podSummary.style.width = '100%';
     podSummary.style.marginTop = '4px';
     podSummary.style.color = '#8A8072';
-    podSummary.textContent = t('comb_pod_summary', {
+    podSummary.textContent = t(podPlan.linked ? 'comb_pod_summary' : 'comb_pod_summary_manual', {
       n: podPlan.count, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podLoadMW * 1000)),
       zones: zoneCount, perZone: fmtN(Math.round(podPlan.count / zoneCount * 10) / 10),
     });

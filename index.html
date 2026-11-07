@@ -294,6 +294,16 @@
         </div>
       </div>
       <div class="field">
+        <label for="combPodCount" data-i18n="label_combPodCount">POD 블럭 수량 (개)</label>
+        <input type="number" id="combPodCount" value="20" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="combPodSync" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_combPodSync">①번 POD 수량과 연동</span>
+          </label>
+          <span id="combPodHint"></span>
+        </div>
+      </div>
+      <div class="field">
         <label for="combFailRoom" data-i18n="label_combFailRoom">비상시 상실 전기실</label>
         <select id="combFailRoom"></select>
       </div>
