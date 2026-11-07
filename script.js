@@ -140,6 +140,8 @@
       alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomSets: '전기실 세트 수',
+      label_roomsPerSet: '세트당 전기실 수',
+      label_roomsPerSetAuto: '②번 N+C와 동일',
       hint_roomSets: '{topo} 1세트 = 전기실 {perSet}개 → 세트 {sets}개 = 총 전기실 {total}개. POD는 부하가 적은 세트부터 배정됩니다.',
       overload_warn: '⚠ 상실 {n}개 모듈에 비해 캐쳐가 {c}개뿐이라 {diff}개 모듈의 부하를 흡수하지 못합니다.',
       legend_tx_note: '변압기(T) · 하단 %는 변압기별 운전부하율 (색상은 소속 모듈과 동일)',
@@ -298,6 +300,8 @@
       alloc_over_emergency: '⚠ Over capacity on a loss — {ratio}% is fine normally, but losing {lost} room(s) pushes the surviving {n} to {emergency}%. Raise room capacity or add a set.',
       alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
       label_roomSets: 'Room sets',
+      label_roomsPerSet: 'Rooms per set',
+      label_roomsPerSetAuto: 'Same as N+C in ②',
       hint_roomSets: 'One {topo} set = {perSet} rooms → {sets} sets = {total} rooms in all. PODs go to the least loaded set first.',
       overload_warn: '⚠ {n} modules lost but only {c} catchers available — {diff} module(s) worth of load cannot be absorbed.',
       legend_tx_note: 'Transformer (T) · % below is per-transformer utilization (color matches its module)',
@@ -545,7 +549,8 @@
     const loadKW = load * 1000;
     const effectiveCap = computeEffectiveCapacity(rating, pf, safety, upsEff);
     updateEffectiveFormulaNote();
-    const M = N + C; // total modules/trains
+    // 세트당 전기실 수가 ②번 N+C와 다를 수 있으므로 ④와 같은 값을 쓴다
+    const M = getRoomsPerSet(N, C); // 세트 1개의 전기실(모듈) 수
 
     // 전기실 세트를 S개 두면 POD가 세트에 배분되고, 모듈은 자기 세트 몫만 책임진다.
     // ④ 다이어그램과 같은 배분 결과를 써서 두 섹션의 대수가 어긋나지 않게 한다.
@@ -693,6 +698,26 @@
     el.style.fontWeight = '700';
   }
 
+  // 세트당 전기실 수. 기본은 ②번 N+C이고, 직접 올리면 "N개 중 R개" 구성이 된다
+  // (N=3에 6실이면 3oo6 — 3실만 살아 있으면 POD 전량을 커버).
+  function getRoomsPerSet(N, C) {
+    const auto = document.getElementById('roomsPerSetAuto');
+    const el = document.getElementById('roomsPerSet');
+    const base = Math.max(1, (N || 1) + (C || 0));
+    if (!auto || auto.checked || !el) return base;
+    const v = parseInt(el.value, 10);
+    return Math.max(Math.max(1, N || 1), Math.min(12, isFinite(v) && v > 0 ? v : base));
+  }
+  function syncRoomsPerSetControl(N, C, perSetRooms) {
+    const auto = document.getElementById('roomsPerSetAuto');
+    const el = document.getElementById('roomsPerSet');
+    if (!el || !auto) return;
+    el.disabled = auto.checked;
+    el.style.background = auto.checked ? 'var(--primary-bg)' : '';
+    el.min = Math.max(1, N);
+    if (auto.checked) el.value = perSetRooms;
+    else if (parseInt(el.value, 10) !== perSetRooms) el.value = perSetRooms;
+  }
   function getRoomSetCount() {
     const el = document.getElementById('roomSets');
     const v = el ? parseInt(el.value, 10) : NaN;
@@ -996,8 +1021,13 @@
     const svg = document.getElementById('diagramSvg');
     diagramZoom.clear();
     const svgTarget = diagramZoom.group;
-    const M = N + C;
+    // 세트당 전기실 수가 ②번 N+C와 다르면, 그 수가 곧 이 세트의 모듈 수가 된다
+    // (여유분 C는 R-N으로 다시 계산된다).
+    const perSetRooms = getRoomsPerSet(N, C);
+    C = perSetRooms - N;
+    const M = perSetRooms;
     if (!M || M <= 0) return;
+    syncRoomsPerSetControl(N, C, perSetRooms);
 
     const navy = '#3A2E75';
     const accent = '#7A6BCB';
@@ -2078,8 +2108,12 @@
   if (podAutoCheckbox) podAutoCheckbox.addEventListener('change', onPodSettingChange);
 
   function onRoomSettingChange() { calculate(); }
-  const roomSetsInput = document.getElementById('roomSets');
-  if (roomSetsInput) roomSetsInput.addEventListener('input', onRoomSettingChange);
+  ['roomSets', 'roomsPerSet'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', onRoomSettingChange);
+  });
+  const roomsPerSetAuto = document.getElementById('roomsPerSetAuto');
+  if (roomsPerSetAuto) roomsPerSetAuto.addEventListener('change', onRoomSettingChange);
   const roomCapacityInput = document.getElementById('roomCapacity');
   if (roomCapacityInput) roomCapacityInput.addEventListener('input', onRoomSettingChange);
   const roomCapAutoCheckbox = document.getElementById('roomCapAuto');
@@ -2483,9 +2517,9 @@
   const PRESET_FIELDS = [
     'utilityCapacity', 'itCapacityInput', 'hallCountInput', 'load', 'rating',
     'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount',
-    'nInput', 'cInput', 'roomSets', 'roomCapacity',
+    'nInput', 'cInput', 'roomSets', 'roomsPerSet', 'roomCapacity',
   ];
-  const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomCapAuto'];
+  const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomCapAuto', 'roomsPerSetAuto'];
   const presetSelect = document.getElementById('presetSelect');
   const presetNameInput = document.getElementById('presetName');
   const presetStatus = document.getElementById('presetStatus');
