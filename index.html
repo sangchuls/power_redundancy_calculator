@@ -231,6 +231,7 @@
         <button class="zoom-btn" id="diagramZoomOut">－</button>
         <button class="zoom-btn" id="diagramZoomReset" data-i18n="btn_zoomReset">리셋</button>
         <button class="zoom-btn" id="diagramZoomIn">＋</button>
+        <button class="zoom-btn expand-btn" id="diagramExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
       </div>
       <svg id="diagramSvg" width="760" height="360"></svg>
     </div>
@@ -273,6 +274,7 @@
         <button class="zoom-btn" id="combZoomOut">－</button>
         <button class="zoom-btn" id="combZoomReset" data-i18n="btn_zoomReset">리셋</button>
         <button class="zoom-btn" id="combZoomIn">＋</button>
+        <button class="zoom-btn expand-btn" id="combExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
       </div>
       <svg id="combSvg" width="760" height="360"></svg>
     </div>
@@ -287,10 +289,17 @@
   </div>
 
   <div class="card">
-    <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → IT Rack — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
+    <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
       <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="podCapacity" data-i18n="label_podCapacity">POD 용량 (kW/POD)</label>
+        <input type="number" id="podCapacity" value="500" step="50" min="10">
+        <div class="hint" id="podHint"></div>
+      </div>
     </div>
     <div id="sldManualUI" style="display:none;">
       <div class="sld-palette-label" data-i18n="sld_palette_title">장비 팔레트 — 클릭해서 추가</div>
@@ -307,6 +316,7 @@
         <button class="zoom-btn" id="sldZoomOut">－</button>
         <button class="zoom-btn" id="sldZoomReset" data-i18n="btn_zoomReset">리셋</button>
         <button class="zoom-btn" id="sldZoomIn">＋</button>
+        <button class="zoom-btn expand-btn" id="sldExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
       </div>
       <svg id="sldSvg" width="760" height="360"></svg>
     </div>
@@ -352,6 +362,16 @@
 </div>
 
 <div id="printReport" class="print-only"></div>
+
+<div id="diagramModal" class="diagram-modal" aria-hidden="true">
+  <div class="diagram-modal-panel">
+    <div class="diagram-modal-head">
+      <span id="diagramModalTitle" class="diagram-modal-title"></span>
+      <button class="zoom-btn" id="diagramModalClose" data-i18n="btn_modalClose">닫기 ✕</button>
+    </div>
+    <div class="diagram-modal-body" id="diagramModalBody"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>

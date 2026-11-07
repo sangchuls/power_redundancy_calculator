@@ -26,6 +26,10 @@
       h4_title: '구성 다이어그램', mode_normal: '평상시', mode_emergency: '비상시',
       hint_diagram4: '휠로 확대/축소 · 드래그로 이동 · 블럭 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
       btn_zoomReset: '리셋',
+      btn_expand: '크게 보기',
+      btn_modalClose: '닫기 ✕',
+      label_podCapacity: 'POD 용량 (kW/POD)',
+      hint_pod: 'POD {n}개 / POD당 약 {kw}kW — 모듈당 설계부하 ÷ POD 용량(올림). PDU에서 각 POD로 분배선이 자동 생성됩니다.',
       h5_title: '조합형 분배 배치도', h5_desc: '전기실 M개 → IT존(2개씩 조합 이중급전) — 예: 전기실 4개(A~D) → IT존 6개',
       h5_explain: '<b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).',
       label_combM: '전기실 개수 (M)', hint_combM: '3~{max} 지원 (방 1개당 변압기 최소 1대 기준, 조합 수 = M×(M-1)÷2)',
@@ -44,7 +48,7 @@
       globalFootnote: '총 변압기 대수 = ⌈ (①모듈당 설계부하) ÷ (변압기 정격 × 안전율) ⌉ × (N + C) &nbsp;|&nbsp; 분산이중화: ①=총부하÷N (전 모듈 동시가동, C개 모듈 상실까지 무스위칭 대응) &nbsp;|&nbsp; 대기이중화: ①=총부하÷N (duty N개가 분담, C개는 평상시 idle 대기) &nbsp;|&nbsp; 완전이중화: ①=총부하 (각 트레인이 단독으로 전체부하 100% 커버)',
       export_title: '저장', export_desc: '현재 입력값·계산결과·다이어그램을 문서로 저장합니다.',
       view_sequential: '순차형', view_dual: '듀얼형',
-      h6_title: 'SLD (단선결선도)', h6_desc: '한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → IT Rack — ④번과 같은 평상시/비상시 상태를 그대로 반영',
+      h6_title: 'SLD (단선결선도)', h6_desc: '한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영',
       hint_sld: '휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다',
       sld_utility: '한전 수전', sld_utility_sub: '상시 2회선', sld_generator: '비상발전기', sld_generator_sub: '병렬운전',
       sld_mainbus: '주모선', sld_legend_note: '실선=상시 가동 경로 · 점선=대기/상실 경로 (④번 평상시·비상시 상태와 동일)',
@@ -59,7 +63,7 @@
       sldb_acb: '기중차단기', sldb_mccb: '배선용차단기', sldb_mtr: '주변압기', sldb_tr: '변압기',
       sldb_bus: '모선', sldb_gen: '비상발전기', sldb_gcp: '발전기 제어반', sldb_syn: '동기 병렬반',
       sldb_ctts: '무순단 절체기', sldb_sts: '정지형 절체기', sldb_ups: '무정전전원장치', sldb_bat: '축전지',
-      sldb_pdu: '전력분배반', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
+      sldb_pdu: '전력분배반', sldb_pod: '랙 그룹(POD)', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
       export_pdf: 'PDF로 저장', export_word: 'Word로 저장', export_ppt: 'PPT로 저장',
       export_generating: '생성 중…', export_done: '저장 완료', export_fail: '생성 실패 — 콘솔을 확인하세요',
 
@@ -141,6 +145,10 @@
       h4_title: 'Configuration diagram', mode_normal: 'Normal', mode_emergency: 'Emergency',
       hint_diagram4: 'Wheel to zoom · drag to pan · double-click a block: mark lost / double-click empty space: back to normal',
       btn_zoomReset: 'Reset',
+      btn_expand: 'Expand',
+      btn_modalClose: 'Close ✕',
+      label_podCapacity: 'POD capacity (kW/POD)',
+      hint_pod: '{n} PODs / about {kw}kW each — design load per module ÷ POD capacity (rounded up). Distribution lines from the PDU to each POD are generated automatically.',
       h5_title: 'Combinatorial distribution layout', h5_desc: 'M rooms → IT zones (dual-fed in pairs) — e.g. 4 rooms (A~D) → 6 zones',
       h5_explain: '<b>Combinatorial distribution (N choose 2)</b> — M electrical rooms pair up two-by-two to dual-feed IT zones. Each room participates in (M-1) zones; if one room is lost, its partner room alone absorbs that zone\'s full load. Total zones = M×(M-1)÷2 (e.g. M=4 → 6 zones).',
       label_combM: 'Room count (M)', hint_combM: 'Supports 3~{max} (at least 1 transformer per room, combinations = M×(M-1)÷2)',
@@ -159,7 +167,7 @@
       globalFootnote: 'Total transformer units = ⌈ (① design load / module) ÷ (rating × safety factor) ⌉ × (N + C) &nbsp;|&nbsp; Distributed: ①=load÷N (all modules run simultaneously, absorbs up to C simultaneous losses without switching) &nbsp;|&nbsp; Standby: ①=load÷N (N duty modules share it, C stay idle) &nbsp;|&nbsp; Full: ①=load (each train independently covers 100%)',
       export_title: 'Save', export_desc: 'Save the current inputs, results, and diagrams as a document.',
       view_sequential: 'Sequential', view_dual: 'Dual',
-      h6_title: 'SLD (Single Line Diagram)', h6_desc: 'Utility feed → emergency generator → main bus → per-module transformer/UPS → IT rack — mirrors the same normal/emergency state as ④',
+      h6_title: 'SLD (Single Line Diagram)', h6_desc: 'Utility feed → emergency generator → main bus → per-module transformer/UPS → PDU → rack PODs — mirrors the same normal/emergency state as ④',
       hint_sld: 'Wheel to zoom · drag to pan · automatically mirrors the same normal/emergency state as the ④ configuration diagram',
       sld_utility: 'Utility feed', sld_utility_sub: 'dual feed, always-on', sld_generator: 'Emergency generator', sld_generator_sub: 'parallel operation',
       sld_mainbus: 'Main bus', sld_legend_note: 'Solid = always-energized path · Dashed = standby/lost path (same as ④\'s normal/emergency state)',
@@ -174,7 +182,7 @@
       sldb_acb: 'Air circuit breaker', sldb_mccb: 'Molded case CB', sldb_mtr: 'Main transformer', sldb_tr: 'Transformer',
       sldb_bus: 'Bus bar', sldb_gen: 'Emergency generator', sldb_gcp: 'Gen. control panel', sldb_syn: 'Synchronizing panel',
       sldb_ctts: 'Closed transition TS', sldb_sts: 'Static transfer switch', sldb_ups: 'Uninterruptible PS', sldb_bat: 'Battery',
-      sldb_pdu: 'Power distribution unit', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
+      sldb_pdu: 'Power distribution unit', sldb_pod: 'Rack group (POD)', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
       export_pdf: 'Save as PDF', export_word: 'Save as Word', export_ppt: 'Save as PPT',
       export_generating: 'Generating…', export_done: 'Saved', export_fail: 'Failed to generate — check console',
 
@@ -250,6 +258,9 @@
       } else {
         el.innerHTML = val;
       }
+    });
+    document.querySelectorAll('[data-i18n-title]').forEach(el => {
+      el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
     });
   }
 
@@ -611,6 +622,74 @@
   document.getElementById('sldZoomOut').addEventListener('click', () => sldZoom.zoomOut());
   document.getElementById('sldZoomReset').addEventListener('click', () => sldZoom.reset());
 
+  // ----- 확대 보기 (별도 큰 화면) -----
+  // 다이어그램 요소를 복제하지 않고 모달 안으로 '이동'시킨다 — 그래야 휠 확대/드래그/블럭
+  // 더블클릭 같은 기존 이벤트 핸들러와 수동 편집 상태가 그대로 살아있다. 닫을 때는
+  // 원래 자리에 남겨둔 자리표시자(placeholder) 위치로 되돌린다.
+  const diagramModal = document.getElementById('diagramModal');
+  const diagramModalBody = document.getElementById('diagramModalBody');
+  const diagramModalTitle = document.getElementById('diagramModalTitle');
+  let modalState = null;
+
+  function openDiagramModal(wrap, title, zoom) {
+    if (modalState) closeDiagramModal();
+    const placeholder = document.createComment('diagram-placeholder');
+    wrap.parentNode.insertBefore(placeholder, wrap);
+    modalState = { wrap, placeholder, zoom };
+    diagramModalTitle.textContent = title;
+    diagramModalBody.appendChild(wrap);
+    diagramModal.classList.add('open');
+    diagramModal.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+    if (zoom) zoom.reset();
+    // 원래 크기가 모달보다 작은 다이어그램은 모달 폭에 맞춰 크게 키우고,
+    // 더 큰 다이어그램은 원래 크기로 두고 모달 본문을 스크롤한다.
+    const svg = wrap.querySelector('svg');
+    if (svg) {
+      const natural = parseFloat(svg.getAttribute('width')) || 0;
+      const avail = diagramModalBody.clientWidth - 4;
+      if (natural && avail > natural) {
+        svg.style.width = avail + 'px';
+        svg.style.height = 'auto';
+      }
+    }
+  }
+  function closeDiagramModal() {
+    if (!modalState) return;
+    const { wrap, placeholder, zoom } = modalState;
+    modalState = null;
+    const svg = wrap.querySelector('svg');
+    if (svg) { svg.style.width = ''; svg.style.height = ''; }
+    placeholder.parentNode.insertBefore(wrap, placeholder);
+    placeholder.parentNode.removeChild(placeholder);
+    diagramModal.classList.remove('open');
+    diagramModal.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('modal-open');
+    if (zoom) zoom.reset();
+  }
+  [['diagramExpandBtn', 'diagramSvg', diagramZoom], ['combExpandBtn', 'combSvg', combZoom], ['sldExpandBtn', 'sldSvg', sldZoom]]
+    .forEach(([btnId, svgId, zoom]) => {
+      const btn = document.getElementById(btnId);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const svg = document.getElementById(svgId);
+        const wrap = svg && svg.closest('.diagram-wrap');
+        if (!wrap) return;
+        const card = wrap.closest('.card');
+        const h2 = card && card.querySelector('h2');
+        let title = '';
+        if (h2) {
+          const clone = h2.cloneNode(true);
+          clone.querySelectorAll('.desc').forEach(d => d.remove());
+          title = clone.textContent.trim();
+        }
+        openDiagramModal(wrap, title, zoom);
+      });
+    });
+  document.getElementById('diagramModalClose').addEventListener('click', closeDiagramModal);
+  diagramModal.addEventListener('click', e => { if (e.target === diagramModal) closeDiagramModal(); });
+  window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDiagramModal(); });
+
   // Double-click on empty diagram background (outside any module/room block) => back to 평상시.
   // Per-block dblclick handlers (added inside renderDiagram/renderCombDiagram, since blocks are
   // redrawn every render) call stopPropagation so only a genuine background click reaches here.
@@ -904,6 +983,7 @@
   const SLD_CATS = {
     source: '#3A2E75', switch: '#6759B0', breaker: '#7A6BCB', tr: '#0F6E56',
     bus: '#2E2419', gen: '#993C1D', transfer: '#854F0B', ups: '#185FA5', load: '#993556',
+    pod: '#3B6D11',
   };
   const SLD_EDGE_COLORS = { main: '#3A2E75', standby: '#854F0B', lost: '#DB8478' };
   const SLD_BLOCK_TYPES = [
@@ -924,6 +1004,7 @@
     { key: 'ups', abbr: 'UPS', cat: 'ups' },
     { key: 'bat', abbr: 'BAT', cat: 'ups' },
     { key: 'pdu', abbr: 'PDU', cat: 'load' },
+    { key: 'pod', abbr: 'POD', cat: 'pod' },
     { key: 'rack', abbr: 'RACK', cat: 'load' },
     { key: 'load', abbr: 'LOAD', cat: 'load' },
   ];
@@ -983,18 +1064,43 @@
     return t('sldb_' + node.type);
   }
 
-  // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → IT Rack.
+  // POD(랙군) 용량 — 모듈당 설계부하를 이 값으로 나눠 POD 개수와 분배선을 결정한다.
+  const POD_CAP_DEFAULT = 500;
+  function getPodCapacityKW() {
+    const el = document.getElementById('podCapacity');
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : POD_CAP_DEFAULT;
+  }
+  function updatePodHint(podCount, perPodKW) {
+    const el = document.getElementById('podHint');
+    if (!el) return;
+    el.textContent = t('hint_pod', { n: podCount, kw: fmtN(Math.round(perPodKW)) });
+  }
+
+  // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → PDU → POD.
   function buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
     const nodes = [], edges = [], notes = [];
     const M = modules.length;
     if (!M) { sldAutoGraph = { nodes, edges, notes }; if (sldMode === 'auto') drawSLD(); return; }
 
-    const colW = 116, gap = 20;
+    // POD(랙군) 분할 — 모듈 1개가 감당해야 하는 설계부하를 POD 용량으로 나눠 개수를 정하고,
+    // UPS에서 각 POD로 분배선을 뽑는다. POD 용량을 바꾸면 개수와 분배선이 함께 갱신된다.
+    const podCapKW = getPodCapacityKW();
+    const designLoadKW = currentTopo === 'full' ? load * 1000 : (load * 1000) / Math.max(1, N);
+    const podCount = Math.max(1, Math.ceil(designLoadKW / podCapKW));
+    const podW = 56, podH = 38, podGap = 6, podRowGap = 10;
+    // POD 용량을 작게 잡으면 개수가 많아지므로 한 줄에 최대 6개씩 줄바꿈해 가로폭을 유지한다.
+    const podPerRow = Math.min(podCount, 6);
+    const podRows = Math.ceil(podCount / podPerRow);
+    const podsRowW = podPerRow * podW + (podPerRow - 1) * podGap;
+
+    const colW = Math.max(116, podsRowW), gap = 20;
     const totalW = M * colW + (M - 1) * gap;
     const svgW = Math.max(760, totalW + 100);
     const startX = (svgW - totalW) / 2;
     const add = n => { nodes.push(n); return n; };
-    const link = (a, b, kind) => edges.push({ id: 'e' + a.id + '-' + b.id, from: a.id, to: b.id, kind: kind || 'main' });
+    const link = (a, b, kind) => edges.push({ id: 'e' + a.id + '-' + b.id + '-' + (++sldSeq), from: a.id, to: b.id, kind: kind || 'main' });
+    updatePodHint(podCount, designLoadKW / podCount);
 
     const kepco = add(makeSldNode('kepco', startX, 16, { w: 120, sub: t('sld_utility_sub') }));
     const mtr = add(makeSldNode('mtr', startX, 92, { w: 120 }));
@@ -1019,10 +1125,26 @@
 
       const tr = add(makeSldNode('tr', x, 244, { w: colW, label: `TR ${fmtN(rating)}kVA`, sub: '×' + t('unit_dae', { n: perModuleUnits }), state: mod.state }));
       const ups = add(makeSldNode('ups', x, 318, { w: colW, sub: isActive ? `${fmtN(mod.loadKW)}kW` : '-', state: mod.state }));
-      const rack = add(makeSldNode('rack', x, 392, { w: colW, label: 'IT Rack', state: mod.state }));
+      const pdu = add(makeSldNode('pdu', x, 392, { w: colW, label: 'PDU', state: mod.state }));
       link(bus, tr, kind);
       link(tr, ups, kind);
-      link(ups, rack, kind);
+      link(ups, pdu, kind);
+
+      // PDU → POD 분배선. POD 개수는 POD 용량에 따라 자동으로 늘거나 줄어든다.
+      const podsStartX = x + (colW - podsRowW) / 2;
+      const podLoadKW = isActive ? mod.loadKW / podCount : 0;
+      for (let p = 0; p < podCount; p++) {
+        const row = Math.floor(p / podPerRow), col = p % podPerRow;
+        const inRow = Math.min(podPerRow, podCount - row * podPerRow);
+        const rowW = inRow * podW + (inRow - 1) * podGap;
+        const rowX = x + (colW - rowW) / 2;
+        const pod = add(makeSldNode('pod', rowX + col * (podW + podGap), 470 + row * (podH + podRowGap), {
+          w: podW, h: podH, label: 'POD ' + (p + 1),
+          sub: isActive ? fmtN(Math.round(podLoadKW)) + 'kW' : '-',
+          state: mod.state,
+        }));
+        link(pdu, pod, kind);
+      }
     });
 
     sldAutoGraph = { nodes, edges, notes };
@@ -1387,6 +1509,10 @@
       updateSldStatus();
     }
   });
+
+  // POD 용량을 바꾸면 ④번 결과를 다시 돌려 ⑥번 POD 개수와 분배선을 갱신한다.
+  const podCapacityInput = document.getElementById('podCapacity');
+  if (podCapacityInput) podCapacityInput.addEventListener('input', () => calculate());
 
   renderSldPalette();
   setSldMode(sldMode);
