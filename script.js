@@ -35,6 +35,10 @@
       hint_pod_manual: '— POD {n}개 × {cap}kW = 데이터홀 {total}MW (이 합계가 ①번 총부하가 됩니다)',
       hint_pod_auto: '— 총부하 기준 POD {n}개, POD당 실부하 약 {kw}kW. 6MW POD 같은 고정 블럭으로 보려면 체크 해제.',
       pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}',
+      pod_row_title_split: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · POD당 {split}분할 → 급전 블록 {blocks}개 × {blockKW}kW · 세트별 배정 {sets}',
+      label_podSplit: 'POD 급전 분할',
+      hint_podSplit_1: 'POD 1개를 통째로 한 세트에 물립니다. POD 수가 세트 수로 나눠떨어지지 않으면 세트별 부하가 달라집니다.',
+      hint_podSplit_n: 'POD 1개를 {split}갈래({blockKW}kW씩)로 쪼개 서로 다른 세트에 물립니다 — 갈래마다 온전한 {topo} 급전이고, 세트 부하가 고르게 맞습니다.',
       set_label: 'S{n}',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
@@ -137,6 +141,7 @@
       hint_roomCapManual: ' — 이 용량이면 실당 변압기 {tx}대(유효 {eff}kW/대), 전체 {total}대가 필요합니다.',
       alloc_ok: '✓ 분배 가능 — POD {pods}개를 전기실 {rooms}개가 POD당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (남은 {n}실이 전량 부담, 용량 이내)',
       alloc_over: '⚠ 분배 불가 — 평상시부터 전기실 {over}개가 용량 초과 (최대 {ratio}%). 전기실 용량·세트 수를 늘리거나 POD 부하를 줄이세요.',
+      alloc_ok_split: '✓ 분배 가능 — POD {realPods}개를 {split}분할한 급전 블록 {pods}개를 전기실 {rooms}개가 블록당 {feeds}회선으로 분담. 전기실 최대 부하율 평상시 {ratio}% · {lost}실 상실 시 {emergency}% (남은 {n}실이 전량 부담, 용량 이내)',
       alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomSets: '전기실 세트 수',
@@ -195,6 +200,10 @@
       hint_pod_manual: '— {n} PODs × {cap}kW = {total}MW for the hall (this total becomes the ① total load)',
       hint_pod_auto: '— {n} PODs from the total load, about {kw}kW each. Uncheck to model fixed blocks such as 6MW PODs.',
       pod_row_title: 'Data hall PODs — {n} × {cap}kW = {mw}MW · per set {sets}',
+      pod_row_title_split: 'Data hall PODs — {n} × {cap}kW = {mw}MW · split {split} ways → {blocks} feed blocks × {blockKW}kW · per set {sets}',
+      label_podSplit: 'POD feed split',
+      hint_podSplit_1: 'A whole POD goes to one set. Set loads differ when the POD count is not a multiple of the set count.',
+      hint_podSplit_n: 'Each POD is split {split} ways ({blockKW}kW each) across different sets — every branch is still a full {topo} feed, and the sets come out even.',
       set_label: 'S{n}',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
       pod_feed_caption_comb: '2 feeders per POD (combinatorial) — a different pair of rooms carries half each, {pairs} combinations',
@@ -297,6 +306,7 @@
       hint_roomCapManual: ' — that capacity needs {tx} transformers per room ({eff}kW each), {total} in total.',
       alloc_ok: '✓ Feasible — {pods} PODs across {rooms} rooms, {feeds} feeders each. Peak room loading {ratio}% normally, {emergency}% with {lost} room(s) lost (the surviving {n} carry it all, within capacity)',
       alloc_over: '⚠ Not feasible — {over} room(s) already over capacity in normal operation (peak {ratio}%). Raise room capacity or set count, or lower the POD load.',
+      alloc_ok_split: '✓ Feasible — {realPods} PODs split {split} ways into {pods} feed blocks across {rooms} rooms, {feeds} feeders each. Peak room loading {ratio}% normally, {emergency}% with {lost} room(s) lost (within capacity)',
       alloc_over_emergency: '⚠ Over capacity on a loss — {ratio}% is fine normally, but losing {lost} room(s) pushes the surviving {n} to {emergency}%. Raise room capacity or add a set.',
       alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
       label_roomSets: 'Room sets',
@@ -686,7 +696,7 @@
   // 전기실 수를 늘리면 각 모듈의 변압기가 여러 방으로 쪼개진다. 방마다 최소 변압기 1대는
   // 들어가야 하므로 상한은 총 변압기 대수다 (전기실 8개 = 총 8대면 방당 1대씩).
   // 분배 결과 판정 — 용량을 넘기는 방이 있으면 경고, 급전원을 모두 잃은 POD가 있으면 더 강하게.
-  function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, M) {
+  function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, M, podPlan) {
     const el = document.getElementById('allocVerdict');
     if (!el) return;
     const over = rooms.filter(r => r.capacityKW > 0 && r.loadKW > r.capacityKW + 0.5).length;
@@ -695,10 +705,13 @@
     else if (over > 0) { key = 'alloc_over'; color = 'var(--warn)'; }
     else { key = 'alloc_ok'; color = 'var(--primary)'; }
     if (key === 'alloc_ok' && worstEmergency > 100.5) { key = 'alloc_over_emergency'; color = 'var(--warn)'; }
+    // 분할했으면 '블록'이 급전 단위다 — POD 개수와 혼동되지 않게 문구를 바꾼다
+    if (key === 'alloc_ok' && podPlan && podPlan.split > 1) key = 'alloc_ok_split';
     el.textContent = t(key, {
       pods: podCount, feeds: feedsPerPod, rooms: rooms.length,
       ratio: fmtN(Math.round(worstRatio * 10) / 10), over, unfed: unfedPods,
       emergency: fmtN(Math.round(worstEmergency * 10) / 10), lost: M - N, n: N,
+      realPods: podPlan ? podPlan.pods : podCount, split: podPlan ? podPlan.split : 1,
     });
     el.style.color = color;
     el.style.fontWeight = '700';
@@ -827,22 +840,41 @@
     return el ? el.checked : true;
   }
   // loadMW를 주면 그 부하 기준으로, 없으면 ①번 데이터홀 총부하 기준으로 POD 구성을 돌려준다.
+  // POD 1개를 몇 갈래로 쪼개 급전할지. 2로 두면 6MW POD가 3MW 반쪽 2개가 되고,
+  // 반쪽마다 서로 다른 전기실 세트에 물려도 각 반쪽은 온전한 N-of-M 구성을 유지한다.
+  function getPodSplit() {
+    const el = document.getElementById('podSplit');
+    const v = el ? parseInt(el.value, 10) : NaN;
+    return Math.max(1, Math.min(8, isFinite(v) && v > 0 ? v : 1));
+  }
+  // 반환값의 count/perPodKW는 '급전 블록' 기준이다 (분할했으면 POD 개수 × 분할 수).
+  // pods/cap은 사람이 보는 POD 기준.
   function getPodPlan(loadMW) {
     const cap = getPodCapacityKW();
+    const split = getPodSplit();
     const mw = (loadMW === undefined || loadMW === null || !isFinite(loadMW))
       ? (parseFloat(document.getElementById('load').value) || 0) : loadMW;
     const auto = isPodCountAuto();
-    if (auto) {
-      // 부하 주도: 총부하를 POD 부하로 나눠 개수를 정한다 (마지막 POD는 부분 적재)
-      const loadKW = mw * 1000;
-      const count = Math.max(1, Math.ceil(loadKW / cap));
-      return { cap, count, loadKW, perPodKW: loadKW / count, auto: true };
-    }
-    // POD 주도: POD 1개가 cap만큼 쓰는 고정 블럭이고, 그 합이 데이터홀 부하가 된다.
-    const el = document.getElementById('podCount');
-    const v = el ? parseInt(el.value, 10) : NaN;
-    const count = Math.max(1, Math.min(POD_COUNT_MAX, isFinite(v) && v > 0 ? v : 1));
-    return { cap, count, loadKW: count * cap, perPodKW: cap, auto: false };
+    const pods = auto
+      ? Math.max(1, Math.ceil((mw * 1000) / cap))
+      : (() => {
+          const el = document.getElementById('podCount');
+          const v = el ? parseInt(el.value, 10) : NaN;
+          return Math.max(1, Math.min(POD_COUNT_MAX, isFinite(v) && v > 0 ? v : 1));
+        })();
+    const loadKW = auto ? mw * 1000 : pods * cap;
+    const podKW = loadKW / pods;
+    return {
+      cap, split, pods, auto, loadKW,
+      count: pods * split,          // 급전 블록 수
+      perPodKW: podKW / split,      // 블록 1개가 받는 부하
+      podKW,                        // POD 1개 전체 부하
+    };
+  }
+  // 블록 i가 어느 POD의 몇 번째 갈래인지
+  function podBlockLabel(i, split) {
+    const n = Math.floor(i / split) + 1;
+    return split > 1 ? n + '-' + 'ABCDEFGH'[i % split] : String(n);
   }
   // ①번 총부하가 바뀌면 자동 모드의 수량 칸과 안내 문구를 다시 채운다.
   function updatePodControls() {
@@ -1118,6 +1150,12 @@
     const rooms = roomPlan.rooms;
     if (highlightRoom !== null && highlightRoom >= rooms.length) highlightRoom = null;
     updateRoomControls(roomPlan, effectiveCap, topoShortName);
+    const splitHint = document.getElementById('podSplitHint');
+    if (splitHint) {
+      splitHint.textContent = podPlan.split > 1
+        ? t('hint_podSplit_n', { split: podPlan.split, blockKW: fmtN(Math.round(podPlan.perPodKW)), topo: topoShortName })
+        : t('hint_podSplit_1');
+    }
     lastRoomCount = rooms.length;
     lastPerModuleUnits = rooms.length ? rooms[0].txCount : perModuleUnits;
     const podSet = new Array(podCount).fill(0);
@@ -1187,7 +1225,7 @@
       return r.capacityKW > 0 ? Math.max(m, load / r.capacityKW * 100) : m;
     }, 0);
     const unfedPods = podCarriers.filter(c => !c.length).length;
-    updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C);
+    updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C, podPlan);
 
     // POD가 많아지면 블럭을 좁혀서 도면 가로폭이 과도하게 늘어나지 않게 한다.
     let podW = 56, podGap = 6, podDetail = 2;   // 2: 이름+부하, 1: 이름만, 0: 번호만
@@ -1251,8 +1289,9 @@
 
     // ----- 데이터홀 → POD 분할 -----
     const podTitle = svgEl('text', { x: svgW / 2, y: podY - 20, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: navy, 'font-family': 'sans-serif' });
-    podTitle.textContent = t('pod_row_title', {
-      n: podCount, cap: fmtN(podPlan.cap), mw: fmtN(Math.round(podPlan.loadKW / 100) / 10),
+    podTitle.textContent = t(podPlan.split > 1 ? 'pod_row_title_split' : 'pod_row_title', {
+      n: podPlan.pods, cap: fmtN(Math.round(podPlan.podKW)), mw: fmtN(Math.round(podPlan.loadKW / 100) / 10),
+      split: podPlan.split, blocks: podCount, blockKW: fmtN(Math.round(podPlan.perPodKW)),
       // 세트별로 POD 몇 개가 몇 MW 들어갔는지 — POD 수가 세트 수로 나눠떨어지지 않으면
       // 한쪽 세트가 더 무거워지므로 그 결과를 숨기지 않고 그대로 보여준다.
       sets: roomPlan.setPods.map((list, si) =>
@@ -1295,7 +1334,8 @@
         x: podCx(p), y: podDetail === 2 ? podY + 15 : podY + 16, 'text-anchor': 'middle',
         'font-size': podDetail === 0 ? 8.5 : 9.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
       });
-      label.textContent = podDetail === 2 ? t('pod_chip', { n: p + 1 }) : (podDetail === 1 ? 'P' + (p + 1) : String(p + 1));
+      const blockName = podBlockLabel(p, podPlan.split);
+      label.textContent = podDetail === 2 ? t('pod_chip', { n: blockName }) : (podDetail === 1 ? 'P' + blockName : blockName);
       grp.appendChild(label);
       if (podDetail === 2) {
         const sub = svgEl('text', { x: podCx(p), y: podY + 27, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
@@ -2136,7 +2176,7 @@
     updatePodControls();
     calculate();
   }
-  ['podCapacity', 'podCount'].forEach(id => {
+  ['podCapacity', 'podCount', 'podSplit'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', onPodSettingChange);
   });
@@ -2552,7 +2592,7 @@
   const PRESET_KEY = 'prc_presets';
   const PRESET_FIELDS = [
     'utilityCapacity', 'itCapacityInput', 'hallCountInput', 'load', 'rating',
-    'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount',
+    'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount', 'podSplit',
     'nInput', 'cInput', 'roomSets', 'roomsPerSet', 'roomCapacity',
   ];
   const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomCapAuto', 'roomsPerSetAuto'];

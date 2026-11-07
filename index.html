@@ -147,6 +147,11 @@
         <div class="hint" data-i18n="hint_podCapacity">랙 그룹(POD) 1개가 쓰는 전력 — 이 블럭이 이중급전 단위가 됩니다</div>
       </div>
       <div class="field">
+        <label for="podSplit" data-i18n="label_podSplit">POD 급전 분할</label>
+        <input type="number" id="podSplit" value="1" step="1" min="1" max="8">
+        <div class="hint" id="podSplitHint"></div>
+      </div>
+      <div class="field">
         <label for="podCount" data-i18n="label_podCount">POD 수량 (개)</label>
         <input type="number" id="podCount" value="3" step="1" min="1" max="200">
         <div class="hint">
