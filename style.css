@@ -380,6 +380,30 @@
   .zoom-btn:hover { border-color: var(--primary); color: var(--primary); }
   .expand-btn { font-size: 13px; padding: 4px 10px; }
 
+  /* POD 구성 스터디 연동 */
+  .pod-study-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin: 14px 0 8px;
+  }
+  .pod-study-bar a.quick-btn { text-decoration: none; display: inline-block; }
+  #podJsonInput {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 12px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-color);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--text-main);
+    resize: vertical;
+  }
+  #podJsonInput:focus { outline: none; border-color: var(--primary); }
+
   /* 시스템 검토 의견 */
   .review-list { display: flex; flex-direction: column; gap: 9px; }
   .review-item {

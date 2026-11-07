@@ -37,6 +37,15 @@
       pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}',
       pod_row_title_split: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · POD당 {split}분할 → 급전 블록 {blocks}개 × {blockKW}kW · 세트별 배정 {sets}',
       label_podSplit: 'POD 급전 분할',
+      btn_podStudy: 'POD 구성 ↗',
+      btn_podJson: '구성 JSON 적용',
+      btn_podJsonApply: '적용',
+      ph_podJson: 'POD 구성 페이지의 "구성 JSON ↓"로 받은 내용을 붙여넣으세요',
+      podJson_ok: '✓ 랙 {racks}개 · IT {kw}kW({mw}MW) · PUE {pue} — POD 1개 부하에 적용했습니다',
+      podJson_err_parse: '⚠ JSON 형식이 아닙니다. "구성 JSON ↓"로 받은 파일 내용을 그대로 붙여넣으세요.',
+      podJson_err_shape: '⚠ counts·kw 배열이 없습니다. POD 구성 페이지의 구성 JSON이 맞는지 확인하세요.',
+      podJson_err_empty: '⚠ 랙 수량 또는 랙당 kW가 0입니다.',
+      podStudy_loaded: '랙 {racks}개 · IT {kw}kW 반영됨',
       hint_podSplit_1: 'POD 1개를 통째로 한 세트에 물립니다. POD 수가 세트 수로 나눠떨어지지 않으면 세트별 부하가 달라집니다.',
       warn_podSplit_sets: '⚠ {split}분할하려면 전기실 세트가 {split}개 이상이어야 합니다 (현재 {sets}개) — 같은 세트에 갈래가 몰려 쪼갠 효과가 없습니다.',
       hint_podSplit_n: 'POD 1개를 {split}갈래({blockKW}kW씩)로 쪼개 서로 다른 세트에 물립니다 — 갈래마다 온전한 {topo} 급전이고, 세트 부하가 고르게 맞습니다.',
@@ -254,6 +263,15 @@
       pod_row_title: 'Data hall PODs — {n} × {cap}kW = {mw}MW · per set {sets}',
       pod_row_title_split: 'Data hall PODs — {n} × {cap}kW = {mw}MW · split {split} ways → {blocks} feed blocks × {blockKW}kW · per set {sets}',
       label_podSplit: 'POD feed split',
+      btn_podStudy: 'POD study ↗',
+      btn_podJson: 'Apply config JSON',
+      btn_podJsonApply: 'Apply',
+      ph_podJson: 'Paste the contents of the POD study page’s config JSON download',
+      podJson_ok: '✓ {racks} racks · {kw}kW IT ({mw}MW) · PUE {pue} — applied as the load per POD',
+      podJson_err_parse: '⚠ Not valid JSON. Paste the downloaded config JSON exactly as it is.',
+      podJson_err_shape: '⚠ No counts/kw arrays found. Check that this is the POD study config JSON.',
+      podJson_err_empty: '⚠ Rack counts or kW per rack come to zero.',
+      podStudy_loaded: '{racks} racks · {kw}kW IT applied',
       hint_podSplit_1: 'A whole POD goes to one set. Set loads differ when the POD count is not a multiple of the set count.',
       warn_podSplit_sets: '⚠ Splitting {split} ways needs at least {split} room sets (currently {sets}) — the branches land in the same set, so the split buys nothing.',
       hint_podSplit_n: 'Each POD is split {split} ways ({blockKW}kW each) across different sets — every branch is still a full {topo} feed, and the sets come out even.',
@@ -1138,8 +1156,9 @@
       }
     }
     if (hint) {
+      // n은 사람이 세는 POD 개수다 — plan.count는 분할된 급전 블록 수라 여기선 쓰면 안 된다.
       hint.textContent = ' ' + t(plan.auto ? 'hint_pod_auto' : 'hint_pod_manual', {
-        n: plan.count, kw: fmtN(Math.round(plan.perPodKW)), cap: fmtN(plan.cap),
+        n: plan.pods, kw: fmtN(Math.round(plan.podKW)), cap: fmtN(plan.cap),
         total: fmtN(Math.round(plan.loadKW / 100) / 10),
       });
       hint.style.color = '';
@@ -2449,6 +2468,59 @@
       updateSldStatus();
     }
   });
+
+  // ===== POD 구성 스터디 연동 =====
+  // ai-factory-study 의 "구성 JSON" 은 랙 종류별 수량(counts)과 랙당 kW(kw)를 담고 있다.
+  // 둘을 곱해 더하면 POD 1개의 IT 부하가 나오고, 그 값을 ①번 POD 부하로 가져온다.
+  function parsePodStudyJson(text) {
+    let data;
+    try { data = JSON.parse(text); } catch (e) { return { error: 'parse' }; }
+    if (!data || !Array.isArray(data.counts) || !Array.isArray(data.kw)) return { error: 'shape' };
+    const n = Math.min(data.counts.length, data.kw.length);
+    let racks = 0, kw = 0;
+    for (let i = 0; i < n; i++) {
+      const c = Number(data.counts[i]) || 0;
+      const k = Number(data.kw[i]) || 0;
+      racks += c;
+      kw += c * k;
+    }
+    if (!(kw > 0)) return { error: 'empty' };
+    return { racks, kw, pue: Number(data.pue) || null };
+  }
+
+  const podJsonToggle = document.getElementById('podJsonToggle');
+  const podJsonBox = document.getElementById('podJsonBox');
+  if (podJsonToggle && podJsonBox) {
+    podJsonToggle.addEventListener('click', () => {
+      const open = podJsonBox.style.display === 'none';
+      podJsonBox.style.display = open ? 'block' : 'none';
+      if (open) document.getElementById('podJsonInput').focus();
+    });
+  }
+  const podJsonApply = document.getElementById('podJsonApply');
+  if (podJsonApply) {
+    podJsonApply.addEventListener('click', () => {
+      const status = document.getElementById('podJsonStatus');
+      const res = parsePodStudyJson(document.getElementById('podJsonInput').value || '');
+      const say = (key, vars, bad) => {
+        if (!status) return;
+        status.textContent = t(key, vars || {});
+        status.style.color = bad ? 'var(--warn)' : 'var(--primary)';
+        status.style.fontWeight = '700';
+      };
+      if (res.error) { say('podJson_err_' + res.error, {}, true); return; }
+      const capInput = document.getElementById('podCapacity');
+      capInput.value = Math.round(res.kw);
+      capInput.dispatchEvent(new Event('input', { bubbles: true }));
+      say('podJson_ok', {
+        racks: res.racks, kw: fmtN(Math.round(res.kw)),
+        mw: fmtN(Math.round(res.kw / 100) / 10),
+        pue: res.pue ? fmtN(res.pue) : '-',
+      });
+      const bar = document.getElementById('podStudyStatus');
+      if (bar) bar.textContent = t('podStudy_loaded', { racks: res.racks, kw: fmtN(Math.round(res.kw)) });
+    });
+  }
 
   // POD 설정을 바꾸면 ④·⑤가 함께 다시 그려진다.
   function onPodSettingChange() {

@@ -140,6 +140,18 @@
         </div>
       </div>
     </div>
+    <div class="pod-study-bar">
+      <a class="quick-btn" id="podStudyBtn" href="https://ai-factory-study.vercel.app/#/pod/basic" target="_blank" rel="noopener noreferrer" data-i18n="btn_podStudy">POD 구성 ↗</a>
+      <button class="quick-btn" id="podJsonToggle" data-i18n="btn_podJson">구성 JSON 적용</button>
+      <span class="hint" id="podStudyStatus" style="margin:0;"></span>
+    </div>
+    <div id="podJsonBox" style="display:none; margin-bottom:10px;">
+      <textarea id="podJsonInput" rows="4" data-i18n-placeholder="ph_podJson" placeholder="POD 구성 페이지의 &quot;구성 JSON ↓&quot;로 받은 내용을 붙여넣으세요"></textarea>
+      <div style="margin-top:6px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+        <button class="quick-btn" id="podJsonApply" data-i18n="btn_podJsonApply">적용</button>
+        <span class="hint" id="podJsonStatus" style="margin:0;"></span>
+      </div>
+    </div>
     <div class="field-row" style="margin-top:14px;">
       <div class="field">
         <label for="podCapacity" data-i18n="label_podCapacity">POD 1개 부하 (kW)</label>
