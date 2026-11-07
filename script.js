@@ -9,7 +9,7 @@
       label_utility: '수전용량 (MW)', label_it: 'IT용량 (MW)', label_pue: 'PUE (수전 ÷ IT, 자동계산)',
       label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
       label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
-      hint_maxSetCapacity: '변압기 정격×안전율×3(N)으로 ①번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
+      hint_maxSetCapacity: '유효용량 × N × 모듈당 변압기 대수로 ①~③번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
       btn_autoSplit: '데이터홀 개수로 균등 자동 분할', btn_addSet: '+ 데이터홀 수동 추가',
       th_hall: '데이터홀', th_itCap: 'IT용량 (MW)', th_topo: '이중화 방식', th_perRoomTx: '전기실당 변압기',
       th_totalModules: '총 모듈수', th_totalTx: '총 변압기', th_normal: '평상시', th_emergency: '비상시',
@@ -35,8 +35,10 @@
       hint_pod: '— POD {n}개 × {cap}kW, POD당 실부하 약 {kw}kW',
       pod_row_title: '데이터홀 POD — {n}개 × {cap}kW (POD당 실부하 {kw}kW)',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
+      pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
       pod_chip: 'POD {n}',
       legend_pod_note: 'POD(랙 그룹) — 데이터홀을 POD 단위로 분할하고, 각 POD는 위 급전모선에서 {feeds}회선으로 이중급전',
+      legend_pod_note_comb: 'POD(랙 그룹) — 데이터홀을 POD 단위로 분할하고, POD마다 다른 전기실 2곳(조합 {pairs}개)이 짝을 지어 이중급전',
       warn_podOver: '⚠ POD당 실부하가 설정 용량을 초과합니다 — 수량을 늘리거나 용량을 키우세요.',
       comb_pod_summary: '블럭 1개 = POD 1개 · 총 {n}개 × {cap}kW (POD당 실부하 {kw}kW) — 전기실 조합 {pairs}개 중 {zones}개 사용(조합당 평균 {perZone}개). 수량·용량은 ①번 POD 설정에서 조절합니다.',
       h5_title: '조합형 분배 배치도', h5_desc: '전기실 2개씩 짝지어 POD에 이중급전 — 전기실 수와 POD 수량은 ①·④번 값을 그대로 사용',
@@ -110,6 +112,23 @@
       total_emergency_rooms: '모듈 {m}개 기준 · 전기실 {rooms}개 중 {activeRooms}개 가동 · 변압기 총 {total}대 중 {activeTx}대 가동',
       module_label_group: '{n}그룹',
       label_roomCount: '전기실 수량 (개)',
+      preset_title: '설정',
+      preset_placeholder: '설정 이름 (예: 60MW 3홀)',
+      preset_save: '저장',
+      preset_delete: '삭제',
+      preset_reset: '기본값',
+      preset_choose: '저장된 설정 불러오기 ▾',
+      preset_saved: '✓ “{name}” 저장됨',
+      preset_loaded: '✓ “{name}” 불러왔습니다',
+      preset_deleted: '“{name}” 삭제됨',
+      preset_reset_done: '기본값으로 되돌렸습니다',
+      preset_need_name: '저장할 이름을 입력하세요',
+      preset_need_pick: '삭제할 설정을 선택하세요',
+      dist_bus: '모선형 분배',
+      dist_comb: '조합형 분배',
+      dist_bus_hint: '이중화 방식이 정한 전기실 전부가 급전모선을 통해 모든 POD에 병렬 급전합니다.',
+      dist_comb_hint: 'POD마다 서로 다른 전기실 2곳이 짝을 지어 이중급전합니다 — 전기실 {rooms}개로 가능한 조합 {pairs}개 중 {used}개 사용. 1개 전기실을 잃어도 그 부하가 짝 전체로 분산됩니다.',
+      dist_comb_need3: '⚠ 조합형 분배는 전기실이 최소 3개 필요합니다 (현재 {rooms}개) — 모선형으로 표시합니다.',
       label_roomCapacity: '전기실 1개 용량 (kW)',
       room_cap_line: '용량 {cap}kW · 부하율 {pct}%',
       label_roomCapAuto: '실당 변압기 대수 × 유효용량',
@@ -146,7 +165,7 @@
       label_utility: 'Utility capacity (MW)', label_it: 'IT capacity (MW)', label_pue: 'PUE (utility ÷ IT, auto)',
       label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
       label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
-      hint_maxSetCapacity: 'Derived from ① as transformer rating × safety factor × 3(N) — halls above it are flagged in the table below',
+      hint_maxSetCapacity: 'Derived from ①~③ as effective capacity × N × transformers per module — halls above it are flagged in the table below',
       btn_autoSplit: 'Auto-split evenly by hall count', btn_addSet: '+ Add hall manually',
       th_hall: 'Data hall', th_itCap: 'IT capacity (MW)', th_topo: 'Redundancy', th_perRoomTx: 'Tx per room',
       th_totalModules: 'Total modules', th_totalTx: 'Total tx', th_normal: 'Normal', th_emergency: 'Emergency',
@@ -172,8 +191,10 @@
       hint_pod: '— {n} PODs × {cap}kW, about {kw}kW actual per POD',
       pod_row_title: 'Data hall PODs — {n} × {cap}kW ({kw}kW actual each)',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
+      pod_feed_caption_comb: '2 feeders per POD (combinatorial) — a different pair of rooms carries half each, {pairs} combinations',
       pod_chip: 'POD {n}',
       legend_pod_note: 'POD (rack group) — the hall is split into PODs, each dual-fed by {feeds} feeders from the buses above',
+      legend_pod_note_comb: 'POD (rack group) — the hall is split into PODs, each dual-fed by its own pair of rooms ({pairs} combinations)',
       warn_podOver: '⚠ Actual load per POD exceeds the configured capacity — raise the count or the capacity.',
       comb_pod_summary: 'One block = one POD · {n} × {cap}kW ({kw}kW actual each) — {zones} of {pairs} room combinations in use ({perZone} PODs each on average). Count and capacity are set in the POD fields in ①.',
       h5_title: 'Combinatorial distribution layout', h5_desc: 'Rooms paired up to dual-feed each POD — room count and POD count come from ① and ④',
@@ -247,6 +268,23 @@
       total_emergency_rooms: '{m} modules · {activeRooms} of {rooms} rooms running · {activeTx} of {total} transformers running',
       module_label_group: 'Group {n}',
       label_roomCount: 'Electrical rooms',
+      preset_title: 'Presets',
+      preset_placeholder: 'Preset name (e.g. 60MW 3 halls)',
+      preset_save: 'Save',
+      preset_delete: 'Delete',
+      preset_reset: 'Defaults',
+      preset_choose: 'Load a saved preset ▾',
+      preset_saved: '✓ Saved “{name}”',
+      preset_loaded: '✓ Loaded “{name}”',
+      preset_deleted: 'Deleted “{name}”',
+      preset_reset_done: 'Restored the defaults',
+      preset_need_name: 'Enter a name to save under',
+      preset_need_pick: 'Pick a preset to delete',
+      dist_bus: 'Bus distribution',
+      dist_comb: 'Combinatorial distribution',
+      dist_bus_hint: 'Every room the redundancy scheme names feeds every POD in parallel through its distribution bus.',
+      dist_comb_hint: 'Each POD is dual-fed by its own pair of rooms — {used} of the {pairs} combinations {rooms} rooms allow, so losing one room spreads its load across all the others.',
+      dist_comb_need3: '⚠ Combinatorial distribution needs at least 3 rooms (currently {rooms}) — showing bus distribution.',
       label_roomCapacity: 'Capacity per room (kW)',
       room_cap_line: 'capacity {cap}kW · {pct}% loaded',
       label_roomCapAuto: 'Transformers per room × effective capacity',
@@ -298,6 +336,9 @@
     document.querySelectorAll('[data-i18n-title]').forEach(el => {
       el.setAttribute('title', t(el.getAttribute('data-i18n-title')));
     });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      el.setAttribute('placeholder', t(el.getAttribute('data-i18n-placeholder')));
+    });
   }
 
   function setLang(lang) {
@@ -309,10 +350,9 @@
     applyTopoMeta();
     refreshRatingPresetOptions();
     updateRatingCapStyle();
-    refreshFailRoomOptions();
     calculate();
-    renderCombDiagram();
     renderSets();
+    if (typeof refreshPresetOptions === 'function') { try { refreshPresetOptions(presetSelect.value); } catch (e) {} }
     if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
   }
 
@@ -467,12 +507,11 @@
     document.getElementById('flowDesc').textContent = meta.flowDesc;
   }
 
-  // Central setter for the ①번 데이터홀 총부하 so every dependent section (⑤ 조합형 배치도,
-  // ③/④ 계산 결과) stays in sync even when the value is pushed in programmatically
-  // (e.g. from ⓪번 홀당 용량 auto-calc), since setting .value directly does not fire 'input'.
+  // Central setter for the ①번 데이터홀 총부하 so every dependent section stays in sync even
+  // when the value is pushed in programmatically (e.g. from ⓪번 홀당 용량 auto-calc), since
+  // setting .value directly does not fire 'input'.
   function applyMainLoad(mw) {
     loadInput.value = Number(mw.toFixed(2));
-    if (typeof renderCombDiagram === 'function') renderCombDiagram();
     calculate();
   }
 
@@ -549,6 +588,7 @@
     // (이 calculate()의 최초 1회 호출은 ⑤번 const들이 아직 선언되기 전에 실행되므로,
     // 그 시점의 TDZ 참조 오류는 무시 — ⑤번 초기화가 끝난 뒤 다시 호출되면서 정상 반영됨)
     if (typeof renderRefTable === 'function') { try { renderRefTable(); } catch (e) {} }
+    if (typeof refreshMaxSetCapacityHint === 'function') { try { refreshMaxSetCapacityHint(); renderSets(); } catch (e) {} }
   }
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -587,7 +627,45 @@
   // Shared color palette for rooms/modules (distinct hues so cross-connections read intuitively)
   const ROOM_COLORS = ['#6F5FBF', '#0F6E56', '#993C1D', '#185FA5', '#993556', '#3B6D11', '#854F0B', '#A32D2D'];
   const ROOM_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-  let lastRoomCount = 0;   // ④가 정한 전기실 수 — ⑤의 M 연동에 쓰인다
+  let lastRoomCount = 0;
+  let lastPerModuleUnits = 1;   // ③이 산정한 모듈당 변압기 대수 — ⓪ 권장 최대용량에 쓰인다
+
+  // ===== ④ 분배 방식 =====
+  // 같은 입력(전기실 수·용량, POD 수·용량, 이중화 방식)에 대해 POD를 전기실에 물리는
+  // 두 가지 방식을 토글로 전환한다.
+  //  · 모선형: 이중화 방식이 정한 전기실 전부가 모선을 통해 모든 POD에 병렬 급전
+  //  · 조합형: POD마다 서로 다른 전기실 2곳(N choose 2 조합)이 짝지어 이중급전
+  let distMode = localStorage.getItem('prc_dist') === 'comb' ? 'comb' : 'bus';
+  function updateDistHint(combActive, roomCount, pairCount, usedPairs) {
+    const el = document.getElementById('distHint');
+    if (!el) return;
+    if (distMode === 'comb' && !combActive) {
+      el.textContent = t('dist_comb_need3', { rooms: roomCount });
+      el.style.color = 'var(--warn)';
+    } else if (combActive) {
+      el.textContent = t('dist_comb_hint', { rooms: roomCount, pairs: pairCount, used: usedPairs });
+      el.style.color = '';
+    } else {
+      el.textContent = t('dist_bus_hint');
+      el.style.color = '';
+    }
+  }
+  function applyDistButtons() {
+    // .active 만으로는 색이 안 붙는다 — 보라색 알약은 .active.normal 조합이다
+    [['distBusBtn', 'bus'], ['distCombBtn', 'comb']].forEach(([id, mode]) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const on = distMode === mode;
+      btn.classList.toggle('active', on);
+      btn.classList.toggle('normal', on);
+    });
+  }
+  function setDistMode(mode) {
+    distMode = mode === 'comb' ? 'comb' : 'bus';
+    localStorage.setItem('prc_dist', distMode);
+    applyDistButtons();
+    calculate();
+  }
 
   // ===== 전기실(물리적 방) 구성 =====
   // 이중화 방식은 "모듈(트레인/Duty/캐쳐)"을 몇 개 둘지만 정한다. 그 모듈의 변압기를 실제로
@@ -807,14 +885,10 @@
   }
 
   const diagramZoom = makeZoomable('diagramSvg');
-  const combZoom = makeZoomable('combSvg');
   const sldZoom = makeZoomable('sldSvg');
   document.getElementById('diagramZoomIn').addEventListener('click', () => diagramZoom.zoomIn());
   document.getElementById('diagramZoomOut').addEventListener('click', () => diagramZoom.zoomOut());
   document.getElementById('diagramZoomReset').addEventListener('click', () => diagramZoom.reset());
-  document.getElementById('combZoomIn').addEventListener('click', () => combZoom.zoomIn());
-  document.getElementById('combZoomOut').addEventListener('click', () => combZoom.zoomOut());
-  document.getElementById('combZoomReset').addEventListener('click', () => combZoom.reset());
   document.getElementById('sldZoomIn').addEventListener('click', () => sldZoom.zoomIn());
   document.getElementById('sldZoomOut').addEventListener('click', () => sldZoom.zoomOut());
   document.getElementById('sldZoomReset').addEventListener('click', () => sldZoom.reset());
@@ -864,7 +938,7 @@
     document.body.classList.remove('modal-open');
     if (zoom) zoom.reset();
   }
-  [['diagramExpandBtn', 'diagramSvg', diagramZoom], ['combExpandBtn', 'combSvg', combZoom], ['sldExpandBtn', 'sldSvg', sldZoom]]
+  [['diagramExpandBtn', 'diagramSvg', diagramZoom], ['sldExpandBtn', 'sldSvg', sldZoom]]
     .forEach(([btnId, svgId, zoom]) => {
       const btn = document.getElementById(btnId);
       if (!btn) return;
@@ -888,18 +962,13 @@
   window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDiagramModal(); });
 
   // Double-click on empty diagram background (outside any module/room block) => back to 평상시.
-  // Per-block dblclick handlers (added inside renderDiagram/renderCombDiagram, since blocks are
+  // Per-block dblclick handlers (added inside renderDiagram, since blocks are
   // redrawn every render) call stopPropagation so only a genuine background click reaches here.
   document.getElementById('diagramSvg').addEventListener('dblclick', () => {
     manualFail4.clear();
     diagramMode = 'normal';
     updateDiagramModeButtons();
     calculate();
-  });
-  document.getElementById('combSvg').addEventListener('dblclick', () => {
-    combMode = 'normal';
-    updateCombModeButtons();
-    renderCombDiagram();
   });
 
   function renderDiagram(N, C, perModuleUnits, load, rating, effectiveCap) {
@@ -982,6 +1051,7 @@
     // ⑤는 같은 전기실을 조합형으로 배치하므로 방 개수를 그대로 넘긴다
     // (⑤ 섹션은 이 함수보다 아래에서 초기화되므로 존재 확인 후 호출한다).
     lastRoomCount = rooms.length;
+    lastPerModuleUnits = perModuleUnits;
 
     // ----- POD 구성 (①번 공통 설정) -----
     // 데이터홀은 단일 덩어리가 아니라 POD(랙 그룹) 단위로 쪼개지고, 각 POD는 이중화 방식이
@@ -995,8 +1065,37 @@
     // 모듈별 첫 전기실의 인덱스 — 모듈이 여러 방으로 쪼개졌을 때 POD를 방에 돌려 배분한다.
     const firstRoomOfModule = [];
     { let acc = 0; roomPlan.roomsPerModule.forEach(rc => { firstRoomOfModule.push(acc); acc += rc; }); }
+    // 조합형은 전기실이 최소 3개 있어야 짝을 지을 수 있다
+    const combPossible = distMode === 'comb' && rooms.length >= 3;
+    const pairs = combPossible ? combPairs(rooms.length) : null;
+    // POD를 조합에 물릴 때 combPairs 순서를 그대로 쓰면 앞쪽 전기실에 몰린다
+    // (POD 3개 × 8실이면 (A,B) (A,C) (A,D) — A가 3개를 전부 떠안는다).
+    // 그래서 매번 '지금까지 가장 적게 쓰인 두 방'을, 가능하면 아직 안 쓴 조합으로 고른다.
+    const pairUse = new Array(rooms.length).fill(0);
+    const pairSeen = new Set();
+    const pairKey = (a, b) => Math.min(a, b) + '-' + Math.max(a, b);
+    const roomPairFor = () => {
+      const order = rooms.map((_, i) => i).sort((x, y) => pairUse[x] - pairUse[y] || x - y);
+      let a = order[0], b = order[1];
+      search:
+      for (let i = 0; i < order.length; i++) {
+        for (let j = i + 1; j < order.length; j++) {
+          if (!pairSeen.has(pairKey(order[i], order[j]))) { a = order[i]; b = order[j]; break search; }
+        }
+      }
+      pairSeen.add(pairKey(a, b));
+      pairUse[a]++; pairUse[b]++;
+      return [a, b];
+    };
+    // 조합형에는 '대기 중인 캐쳐'라는 개념이 없다 — 모든 전기실이 조합에 참여해 상시 급전한다.
+    // (그대로 두면 캐쳐 2곳이 짝인 POD가 급전원 없는 상태로 남는다.)
+    if (combPossible) rooms.forEach(r => { if (r.state === 'idle') r.state = 'active'; });
     const podFeeds = [];
     for (let p = 0; p < podCount; p++) {
+      if (combPossible) {
+        podFeeds.push(roomPairFor());
+        continue;
+      }
       const feedModules = currentTopo === 'standby'
         ? [p % Math.max(1, N)].concat(Array.from({ length: C }, (_, c) => N + c))
         : modules.map((_, k) => k);
@@ -1007,6 +1106,9 @@
       }));
     }
     const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
+    const usedPairKeys = new Set();
+    if (combPossible) podFeeds.forEach(f => usedPairKeys.add([...f].sort((a, b) => a - b).join('-')));
+    updateDistHint(combPossible, rooms.length, pairs ? pairs.length : 0, usedPairKeys.size);
 
     // ----- 분배 -----
     // 선택한 이중화 방식이 POD마다 급전 전기실을 정하고, 그중 '살아 있는' 방들이 그 POD의
@@ -1050,10 +1152,12 @@
     const podX = p => podStartX + p * (podW + podGap);
     const podCx = p => podX(p) + podW / 2;
     // 전기실별 급전모선을 POD 행과 전기실 행 사이에 층층이 깔고, POD가 거기서 분기한다.
+    const combLayout = distMode === 'comb' && rooms.length >= 3;
     const busGap = 15;
     const busY0 = podY + podH + 24;
     const busY = k => busY0 + k * busGap;
-    const moduleY = busY(moduleCount - 1) + 30;
+    // 조합형은 모선 없이 곡선으로 바로 잇는다 — 모선 자리만큼의 세로 공간이 필요 없다
+    const moduleY = combLayout ? podY + podH + 86 : busY(moduleCount - 1) + 30;
 
     const maxRoomTx = rooms.reduce((m, r) => Math.max(m, r.txCount), 1);
     const txRowsNeeded = Math.ceil(maxRoomTx / 3);
@@ -1127,8 +1231,43 @@
       }
     }
 
-    // ----- 전기실별 급전모선 + POD 분기 (이중화 회선) -----
-    // 각 전기실은 자기 색의 수평 모선을 하나씩 갖고, POD는 자기에게 급전하는 모선마다
+    // ----- 급전 회선 -----
+    if (combPossible) {
+      // 조합형: POD마다 짝이 된 전기실 2곳에서 곡선으로 직접 급전. 평상시 절반씩,
+      // 한쪽을 잃으면 남은 쪽이 그 POD를 전량 떠안는다.
+      for (let p = 0; p < podCount; p++) {
+        const feeds = podFeeds[p];
+        const live = podCarriers[p];
+        feeds.forEach((k, j) => {
+          const room = rooms[k];
+          const isOff = room.state === 'offline';
+          const isIdleRoom = room.state === 'idle';
+          const color = isOff ? offlineBorder : (isIdleRoom ? standbyBorder : roomColor(k));
+          const carries = live.indexOf(k) >= 0 ? podLoadKW / live.length : 0;
+          const solo = live.length === 1 && carries > 0;
+          const x1 = podCx(p), y1 = podY + podH;
+          const x2 = startX + k * (boxW + gap) + boxW / 2, y2 = moduleY;
+          svgTarget.appendChild(svgEl('path', {
+            d: smoothCurvePath(x1, y1, x2, y2),
+            fill: 'none', stroke: color,
+            'stroke-width': carries === 0 ? 1.2 : (solo ? 2.6 : 1.6),
+            opacity: carries === 0 ? 0.4 : (solo ? 0.95 : 0.6),
+            'stroke-dasharray': carries === 0 ? '4,4' : 'none',
+          }));
+          if (podCount <= 12) {
+            const pt = smoothCurvePoint(0.42 + j * 0.13, x1, y1, x2, y2);
+            const lbl = svgEl('text', {
+              x: pt.x, y: pt.y + (j === 0 ? -3 : 8), 'text-anchor': 'middle', 'font-size': 7.5,
+              'font-weight': 700, fill: color, 'font-family': 'sans-serif',
+              stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+            });
+            lbl.textContent = fmtN(Math.round(carries)) + 'kW';
+            svgTarget.appendChild(lbl);
+          }
+        });
+      }
+    } else {
+    // 모선형: 전기실마다 자기 색의 수평 모선을 하나씩 깔고, POD는 자기에게 급전하는 모선마다
     // 짧은 수직 분기선을 내려 접점(점)으로 연결한다. 접점이 없는 교차는 연결이 아니다.
     const tapSpacing = Math.min(6, Math.max(2.5, (podW - 5) / Math.max(1, feedsPerPod)));
     const busSpan = [];   // 전기실별 모선의 x 범위
@@ -1192,9 +1331,15 @@
       }));
     });
 
+    }
+
     const topoShort = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
-    const feedCaption = svgEl('text', { x: svgW / 2, y: moduleY - 12, 'text-anchor': 'middle', 'font-size': 9.5, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
-    feedCaption.textContent = t('pod_feed_caption', { feeds: feedsPerPod, topo: topoShort });
+    const feedCaption = svgEl('text', {
+      x: svgW / 2, y: moduleY - 12, 'text-anchor': 'middle', 'font-size': 9.5, 'font-weight': 700,
+      fill: '#8A8072', 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+    });
+    feedCaption.textContent = t(combPossible ? 'pod_feed_caption_comb' : 'pod_feed_caption', { feeds: feedsPerPod, topo: topoShort, pairs: usedPairKeys.size });
     svgTarget.appendChild(feedCaption);
 
     rooms.forEach((mod, i) => {
@@ -1354,7 +1499,7 @@
     const podNoteDiv = document.createElement('div');
     podNoteDiv.className = 'item';
     podNoteDiv.style.width = '100%';
-    podNoteDiv.innerHTML = `<span class="swatch" style="background:${hexToRgba(navy, 0.25)}; border:1.2px solid ${accent};"></span>${t('legend_pod_note', { feeds: feedsPerPod })}`;
+    podNoteDiv.innerHTML = `<span class="swatch" style="background:${hexToRgba(navy, 0.25)}; border:1.2px solid ${accent};"></span>${t(combPossible ? 'legend_pod_note_comb' : 'legend_pod_note', { feeds: feedsPerPod, pairs: usedPairKeys.size })}`;
     legend.appendChild(podNoteDiv);
 
     const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
@@ -1895,10 +2040,9 @@
     }
   });
 
-  // POD 설정을 바꾸면 ④·⑤·⑥이 함께 다시 그려진다.
+  // POD 설정을 바꾸면 ④·⑤가 함께 다시 그려진다.
   function onPodSettingChange() {
     updatePodControls();
-    renderCombDiagram();
     calculate();
   }
   ['podCapacity', 'podCount'].forEach(id => {
@@ -1908,11 +2052,7 @@
   const podAutoCheckbox = document.getElementById('podAuto');
   if (podAutoCheckbox) podAutoCheckbox.addEventListener('change', onPodSettingChange);
 
-  // 전기실 수량 — ④의 방 분할을 바꾸고, 연동 체크 시 ⑤의 M도 따라간다.
-  function onRoomSettingChange() {
-    calculate();          // ④ 재계산 → lastRoomCount 갱신 → ⑤ M 연동
-    renderCombDiagram();  // 갱신된 M으로 ⑤도 다시 그린다
-  }
+  function onRoomSettingChange() { calculate(); }
   const roomCountInput = document.getElementById('roomCount');
   if (roomCountInput) roomCountInput.addEventListener('input', onRoomSettingChange);
   const roomAutoCheckbox = document.getElementById('roomAuto');
@@ -1976,6 +2116,10 @@
     });
   });
 
+  applyDistButtons();
+  document.getElementById('distBusBtn').addEventListener('click', () => setDistMode('bus'));
+  document.getElementById('distCombBtn').addEventListener('click', () => setDistMode('comb'));
+
   document.getElementById('modeNormalBtn').addEventListener('click', () => {
     diagramMode = 'normal';
     manualFail4.clear();
@@ -1992,38 +2136,7 @@
   calculate();
 
   // ===== ⑤ 조합형 분배 배치도 (Combinatorial N choose 2) =====
-  const combFailRoomSelect = document.getElementById('combFailRoom');
-  const combModeNormalBtn = document.getElementById('combModeNormalBtn');
-  const combModeEmergencyBtn = document.getElementById('combModeEmergencyBtn');
-  let combMode = 'normal';
-
-  // ⑤는 자체 입력값을 갖지 않는다 — 전기실 수는 ④, 총 IT부하와 POD 수량은 ①에서 그대로
-  // 가져온다. (예전에는 같은 값을 '연동' 체크박스와 함께 한 번 더 입력받았는데, 같은 수치를
-  // 두 곳에서 관리하게 되어 삭제했다.)
-  function getTotalTxCount() {
-    const n = parseInt(document.getElementById('resultTotal').textContent);
-    return isFinite(n) && n > 0 ? n : 6;
-  }
-  // 조합형 배치는 짝을 지으려면 전기실이 최소 3개 필요하다.
-  function getCombM() {
-    return Math.max(3, lastRoomCount || 4);
-  }
-  function getCombLoad() {
-    return parseFloat(loadInput.value);
-  }
-  function updateCombSourceHint() {
-    const el = document.getElementById('combSourceHint');
-    if (!el) return;
-    const M = getCombM();
-    el.textContent = t('hint_combSource', {
-      m: M, rooms: lastRoomCount || M, mw: fmtN(getCombLoad() || 0),
-      pairs: M * (M - 1) / 2,
-    });
-  }
-  // ①번 총부하가 바뀌면 ⑤도 다시 그린다
-  loadInput.addEventListener('input', renderCombDiagram);
-
-
+  // 전기실 2개씩 짝을 짓는 조합(N choose 2) — '조합형 분배'에서 POD마다 다른 짝에 물린다.
   function combPairs(M) {
     const pairs = [];
     for (let i = 0; i < M; i++) {
@@ -2031,288 +2144,6 @@
     }
     return pairs;
   }
-
-  function refreshFailRoomOptions() {
-    const M = getCombM();
-    const current = combFailRoomSelect.value;
-    combFailRoomSelect.innerHTML = '';
-    for (let i = 0; i < M; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = t('room_label', { letter: ROOM_LETTERS[i] });
-      combFailRoomSelect.appendChild(opt);
-    }
-    if (current !== '' && parseInt(current) < M) combFailRoomSelect.value = current;
-  }
-
-  function renderCombDiagram() {
-    const M = getCombM();
-    const totalLoad = getCombLoad();
-    updateCombSourceHint();
-    // 전기실 수가 ④에서 바뀌면 상실 전기실 드롭다운도 같이 늘거나 줄어야 한다
-    if (combFailRoomSelect.options.length !== M) refreshFailRoomOptions();
-    const svg = document.getElementById('combSvg');
-    combZoom.clear();
-    const svgTarget = combZoom.group;
-    if (!totalLoad || totalLoad <= 0) return;
-
-    const pairs = combPairs(M);
-    const pairCount = pairs.length;
-    const failRoom = combMode === 'emergency' ? parseInt(combFailRoomSelect.value) : -1;
-
-    // ----- POD 블럭 -----
-    // 아래 줄의 블럭 1개 = POD 1개다. 입력한 수량만큼 그려지고, 전기실 조합(A+B, A+C …)에
-    // 순서대로 배정되어 그 2곳에서 이중급전받는다. POD가 조합 수보다 많으면 같은 조합에
-    // POD가 여러 개 붙고, 적으면 쓰이지 않는 조합은 그리지 않는다.
-    const podPlan = getPodPlan(totalLoad);
-    const podCount = podPlan.count;
-    const podPair = p => pairs[p % pairCount];
-    const podLoadMW = totalLoad / podCount;
-    const usedPairs = new Set();
-    for (let p = 0; p < podCount; p++) usedPairs.add(p % pairCount);
-    const zoneCount = pairCount;
-
-    const navy = '#3A2E75';
-    const offlineBorder = '#DB8478';
-    const offlineFill = '#FBEDE7';
-
-    // layout
-    const roomW = 90, roomH = 46;
-    const roomGap = Math.max(16, 700 / M - roomW);
-    const roomsTotalW = M * roomW + (M - 1) * roomGap;
-
-    // POD 블럭 한 줄 최대 8개, 수가 많아지면 블럭을 좁힌다
-    const zonesPerRow = Math.min(8, podCount);
-    const zoneW = podCount > 16 ? 88 : (podCount > 8 ? 108 : 132);
-    const zoneGapX = podCount > 8 ? 10 : 16;
-    const zoneGapY = 22;
-    const zoneDetail = zoneW >= 108;   // 블럭이 좁아지면 회선 분담 줄은 생략
-    const zoneH = zoneDetail ? 70 : 58;
-    const zoneRows = Math.ceil(podCount / zonesPerRow);
-    const zoneRowW = zonesPerRow * zoneW + (zonesPerRow - 1) * zoneGapX;
-
-    const svgW = Math.max(760, roomsTotalW + 80, zoneRowW + 80);
-    const roomY = 30;
-    const zoneStartY = roomY + roomH + 83; // 1.5× the original 55px gap, room for label-dense curves
-    const svgH = zoneStartY + zoneRows * (zoneH + zoneGapY) + 50;
-    svg.setAttribute('width', svgW);
-    svg.setAttribute('height', svgH);
-    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
-
-    // defs for cross-color gradients (one per zone, using its 2 parent room colors)
-    const defs = svgEl('defs', {});
-    svgTarget.appendChild(defs);
-
-    const roomStartX = (svgW - roomsTotalW) / 2;
-    const roomX = i => roomStartX + i * (roomW + roomGap);
-    const roomCenterX = i => roomX(i) + roomW / 2;
-
-    // room boxes
-    const roomLoads = new Array(M).fill(0);
-    for (let i = 0; i < M; i++) {
-      if (combMode === 'emergency') {
-        roomLoads[i] = (i === failRoom) ? 0 : totalLoad / (M - 1);
-      } else {
-        roomLoads[i] = totalLoad / M;
-      }
-    }
-
-    for (let i = 0; i < M; i++) {
-      const isOffline = (i === failRoom);
-      const rColor = roomColor(i);
-
-      // Grouped so a double-click anywhere on the room block (box or labels) toggles it as
-      // the 상실 전기실 — mirrors the ④ 구성 다이어그램 interaction.
-      const roomGroup = svgEl('g', { cursor: 'pointer' });
-      roomGroup.addEventListener('dblclick', (e) => {
-        e.stopPropagation();
-        if (failRoom === i) {
-          combMode = 'normal';
-        } else {
-          combFailRoomSelect.value = i;
-          combMode = 'emergency';
-        }
-        updateCombModeButtons();
-        renderCombDiagram();
-      });
-
-      const rect = svgEl('rect', {
-        x: roomX(i), y: roomY, width: roomW, height: roomH, rx: 8,
-        fill: isOffline ? offlineFill : rColor,
-        stroke: isOffline ? offlineBorder : rColor, 'stroke-width': 1.5,
-        'stroke-dasharray': isOffline ? '5,4' : 'none',
-      });
-      roomGroup.appendChild(rect);
-      const label = svgEl('text', { x: roomCenterX(i), y: roomY + 19, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 800, fill: isOffline ? '#C8604F' : '#fff', 'font-family': 'sans-serif' });
-      label.textContent = t('room_label', { letter: ROOM_LETTERS[i] });
-      roomGroup.appendChild(label);
-      const sub = svgEl('text', { x: roomCenterX(i), y: roomY + 36, 'text-anchor': 'middle', 'font-size': 10.5, 'font-weight': 700, fill: isOffline ? '#C8604F' : '#fff', 'font-family': 'sans-serif' });
-      sub.textContent = isOffline ? t('room_offline') : `${fmtN(roomLoads[i])} MW`;
-      roomGroup.appendChild(sub);
-      svgTarget.appendChild(roomGroup);
-    }
-
-    // POD 블럭 + 급전 회선 — 블럭 1개 = POD 1개
-    for (let idx = 0; idx < podCount; idx++) {
-      const pair = podPair(idx);
-      const row = Math.floor(idx / zonesPerRow);
-      const col = idx % zonesPerRow;
-      const rowCount = Math.min(zonesPerRow, podCount - row * zonesPerRow);
-      const rowW = rowCount * zoneW + (rowCount - 1) * zoneGapX;
-      const rowStartX = (svgW - rowW) / 2;
-      const zx = rowStartX + col * (zoneW + zoneGapX);
-      const zy = zoneStartY + row * (zoneH + zoneGapY);
-      const zCenterX = zx + zoneW / 2;
-
-      const zoneLoad = podLoadMW;
-      const [a, b] = pair;
-      const aFailed = (a === failRoom);
-      const bFailed = (b === failRoom);
-      const zoneAffected = aFailed || bFailed;
-      const colorA = roomColor(a), colorB = roomColor(b);
-
-      // feed loads
-      const feedA = aFailed ? 0 : (zoneAffected ? zoneLoad : zoneLoad / 2);
-      const feedB = bFailed ? 0 : (zoneAffected ? zoneLoad : zoneLoad / 2);
-
-      // curves — colored by originating room so crossing pattern reads at a glance; smooth
-      // S-curves (vertical tangents at both ends) instead of straight lines, matching the
-      // 품사/문장성분 reference diagram's connector style.
-      [[a, feedA, aFailed, colorA], [b, feedB, bFailed, colorB]].forEach(([roomIdx, feed, isFailed, rc], sideIdx) => {
-        const isStrong = feed > zoneLoad / 2 + 0.001;
-        const x1 = roomCenterX(roomIdx), y1 = roomY + roomH, x2 = zCenterX, y2 = zy;
-        const line = svgEl('path', {
-          d: smoothCurvePath(x1, y1, x2, y2),
-          fill: 'none',
-          stroke: isFailed ? offlineBorder : rc,
-          'stroke-width': isFailed ? 1.5 : (isStrong ? 3 : 1.75),
-          opacity: isFailed ? 0.5 : (isStrong ? 0.9 : 0.55),
-          'stroke-dasharray': isFailed ? '4,4' : 'none',
-        });
-        svgTarget.appendChild(line);
-
-        // small MW label along the curve itself, so the split is readable at a glance in both
-        // 평상시(50/50) and 비상시(0/100) — offset by side + a slight vertical stagger so the
-        // two labels converging on the same zone don't sit on top of each other.
-        if (podCount > 12) return;   // POD가 많으면 회선 라벨이 겹쳐 도면만 지저분해진다
-        const t = 0.4 + sideIdx * 0.14;
-        const pt = smoothCurvePoint(t, x1, y1, x2, y2);
-        const labelY = pt.y + (sideIdx === 0 ? -3 : 8);
-        const feedLabel = svgEl('text', {
-          x: pt.x, y: labelY, 'text-anchor': 'middle', 'font-size': 7.5, 'font-weight': 700,
-          fill: isFailed ? '#C8604F' : rc, 'font-family': 'sans-serif',
-          stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
-        });
-        feedLabel.textContent = `${fmtN(feed)}MW`;
-        svgTarget.appendChild(feedLabel);
-      });
-
-      // gradient fill combining both parent room colors so the zone box itself shows the cross-composition
-      const gradId = `zoneGrad-${idx}`;
-      const grad = svgEl('linearGradient', { id: gradId, x1: '0%', y1: '0%', x2: '100%', y2: '0%' });
-      const stop1 = svgEl('stop', { offset: '0%', 'stop-color': aFailed ? '#DAD4EC' : colorA, 'stop-opacity': 0.22 });
-      const stop2 = svgEl('stop', { offset: '100%', 'stop-color': bFailed ? '#DAD4EC' : colorB, 'stop-opacity': 0.22 });
-      grad.appendChild(stop1);
-      grad.appendChild(stop2);
-      defs.appendChild(grad);
-
-      const zoneRect = svgEl('rect', {
-        x: zx, y: zy, width: zoneW, height: zoneH, rx: 8,
-        fill: `url(#${gradId})`,
-        stroke: zoneAffected ? '#D0A96B' : '#E0DAF0', 'stroke-width': 1.5,
-      });
-      // IT존 박스는 전기실 블럭이 아니므로 더블클릭해도 상태를 바꾸지 않음 — 다만 배경으로
-      // 이벤트가 버블링되어 실수로 평상시 복귀되는 것은 막는다.
-      zoneRect.addEventListener('dblclick', (e) => e.stopPropagation());
-      svgTarget.appendChild(zoneRect);
-
-      // small color chips for A and B under the zone label, reinforcing which two rooms compose it
-      const chipY = zy + 6;
-      const chipA = svgEl('rect', { x: zx + zoneW / 2 - 20, y: chipY, width: 9, height: 9, rx: 2, fill: aFailed ? '#C8604F' : colorA });
-      svgTarget.appendChild(chipA);
-      const chipB = svgEl('rect', { x: zx + zoneW / 2 + 11, y: chipY, width: 9, height: 9, rx: 2, fill: bFailed ? '#C8604F' : colorB });
-      svgTarget.appendChild(chipB);
-
-      // POD 번호 + 급전 조합 + 용량
-      const zLabel = svgEl('text', { x: zCenterX, y: zy + 27, 'text-anchor': 'middle', 'font-size': zoneDetail ? 12 : 10.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif' });
-      zLabel.textContent = t('pod_chip', { n: idx + 1 });
-      svgTarget.appendChild(zLabel);
-
-      const pairText = svgEl('text', { x: zCenterX, y: zy + 40, 'text-anchor': 'middle', 'font-size': 9.5, 'font-weight': 700, fill: zoneAffected ? '#C8604F' : '#8A8072', 'font-family': 'sans-serif' });
-      pairText.textContent = `${ROOM_LETTERS[a]}+${ROOM_LETTERS[b]}`;
-      svgTarget.appendChild(pairText);
-
-      const zLoadText = svgEl('text', { x: zCenterX, y: zy + 53, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif' });
-      zLoadText.textContent = fmtN(Math.round(podLoadMW * 1000)) + 'kW';
-      svgTarget.appendChild(zLoadText);
-
-      if (zoneDetail) {
-        // 이 POD를 전기실 2곳이 어떻게 나눠 메우는지 — 평상시 ½+½, 1곳 상실 시 남은 1곳이 전량
-        const share = zoneAffected ? podLoadMW * 1000 : podLoadMW * 1000 / 2;
-        const splitText = svgEl('text', { x: zCenterX, y: zy + 64, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 600, fill: zoneAffected ? '#C8604F' : '#9A90BB', 'font-family': 'sans-serif' });
-        splitText.textContent = (zoneAffected ? '1×' : '2×') + fmtN(Math.round(share)) + 'kW';
-        svgTarget.appendChild(splitText);
-      }
-    }
-
-    // legend
-    const legend = document.getElementById('combLegend');
-    legend.innerHTML = '';
-    for (let i = 0; i < M; i++) {
-      const isOffline = (i === failRoom);
-      const div = document.createElement('div');
-      div.className = 'item';
-      div.innerHTML = `<span class="swatch" style="background:${isOffline ? '#FBEDE7' : roomColor(i)}"></span>${t('comb_legend_room', { letter: ROOM_LETTERS[i], suffix: isOffline ? t('comb_legend_offline_suffix') : '' })}`;
-      legend.appendChild(div);
-    }
-    // summary line appended to legend
-    const summary = document.createElement('div');
-    summary.style.width = '100%';
-    summary.style.marginTop = '8px';
-    summary.style.fontWeight = '700';
-    summary.style.color = navy;
-    if (combMode === 'normal') {
-      summary.textContent = t('comb_summary_normal', { m: M, perRoom: fmtN(totalLoad / M), total: fmtN(totalLoad), zones: usedPairs.size, zoneLoad: fmtN(podLoadMW) });
-    } else {
-      summary.textContent = t('comb_summary_emergency', { room: ROOM_LETTERS[failRoom], rest: M - 1, newLoad: fmtN(totalLoad / (M - 1)), oldLoad: fmtN(totalLoad / M), diff: fmtN((1 / (M - 1) - 1 / M) * totalLoad) });
-    }
-    legend.appendChild(summary);
-    const podSummary = document.createElement('div');
-    podSummary.style.width = '100%';
-    podSummary.style.marginTop = '4px';
-    podSummary.style.color = '#8A8072';
-    podSummary.textContent = t('comb_pod_summary', {
-      n: podCount, cap: fmtN(podPlan.cap), kw: fmtN(Math.round(podLoadMW * 1000)),
-      zones: usedPairs.size, pairs: pairCount,
-      perZone: fmtN(Math.round(podCount / usedPairs.size * 10) / 10),
-    });
-    legend.appendChild(podSummary);
-    combZoom.reset();
-  }
-
-  function updateCombModeButtons() {
-    combModeNormalBtn.classList.toggle('active', combMode === 'normal');
-    combModeEmergencyBtn.classList.toggle('active', combMode === 'emergency');
-  }
-
-  combFailRoomSelect.addEventListener('change', () => {
-    combMode = 'emergency';
-    updateCombModeButtons();
-    renderCombDiagram();
-  });
-  combModeNormalBtn.addEventListener('click', () => {
-    combMode = 'normal';
-    updateCombModeButtons();
-    renderCombDiagram();
-  });
-  combModeEmergencyBtn.addEventListener('click', () => {
-    combMode = 'emergency';
-    updateCombModeButtons();
-    renderCombDiagram();
-  });
-
-  refreshFailRoomOptions();
-  renderCombDiagram();
 
   // ===== ⓪ 전체 용량 계획 (수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할, 하이브리드) =====
   const utilityCapacityInput = document.getElementById('utilityCapacity');
@@ -2354,12 +2185,15 @@
   }
 
   function computeMaxSetCapacity() {
-    // Derived from ①'s effective capacity (rating×PF×안전율×UPS효율), at N=3 (3oo4 standard): effectiveCap*3
+    // ①의 유효용량(정격×PF×안전율×UPS효율) × N × 모듈당 변압기 대수.
+    // 모듈당 1대로 고정해두면 2대 이상 쓰는 구성에서 멀쩡한 데이터홀마다 경고가 떴다.
     const rating = parseFloat(ratingInput.value);
     const { pf, upsEff, safety } = getGlobalDeratingFactors();
     if (!rating || !safety) return null;
     const effectiveCap = computeEffectiveCapacity(rating, pf, safety, upsEff);
-    return (effectiveCap * 3) / 1000; // MW
+    const n = Math.max(1, parseInt(nInput.value) || 3);
+    const perModule = Math.max(1, lastPerModuleUnits || 1);
+    return (effectiveCap * n * perModule) / 1000; // MW
   }
 
   function refreshMaxSetCapacityHint() {
@@ -2616,13 +2450,129 @@
   // init: compute PUE, derive recommended max cap from ① defaults, set default hall count from it, auto-split once
   updatePueDisplay();
   refreshMaxSetCapacityHint();
-  (function initHallCount() {
-    const it = computeItCapacity();
-    const maxCap = computeMaxSetCapacity();
-    if (it && maxCap) hallCountInput.value = Math.max(1, Math.ceil(it / maxCap));
-  })();
   updateHallCapacityDisplay();
   autoSplitSets();
+
+  // ===== 설정 저장 / 불러오기 =====
+  // 규모가 다른 데이터센터를 여러 개 검토할 수 있도록 입력값 전체를 이름 붙여 저장한다.
+  // 저장 대상: ⓪~④의 모든 입력란·체크박스, 이중화 방식, 분배 방식, ⓪ 데이터홀 목록.
+  const PRESET_KEY = 'prc_presets';
+  const PRESET_FIELDS = [
+    'utilityCapacity', 'itCapacityInput', 'hallCountInput', 'load', 'rating',
+    'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount',
+    'nInput', 'cInput', 'roomCount', 'roomCapacity',
+  ];
+  const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomAuto', 'roomCapAuto'];
+  const presetSelect = document.getElementById('presetSelect');
+  const presetNameInput = document.getElementById('presetName');
+  const presetStatus = document.getElementById('presetStatus');
+
+  function loadPresetStore() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+      return (raw && typeof raw === 'object') ? raw : {};
+    } catch (e) { return {}; }
+  }
+  function savePresetStore(store) {
+    try { localStorage.setItem(PRESET_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+  function snapshotSettings() {
+    const fields = {}, checks = {};
+    PRESET_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) fields[id] = el.value; });
+    PRESET_CHECKS.forEach(id => { const el = document.getElementById(id); if (el) checks[id] = el.checked; });
+    const activeOpt = Array.prototype.findIndex.call(redundancyOpts, o => o.classList.contains('active'));
+    return {
+      v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode,
+      sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey })),
+    };
+  }
+  function restoreSettings(snap) {
+    if (!snap || !snap.fields) return;
+    // 이중화 방식 먼저 — 프리셋 클릭이 N/C를 덮어쓰므로 그 다음에 수치를 복원한다
+    if (snap.opt >= 0 && redundancyOpts[snap.opt]) {
+      Array.prototype.forEach.call(redundancyOpts, o => o.classList.remove('active'));
+      redundancyOpts[snap.opt].classList.add('active');
+    }
+    if (snap.topo) currentTopo = snap.topo;
+    Object.keys(snap.fields).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = snap.fields[id];
+    });
+    Object.keys(snap.checks || {}).forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.checked = !!snap.checks[id];
+    });
+    if (Array.isArray(snap.sets)) {
+      sets = snap.sets.map(st => ({ id: setIdCounter++, loadMW: st.loadMW, presetKey: st.presetKey }));
+    }
+    manualFail4.clear();
+    diagramMode = 'normal';
+    updateDiagramModeButtons();
+    distMode = snap.dist === 'comb' ? 'comb' : 'bus';
+    localStorage.setItem('prc_dist', distMode);
+    applyDistButtons();
+    applyTopoMeta();
+    updatePueDisplay();
+    refreshMaxSetCapacityHint();
+    updateHallCapacityDisplay();
+    renderSets();
+    calculate();
+  }
+  function refreshPresetOptions(selectName) {
+    const store = loadPresetStore();
+    const names = Object.keys(store).sort();
+    presetSelect.innerHTML = '';
+    const blank = document.createElement('option');
+    blank.value = '';
+    blank.textContent = t('preset_choose');
+    presetSelect.appendChild(blank);
+    names.forEach(n => {
+      const opt = document.createElement('option');
+      opt.value = n; opt.textContent = n;
+      presetSelect.appendChild(opt);
+    });
+    if (selectName && store[selectName]) presetSelect.value = selectName;
+  }
+  function setPresetStatus(key, vars) {
+    if (presetStatus) presetStatus.textContent = key ? t(key, vars) : '';
+  }
+  presetSelect.addEventListener('change', () => {
+    const name = presetSelect.value;
+    if (!name) { setPresetStatus(null); return; }
+    const store = loadPresetStore();
+    if (!store[name]) return;
+    restoreSettings(store[name]);
+    presetNameInput.value = name;
+    setPresetStatus('preset_loaded', { name });
+  });
+  document.getElementById('presetSaveBtn').addEventListener('click', () => {
+    const name = (presetNameInput.value || '').trim() || presetSelect.value;
+    if (!name) { setPresetStatus('preset_need_name'); return; }
+    const store = loadPresetStore();
+    store[name] = snapshotSettings();
+    savePresetStore(store);
+    refreshPresetOptions(name);
+    setPresetStatus('preset_saved', { name });
+  });
+  document.getElementById('presetDeleteBtn').addEventListener('click', () => {
+    const name = presetSelect.value;
+    if (!name) { setPresetStatus('preset_need_pick'); return; }
+    const store = loadPresetStore();
+    delete store[name];
+    savePresetStore(store);
+    refreshPresetOptions();
+    presetNameInput.value = '';
+    setPresetStatus('preset_deleted', { name });
+  });
+  document.getElementById('presetResetBtn').addEventListener('click', () => {
+    restoreSettings(DEFAULT_SETTINGS);
+    presetSelect.value = '';
+    presetNameInput.value = '';
+    setPresetStatus('preset_reset_done');
+  });
+  // 페이지가 처음 뜬 상태 = 기본값
+  const DEFAULT_SETTINGS = snapshotSettings();
+  refreshPresetOptions();
 
   // ===== 저장 (PDF / Word / PPT export) =====
   // Rasterizes a live diagram <svg> to a PNG data URL, ignoring the user's current pan/zoom
@@ -2672,14 +2622,14 @@
     ];
     const [diagram4, diagram5] = await Promise.all([
       svgToPngDataUrl(document.getElementById('diagramSvg')),
-      svgToPngDataUrl(document.getElementById('combSvg')),
+      svgToPngDataUrl(document.getElementById('sldSvg')),
     ]);
     return {
       title: t('pageTitle'),
       dateStr: new Date().toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US'),
       inputs, diagram4, diagram5,
       h4Title: '④ ' + t('h4_title'),
-      h5Title: '⑤ ' + t('h5_title'),
+      h5Title: '⑤ ' + t('h6_title'),
     };
   }
 

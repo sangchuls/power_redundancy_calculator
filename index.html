@@ -22,6 +22,15 @@
       <button class="lang-btn" id="langEnBtn" data-lang="en">EN</button>
     </div>
   </div>
+  <div class="preset-bar">
+    <span class="preset-label" data-i18n="preset_title">설정</span>
+    <select id="presetSelect"></select>
+    <input type="text" id="presetName" placeholder="설정 이름" data-i18n-placeholder="preset_placeholder">
+    <button class="zoom-btn" id="presetSaveBtn" data-i18n="preset_save">저장</button>
+    <button class="zoom-btn" id="presetDeleteBtn" data-i18n="preset_delete">삭제</button>
+    <button class="zoom-btn" id="presetResetBtn" data-i18n="preset_reset">기본값</button>
+    <span class="hint" id="presetStatus" style="margin:0;"></span>
+  </div>
   <h1 data-i18n="pageTitle">전력계통 이중화 방식별 변압기 대수 계산기</h1>
   <p class="subtitle" data-i18n="subtitle">수전용량·IT용량부터 데이터홀 분할, 데이터홀별 이중화 방식까지 한번에 계획하세요.</p>
 
@@ -33,11 +42,11 @@
     <div class="field-row">
       <div class="field">
         <label for="utilityCapacity" data-i18n="label_utility">수전용량 (MW)</label>
-        <input type="number" id="utilityCapacity" value="120" step="1" min="0">
+        <input type="number" id="utilityCapacity" value="60" step="1" min="0">
       </div>
       <div class="field">
         <label for="itCapacityInput" data-i18n="label_it">IT용량 (MW)</label>
-        <input type="number" id="itCapacityInput" value="90.2" step="0.1" min="0">
+        <input type="number" id="itCapacityInput" value="48" step="0.1" min="0">
       </div>
       <div class="field">
         <label data-i18n="label_pue">PUE (수전 ÷ IT, 자동계산)</label>
@@ -47,7 +56,7 @@
     <div class="field-row" style="margin-top:16px;">
       <div class="field">
         <label for="hallCountInput" data-i18n="label_hallCount">데이터홀 개수</label>
-        <input type="number" id="hallCountInput" value="10" step="1" min="1">
+        <input type="number" id="hallCountInput" value="3" step="1" min="1">
       </div>
       <div class="field">
         <label data-i18n="label_hallCapacity">홀당 용량 (IT ÷ 개수, 자동계산)</label>
@@ -91,7 +100,7 @@
     <div class="field-row">
       <div class="field">
         <label for="load" data-i18n="label_load">데이터홀 총부하 (MW)</label>
-        <input type="number" id="load" value="22.8" step="0.1" min="0" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+        <input type="number" id="load" value="16" step="0.1" min="0" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
         <div class="hint">
           <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
             <input type="checkbox" id="loadSyncCheckbox" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_loadSync">⓪번 홀당 용량과 연동</span>
@@ -134,12 +143,12 @@
     <div class="field-row" style="margin-top:14px;">
       <div class="field">
         <label for="podCapacity" data-i18n="label_podCapacity">POD 용량 (kW/POD)</label>
-        <input type="number" id="podCapacity" value="500" step="50" min="10">
+        <input type="number" id="podCapacity" value="5800" step="100" min="10">
         <div class="hint" data-i18n="hint_podCapacity">랙 그룹(POD) 1개가 받는 설계 전력 — ④·⑤·⑥ 다이어그램의 POD 블럭과 급전 회선에 공통 적용</div>
       </div>
       <div class="field">
         <label for="podCount" data-i18n="label_podCount">POD 수량 (개)</label>
-        <input type="number" id="podCount" value="20" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
+        <input type="number" id="podCount" value="3" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
         <div class="hint">
           <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
             <input type="checkbox" id="podAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_podAuto">총부하 ÷ POD 용량으로 자동 산정</span>
@@ -241,10 +250,10 @@
     <div class="field-row">
       <div class="field">
         <label for="roomCount" data-i18n="label_roomCount">전기실 수량 (개)</label>
-        <input type="number" id="roomCount" value="4" step="1" min="1" max="200" disabled style="background:var(--primary-bg);">
+        <input type="number" id="roomCount" value="8" step="1" min="1" max="200">
         <div class="hint">
           <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="roomAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_roomAuto">이중화 모듈 수(N+C)와 동일</span>
+            <input type="checkbox" id="roomAuto" style="width:13px; height:13px; margin:0;"> <span data-i18n="label_roomAuto">이중화 모듈 수(N+C)와 동일</span>
           </label>
           <span id="roomHint"></span>
         </div>
@@ -261,6 +270,11 @@
       </div>
     </div>
     <div class="hint" id="allocVerdict" style="margin:-2px 0 10px;"></div>
+    <div class="mode-toggle">
+      <button class="mode-btn" id="distBusBtn" data-i18n="dist_bus">모선형 분배</button>
+      <button class="mode-btn" id="distCombBtn" data-i18n="dist_comb">조합형 분배</button>
+    </div>
+    <div class="hint" id="distHint" style="margin:-4px 0 8px;"></div>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="modeNormalBtn" data-mode="normal" data-i18n="mode_normal">평상시</button>
       <button class="mode-btn" id="modeEmergencyBtn" data-mode="emergency" data-i18n="mode_emergency">비상시</button>
@@ -279,39 +293,7 @@
   </div>
 
   <div class="card">
-    <h2>⑤ <span data-i18n="h5_title">조합형 분배 배치도</span> <span class="desc" data-i18n="h5_desc">전기실 2개씩 짝지어 POD에 이중급전 — 전기실 수와 POD 수량은 ①·④번 값을 그대로 사용</span></h2>
-    <div class="topo-explain" data-i18n="h5_explain">
-      <b>조합형 분배(Combinatorial N choose 2)</b> — 전기실 M개가 서로 2개씩 짝을 지어 IT존에 이중급전. 각 전기실은 (M-1)개 IT존에 관여하며, 1개 전기실 상실 시 그 파트너 전기실이 해당 존의 전체 부하를 단독으로 흡수. 총 IT존 수 = M×(M-1)÷2 (예: M=4 → 6존).
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label for="combFailRoom" data-i18n="label_combFailRoom">비상시 상실 전기실</label>
-        <select id="combFailRoom"></select>
-        <div class="hint" id="combSourceHint"></div>
-      </div>
-    </div>
-    <div class="mode-toggle">
-      <button class="mode-btn active normal" id="combModeNormalBtn" data-mode="normal" data-i18n="mode_normal">평상시</button>
-      <button class="mode-btn" id="combModeEmergencyBtn" data-mode="emergency" data-i18n="mode_emergency">비상시</button>
-    </div>
-    <div class="diagram-wrap">
-      <div class="zoom-controls">
-        <span class="hint" style="margin:4px 8px 0 0;" data-i18n="hint_diagram5">휠로 확대/축소 · 드래그로 이동 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀</span>
-        <button class="zoom-btn" id="combZoomOut">－</button>
-        <button class="zoom-btn" id="combZoomReset" data-i18n="btn_zoomReset">리셋</button>
-        <button class="zoom-btn" id="combZoomIn">＋</button>
-        <button class="zoom-btn expand-btn" id="combExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
-      </div>
-      <svg id="combSvg" width="760" height="360"></svg>
-    </div>
-    <div class="diagram-legend" id="combLegend"></div>
-    <p class="footnote" style="margin-top:10px; text-align:left;" data-i18n="footnote_comb">
-      전기실 1개 안의 변압기 대수는 이 배치도가 아니라 ①~④번 계산기에서 산정합니다. 조합형 배치로 이미 전기실 레벨 이중화가 확보된 경우, 전기실 내부는 통상 순수 N(캐쳐 없음, C=0)으로 계산해 과설계를 피합니다 — 전기실 내부까지 추가 이중화를 원하시면 C≥1로 설정하세요.
-    </p>
-  </div>
-
-  <div class="card">
-    <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
+    <h2>⑤ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
       <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
