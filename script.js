@@ -38,6 +38,7 @@
       pod_row_title_split: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · POD당 {split}분할 → 급전 블록 {blocks}개 × {blockKW}kW · 세트별 배정 {sets}',
       label_podSplit: 'POD 급전 분할',
       hint_podSplit_1: 'POD 1개를 통째로 한 세트에 물립니다. POD 수가 세트 수로 나눠떨어지지 않으면 세트별 부하가 달라집니다.',
+      warn_podSplit_sets: '⚠ {split}분할하려면 전기실 세트가 {split}개 이상이어야 합니다 (현재 {sets}개) — 같은 세트에 갈래가 몰려 쪼갠 효과가 없습니다.',
       hint_podSplit_n: 'POD 1개를 {split}갈래({blockKW}kW씩)로 쪼개 서로 다른 세트에 물립니다 — 갈래마다 온전한 {topo} 급전이고, 세트 부하가 고르게 맞습니다.',
       set_label: 'S{n}',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
@@ -203,6 +204,7 @@
       pod_row_title_split: 'Data hall PODs — {n} × {cap}kW = {mw}MW · split {split} ways → {blocks} feed blocks × {blockKW}kW · per set {sets}',
       label_podSplit: 'POD feed split',
       hint_podSplit_1: 'A whole POD goes to one set. Set loads differ when the POD count is not a multiple of the set count.',
+      warn_podSplit_sets: '⚠ Splitting {split} ways needs at least {split} room sets (currently {sets}) — the branches land in the same set, so the split buys nothing.',
       hint_podSplit_n: 'Each POD is split {split} ways ({blockKW}kW each) across different sets — every branch is still a full {topo} feed, and the sets come out even.',
       set_label: 'S{n}',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
@@ -763,19 +765,30 @@
     // 매번 부하가 가장 적은 세트에 POD를 넣어 가능한 한 고르게 나눈다.
     const setPods = Array.from({ length: S }, () => []);
     const setLoad = new Array(S).fill(0);
+    const split = podPlan.split || 1;
+    const usedBySamePod = new Set();
     for (let p = 0; p < podPlan.count; p++) {
-      let best = 0;
-      for (let i = 1; i < S; i++) if (setLoad[i] < setLoad[best]) best = i;
+      if (p % split === 0) usedBySamePod.clear();   // 새 POD 시작
+      // 같은 POD의 갈래는 서로 다른 세트에 둔다 — 한 세트에 몰리면 쪼갠 의미가 없다.
+      // 그 조건을 만족하는 세트 중 부하가 가장 적은 곳을 고르고, 없으면 그냥 최소 부하.
+      let best = -1;
+      for (let i = 0; i < S; i++) {
+        if (usedBySamePod.has(i)) continue;
+        if (best < 0 || setLoad[i] < setLoad[best]) best = i;
+      }
+      if (best < 0) { best = 0; for (let i = 1; i < S; i++) if (setLoad[i] < setLoad[best]) best = i; }
+      usedBySamePod.add(best);
       setPods[best].push(p);
       setLoad[best] += podPlan.perPodKW;
     }
+    const splitHonoured = split <= S;
     const fixedCap = getRoomCapacityKW();
     // 세트가 감당해야 하는 설계부하: 완전이중화는 트레인 1개가 세트 전량, 그 외는 N개가 분담.
     const designPerRoom = setLoad.map(l => (currentTopo === 'full' ? l : l / Math.max(1, N)));
     const txPerSet = designPerRoom.map(d =>
       Math.max(1, Math.ceil((fixedCap || d) / Math.max(1, effectiveCap))));
     const totalTx = txPerSet.reduce((n, tx) => n + tx * perSet, 0);
-    return { sets: S, perSet, setPods, setLoad, designPerRoom, txPerSet, totalTx, fixedCap };
+    return { sets: S, perSet, setPods, setLoad, designPerRoom, txPerSet, totalTx, fixedCap, splitHonoured };
   }
   function buildRoomSets(modules, plan, effectiveCap) {
     const rooms = [];
@@ -1152,9 +1165,12 @@
     updateRoomControls(roomPlan, effectiveCap, topoShortName);
     const splitHint = document.getElementById('podSplitHint');
     if (splitHint) {
-      splitHint.textContent = podPlan.split > 1
-        ? t('hint_podSplit_n', { split: podPlan.split, blockKW: fmtN(Math.round(podPlan.perPodKW)), topo: topoShortName })
-        : t('hint_podSplit_1');
+      const vars = { split: podPlan.split, blockKW: fmtN(Math.round(podPlan.perPodKW)), topo: topoShortName, sets: roomPlan.sets };
+      const bad = podPlan.split > 1 && !roomPlan.splitHonoured;
+      splitHint.textContent = podPlan.split === 1 ? t('hint_podSplit_1')
+        : t(bad ? 'warn_podSplit_sets' : 'hint_podSplit_n', vars);
+      splitHint.style.color = bad ? 'var(--warn)' : '';
+      splitHint.style.fontWeight = bad ? '700' : '';
     }
     lastRoomCount = rooms.length;
     lastPerModuleUnits = rooms.length ? rooms[0].txCount : perModuleUnits;
