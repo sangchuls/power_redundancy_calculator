@@ -167,12 +167,28 @@
       plan_snap: '격자 맞춤',
       plan_magnet: '블럭 붙이기',
       plan_all: '한번에 보기',
-      h_sched: "설계개요표 (실 일람표)",
-      sched_floor: "층",
       sched_group: "분야",
       sched_name: "실명",
       sched_area: "면적 (㎡)",
       sched_note: "비고",
+      sched_equip: "장비",
+      sched_move: "층 이동",
+      sched_add: "＋ 실 추가",
+      sched_add_hint: "이 층 평면에 블럭이 함께 생성됩니다",
+      sched_equip_add: "＋ 장비명",
+      sched_floor_meta: "실 {n}개 · {area}㎡",
+      plan_eq_rooms: "전기실 {n}실",
+      plan_eq_bus: "주모선 / 수전반",
+      plan_eq_per_set: "세트당",
+      plan_eq_runtime: "축전지 랙",
+      plan_eq_gen: "비상발전 (×1.25)",
+      plan_eq_cool: "냉동기 {kw}kW",
+      plan_eq_pump: "냉각수 펌프 / 헤더",
+      plan_eq_net: "네트워크 랙",
+      unit_dae_short: "대",
+      sld_name_ph: "선택한 블럭 이름",
+      sld_del_node: "선택 블럭 삭제",
+      h_sched: "설계개요표 (실 일람표)",
       sched_empty: "블럭을 추가하면 이 표에 실(室)이 쌓입니다. 행을 누르면 평면에서 그 블럭이 선택됩니다.",
       sched_sum: "층 {floors}개 · 실 {rooms}개 · 연면적 {total}㎡ ({detail})",
       unit_room: '실',
@@ -466,12 +482,28 @@
       plan_snap: 'Snap to grid',
       plan_magnet: 'Snap to blocks',
       plan_all: 'View all',
-      h_sched: "Room schedule",
-      sched_floor: "Level",
       sched_group: "Discipline",
       sched_name: "Room",
       sched_area: "Area (m²)",
       sched_note: "Notes",
+      sched_equip: "Equipment",
+      sched_move: "Move to level",
+      sched_add: "+ Add room",
+      sched_add_hint: "Also creates a block on this level's plan",
+      sched_equip_add: "+ Equipment",
+      sched_floor_meta: "{n} rooms · {area} m²",
+      plan_eq_rooms: "{n} rooms",
+      plan_eq_bus: "Main bus / incomer",
+      plan_eq_per_set: "per set",
+      plan_eq_runtime: "Battery racks",
+      plan_eq_gen: "Standby (x1.25)",
+      plan_eq_cool: "Chillers {kw}kW",
+      plan_eq_pump: "Pumps / headers",
+      plan_eq_net: "Network racks",
+      unit_dae_short: "",
+      sld_name_ph: "Name of the selected block",
+      sld_del_node: "Delete selected",
+      h_sched: "Room schedule",
       sched_empty: "Rooms appear here as you add blocks. Click a row to select that block on the plan.",
       sched_sum: "{floors} levels · {rooms} rooms · {total} m² total ({detail})",
       unit_room: ' rooms',
@@ -1661,7 +1693,8 @@
 
     if (typeof setPlanContext === 'function') {
       setPlanContext({ loadKW, pods: podPlan.pods, podKW: podPlan.podKW,
-        sets: roomPlan.sets, perSet: roomPlan.perSet, rooms: rooms.length });
+        sets: roomPlan.sets, perSet: roomPlan.perSet, rooms: rooms.length,
+        rating, txPerRoom: rooms.length ? rooms[0].txCount : 1 });
     }
 
     renderReview({
@@ -2472,6 +2505,34 @@
     return { x: x1 - 20, y: y1 - 20, w: (x2 - x1) + 40, h: (y2 - y1) + 40 };
   }
 
+  // 실 종류별로 그 안에 들어가는 주요 장비 — ①~④ 계산 결과에서 끌어온다.
+  // 실명을 켜면(장비 열) 평면 블럭 안에 작은 글씨로 함께 적힌다.
+  function planEquipFor(kind) {
+    const c = planLastContext;
+    if (!c) return [];
+    const n = v => fmtN(Math.round(v));
+    const perSetKW = c.loadKW / Math.max(1, c.sets);
+    switch (kind) {
+      case 'tr': return ['TR ' + n(c.rating) + 'kVA × ' + c.txPerRoom + t('unit_dae_short'),
+                         t('plan_eq_rooms', { n: c.perSet })];
+      case 'main_elec': return ['MTR ' + n(c.loadKW) + 'kW', t('plan_eq_bus')];
+      case 'mv': return ['GCB / VCB × ' + c.rooms];
+      case 'lv': return ['ACB / MCCB × ' + c.rooms];
+      case 'ups': return ['UPS ' + n(perSetKW) + 'kW', t('plan_eq_per_set')];
+      case 'batt': return ['BAT ' + n(perSetKW) + 'kW', t('plan_eq_runtime')];
+      case 'gen': return ['GEN ' + n(c.loadKW * 1.25) + 'kW', t('plan_eq_gen')];
+      case 'sts': return ['STS / CTTS × ' + c.pods];
+      case 'hall': return ['POD ' + n(c.podKW) + 'kW', 'PDU / RACK'];
+      case 'chiller': return [t('plan_eq_cool', { kw: n(c.loadKW * 0.95) })];
+      case 'cdu': return ['CDU ' + n(c.loadKW * 0.9) + 'kW'];
+      case 'crah': return ['CRAH ' + n(c.loadKW * 0.1) + 'kW'];
+      case 'pump': return [t('plan_eq_pump')];
+      case 'mmr': return ['MMR / MDF'];
+      case 'network': return [t('plan_eq_net')];
+      default: return [];
+    }
+  }
+
   // 글자가 블럭보다 넓으면 먼저 글자 크기를 줄이고, 그래도 넘치면 끝을 잘라 말줄임한다.
   // (getComputedTextLength는 붙인 뒤에만 쓸 수 있어 그리고 나서 손본다.)
   function planFitText(el, text, maxW, baseSize) {
@@ -2512,7 +2573,20 @@
     label.textContent = b.label;
     grp.appendChild(label);
     planFitText(label, b.label, w - 8, fs);
-    if (h > 34 * sc) {
+    // 장비명을 켜면 치수 대신 장비를 적는다 (둘 다 적으면 좁은 블럭이 터진다)
+    const eq = b.equip ? planEquipFor(b.kind) : [];
+    if (eq.length && h > 30 * sc) {
+      eq.slice(0, Math.max(1, Math.floor((h / sc - 24) / 10))).forEach((line, li) => {
+        const el = svgEl('text', {
+          x: x + w / 2, y: y + h / 2 + fs + li * (fs * 0.82), 'text-anchor': 'middle',
+          'font-size': Math.max(5, fs * 0.7), 'font-weight': 600, fill: color, opacity: 0.85,
+          'font-family': 'sans-serif',
+        });
+        el.textContent = line;
+        grp.appendChild(el);
+        planFitText(el, line, w - 6, Math.max(5, fs * 0.7));
+      });
+    } else if (h > 34 * sc) {
       const dim = svgEl('text', {
         x: x + w / 2, y: y + h / 2 + fs, 'text-anchor': 'middle',
         'font-size': Math.max(5, fs * 0.72), 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif',
@@ -2609,40 +2683,45 @@
     const table = document.createElement('table');
     table.className = 'plan-sched';
     const head = document.createElement('tr');
-    ['sched_floor', 'sched_group', 'sched_name', 'sched_area', 'sched_note', ''].forEach(k => {
+    ['sched_group', 'sched_name', 'sched_area', 'sched_note', 'sched_equip', 'sched_move', ''].forEach(k => {
       const th = document.createElement('th');
       th.textContent = k ? t(k) : '';
       head.appendChild(th);
     });
     table.appendChild(head);
 
-    let total = 0;
-    const floorTotal = planTabs.map(() => 0);
+    // 층마다 머리글 한 줄을 두고 그 아래에 실을 모아 적는다
     planTabs.forEach((tab, ti) => {
-      tab.blocks.forEach(b => {
-        const area = planAreaOf(b);
-        total += area; floorTotal[ti] += area;
-        const tr = document.createElement('tr');
+      const area = tab.blocks.reduce((n, b) => n + planAreaOf(b), 0);
+      const htr = document.createElement('tr');
+      htr.className = 'sched-floor';
+      const htd = document.createElement('td');
+      htd.colSpan = 7;
+      const name = document.createElement('b');
+      name.textContent = tab.name;
+      htd.appendChild(name);
+      const meta = document.createElement('span');
+      meta.className = 'meta';
+      meta.textContent = t('sched_floor_meta', { n: tab.blocks.length, area: fmtN(Math.round(area)) });
+      htd.appendChild(meta);
+      const add = document.createElement('button');
+      add.className = 'sched-add';
+      add.textContent = t('sched_add');
+      add.title = t('sched_add_hint');
+      add.addEventListener('click', e => {
+        e.stopPropagation();
+        // 표에서 실을 추가하면 그 층 평면에 블럭이 생긴다
+        planActive = ti; planAllMode = false;
+        planAddBlock();
+        renderPlanTabs();
+      });
+      htd.appendChild(add);
+      htr.appendChild(htd);
+      table.appendChild(htr);
 
-        // 층 — 고르면 그 블럭이 해당 탭으로 옮겨간다
-        const tdFloor = document.createElement('td');
-        const sel = document.createElement('select');
-        planTabs.forEach((o, oi) => {
-          const opt = document.createElement('option');
-          opt.value = oi; opt.textContent = o.name;
-          sel.appendChild(opt);
-        });
-        sel.value = ti;
-        sel.addEventListener('change', () => {
-          const to = parseInt(sel.value, 10);
-          if (to === ti) return;
-          tab.blocks = tab.blocks.filter(x => x.id !== b.id);
-          planTabs[to].blocks.push(b);
-          planSelected = null;
-          savePlans(); drawPlan();
-        });
-        tdFloor.appendChild(sel);
-        tr.appendChild(tdFloor);
+      tab.blocks.forEach(b => {
+        const tr = document.createElement('tr');
+        if (b.id === planSelected && ti === planActive) tr.className = 'sel';
 
         const tdGroup = document.createElement('td');
         tdGroup.className = 'muted';
@@ -2650,18 +2729,18 @@
         tr.appendChild(tdGroup);
 
         const tdName = document.createElement('td');
-        const name = document.createElement('input');
-        name.type = 'text'; name.value = b.label;
-        name.addEventListener('input', () => {
-          b.label = name.value;
+        const nm = document.createElement('input');
+        nm.type = 'text'; nm.value = b.label;
+        nm.addEventListener('input', () => {
+          b.label = nm.value;
           savePlans(); drawPlan({ keepSchedule: true });
         });
-        tdName.appendChild(name);
+        tdName.appendChild(nm);
         tr.appendChild(tdName);
 
         const tdArea = document.createElement('td');
         const ar = document.createElement('input');
-        ar.type = 'number'; ar.min = '0'; ar.step = '5'; ar.value = area || '';
+        ar.type = 'number'; ar.min = '0'; ar.step = '5'; ar.value = planAreaOf(b) || '';
         ar.addEventListener('input', () => {
           b.m2 = parseFloat(ar.value) || 0;
           savePlans(); updatePlanTotals();
@@ -2676,11 +2755,52 @@
         tdNote.appendChild(note);
         tr.appendChild(tdNote);
 
+        // 장비 — 그 실에 들어가는 장비명을 평면 블럭에 작은 글씨로 적는다
+        const tdEq = document.createElement('td');
+        const eq = planEquipFor(b.kind);
+        if (eq.length) {
+          const btn = document.createElement('button');
+          btn.className = 'sched-eq' + (b.equip ? ' on' : '');
+          btn.textContent = b.equip ? eq[0] : t('sched_equip_add');
+          btn.title = eq.join(' · ');
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            b.equip = !b.equip;
+            savePlans(); drawPlan();
+          });
+          tdEq.appendChild(btn);
+        } else {
+          tdEq.className = 'muted';
+          tdEq.textContent = '-';
+        }
+        tr.appendChild(tdEq);
+
+        const tdMove = document.createElement('td');
+        const sel = document.createElement('select');
+        sel.title = t('sched_move');
+        planTabs.forEach((o, oi) => {
+          const opt = document.createElement('option');
+          opt.value = oi; opt.textContent = o.name;
+          sel.appendChild(opt);
+        });
+        sel.value = ti;
+        sel.addEventListener('change', () => {
+          const to = parseInt(sel.value, 10);
+          if (to === ti) return;
+          tab.blocks = tab.blocks.filter(x => x.id !== b.id);
+          planTabs[to].blocks.push(b);
+          planSelected = null;
+          savePlans(); drawPlan();
+        });
+        tdMove.appendChild(sel);
+        tr.appendChild(tdMove);
+
         const tdDel = document.createElement('td');
         const del = document.createElement('button');
         del.className = 'sched-del'; del.textContent = '✕';
         del.title = t('plan_del');
-        del.addEventListener('click', () => {
+        del.addEventListener('click', e => {
+          e.stopPropagation();
           tab.blocks = tab.blocks.filter(x => x.id !== b.id);
           if (planSelected === b.id) planSelected = null;
           savePlans(); drawPlan();
@@ -2688,9 +2808,8 @@
         tdDel.appendChild(del);
         tr.appendChild(tdDel);
 
-        // 표에서 행을 누르면 그 블럭이 평면에서 선택된다
         tr.addEventListener('click', e => {
-          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+          if (['INPUT', 'SELECT', 'BUTTON'].indexOf(e.target.tagName) >= 0) return;
           planAllMode = false; planActive = ti; planSelected = b.id;
           renderPlanTabs(); drawPlan();
         });
@@ -2698,10 +2817,10 @@
       });
     });
 
-    if (!total && !planTabs.some(tb => tb.blocks.length)) {
+    if (!planTabs.some(tb => tb.blocks.length)) {
       const tr = document.createElement('tr');
       const td = document.createElement('td');
-      td.colSpan = 6; td.className = 'muted'; td.textContent = t('sched_empty');
+      td.colSpan = 7; td.className = 'muted'; td.textContent = t('sched_empty');
       tr.appendChild(td); table.appendChild(tr);
     }
     box.appendChild(table);
@@ -2858,7 +2977,7 @@
       b.x = Math.max(0, Math.round(x)); b.y = Math.max(0, Math.round(y));
       b.w = Math.round(w); b.h = Math.round(h);
     }
-    drawPlan();
+    drawPlan({ keepSchedule: true });
   });
   window.addEventListener('pointerup', () => {
     if (!planDrag) return;
@@ -3316,13 +3435,33 @@
 
   function updateSldStatus() {
     const el = document.getElementById('sldStatus');
+    const nameEl = document.getElementById('sldNodeName');
+    const delEl = document.getElementById('sldDelNode');
+    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+    // 선택한 블럭이 있을 때만 이름 칸과 삭제 버튼이 살아난다
+    if (nameEl) {
+      nameEl.disabled = !(sldMode === 'manual' && sel);
+      if (document.activeElement !== nameEl) nameEl.value = sel ? sel.label : '';
+    }
+    if (delEl) delEl.disabled = !(sldMode === 'manual' && sel);
     if (!el) return;
     if (sldMode !== 'manual') { el.textContent = ''; return; }
-    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
     el.textContent = sel
       ? t('sld_status_selected', { name: sel.label })
       : t('sld_status_idle', { n: sldManualGraph.nodes.length, e: sldManualGraph.edges.length });
   }
+
+  document.getElementById('sldNodeName').addEventListener('input', () => {
+    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+    if (!sel) return;
+    sel.label = document.getElementById('sldNodeName').value;
+    saveSldManualGraph();
+    drawSLD();
+  });
+  document.getElementById('sldDelNode').addEventListener('click', () => {
+    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+    if (sel) removeSldNode(sel);
+  });
 
   // 기존 선에 분기점을 끼워 넣고 그 분기점에서 블럭으로 선을 뽑는다.
   // 원래 선은 (시작→분기점) + (분기점→끝)으로 쪼개져 kind(기본/예비)를 그대로 유지한다.

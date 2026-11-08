@@ -126,6 +126,12 @@
   .sld-chip:hover { transform: translateY(-1px); box-shadow: 0 2px 0 rgba(46,36,25,0.08); }
   .sld-chip .abbr { font-size: 11.5px; font-weight: 700; }
   .sld-chip .desc { font-size: 9.5px; color: var(--text-muted); font-weight: 500; }
+  .sld-manual-bar input[type="text"] {
+    padding: 4px 10px; border-radius: 999px; border: 1.5px solid var(--border);
+    background: var(--bg-color); font-family: inherit; font-size: 12px; color: var(--text-main);
+    min-width: 150px;
+  }
+  .sld-manual-bar input:disabled, .sld-manual-bar .quick-btn:disabled { opacity: 0.45; }
   .sld-manual-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
   /* 수동 작성 모드에서는 캔버스를 축소하지 않고 원래 크기로 두고 래퍼를 스크롤한다 —
      좁은 컬럼에서 블럭이 너무 작아져 드래그/클릭이 어려워지는 것을 막기 위함. */
@@ -457,14 +463,45 @@
   }
   table.plan-sched input[type="number"] { text-align: right; max-width: 90px; }
   table.plan-sched select { min-width: 0; }
-  /* 층은 좁게, 실명은 넓게 — 실명이 가장 많이 읽히는 열이다 */
-  table.plan-sched th:nth-child(1), table.plan-sched td:nth-child(1) { width: 21%; }
-  table.plan-sched th:nth-child(2), table.plan-sched td:nth-child(2) { width: 11%; }
-  table.plan-sched th:nth-child(3), table.plan-sched td:nth-child(3) { width: 32%; }
-  table.plan-sched th:nth-child(4), table.plan-sched td:nth-child(4) { width: 12%; }
-  table.plan-sched th:nth-child(5), table.plan-sched td:nth-child(5) { width: 20%; }
-  table.plan-sched th:nth-child(6), table.plan-sched td:nth-child(6) { width: 4%; text-align: center; }
-  table.plan-sched th:nth-child(4) { text-align: right; }
+  /* 분야 | 실명 | 면적 | 비고 | 장비 | 층이동 | ✕ */
+  table.plan-sched th:nth-child(1), table.plan-sched td:nth-child(1) { width: 10%; }
+  table.plan-sched th:nth-child(2), table.plan-sched td:nth-child(2) { width: 26%; }
+  table.plan-sched th:nth-child(3), table.plan-sched td:nth-child(3) { width: 11%; }
+  table.plan-sched th:nth-child(4), table.plan-sched td:nth-child(4) { width: 19%; }
+  table.plan-sched th:nth-child(5), table.plan-sched td:nth-child(5) { width: 17%; }
+  table.plan-sched th:nth-child(6), table.plan-sched td:nth-child(6) { width: 13%; }
+  table.plan-sched th:nth-child(7), table.plan-sched td:nth-child(7) { width: 4%; text-align: center; }
+  table.plan-sched th:nth-child(3) { text-align: right; }
+
+  /* 층 머리글 — 같은 층의 실을 한 덩어리로 묶는다 */
+  table.plan-sched tr.sched-floor td {
+    background: var(--surface);
+    border-bottom: 1.5px solid var(--border);
+    padding: 7px 10px;
+  }
+  table.plan-sched tr.sched-floor:hover td { background: var(--surface); }
+  table.plan-sched tr.sched-floor b { font-family: "Jua", sans-serif; font-size: 12.5px; color: var(--primary); }
+  table.plan-sched tr.sched-floor .meta { font-size: 11px; color: var(--text-muted); margin-left: 10px; }
+  table.plan-sched tr.sel td { background: var(--primary-bg); }
+  .sched-add {
+    margin-left: 12px; padding: 2px 10px;
+    border-radius: 999px; border: 1.5px solid var(--primary);
+    background: var(--bg-color); color: var(--primary);
+    font-family: inherit; font-size: 11px; font-weight: 700; cursor: pointer;
+  }
+  .sched-add:hover { background: var(--primary); color: var(--bg-color); }
+  .sched-eq {
+    width: 100%; padding: 3px 8px;
+    border-radius: 999px; border: 1.5px dashed var(--border);
+    background: transparent; color: var(--text-muted);
+    font-family: inherit; font-size: 11px; cursor: pointer;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .sched-eq:hover { border-color: var(--primary); color: var(--primary); }
+  .sched-eq.on {
+    border-style: solid; border-color: var(--primary);
+    background: var(--primary-bg); color: var(--primary); font-weight: 700;
+  }
   .sched-del {
     border: none; background: transparent; cursor: pointer;
     color: var(--text-muted); font-size: 11px; padding: 2px 6px;
