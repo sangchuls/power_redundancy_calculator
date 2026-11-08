@@ -380,6 +380,47 @@
   .zoom-btn:hover { border-color: var(--primary); color: var(--primary); }
   .expand-btn { font-size: 13px; padding: 4px 10px; }
 
+  /* POD → 세트 배정 */
+  .pod-assign {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 0 0 10px;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    background: var(--surface);
+  }
+  .pod-assign .assign-label {
+    font-family: "Jua", sans-serif;
+    font-size: 12px;
+    color: var(--primary);
+  }
+  .pod-assign .assign-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--bg-color);
+    border: 1.5px solid var(--border);
+  }
+  .pod-assign .assign-group b { font-size: 11px; color: var(--text-main); margin-right: 2px; }
+  .pod-assign select {
+    padding: 2px 4px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: var(--bg-color);
+    font-family: inherit;
+    font-size: 11px;
+    color: var(--text-main);
+  }
+  .pod-assign select.pinned { border-color: var(--primary); color: var(--primary); font-weight: 700; }
+  .pod-assign .quick-btn { padding: 3px 12px; font-size: 11px; }
+  .pod-assign .quick-btn:disabled { opacity: 0.45; cursor: default; }
+  .pod-assign .hint { font-size: 11px; }
+
   /* POD 구성 스터디 연동 */
   .pod-study-bar {
     display: flex;

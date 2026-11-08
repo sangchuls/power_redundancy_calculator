@@ -37,6 +37,10 @@
       pod_row_title: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · 세트별 배정 {sets}',
       pod_row_title_split: '데이터홀 POD — {n}개 × {cap}kW = {mw}MW · POD당 {split}분할 → 급전 블록 {blocks}개 × {blockKW}kW · 세트별 배정 {sets}',
       label_podSplit: 'POD 급전 분할',
+      assign_label: 'POD → 세트 배정',
+      assign_auto: '자동 배분',
+      assign_auto_note: '부하가 적은 세트부터 자동 배분 중 — 직접 고르면 그 블록만 고정됩니다.',
+      assign_manual_note: '직접 지정한 블록(테두리 강조)은 고정되고, 나머지는 자동으로 채워집니다.',
       btn_podStudy: 'POD 구성 ↗',
       btn_podJson: '구성 JSON 적용',
       btn_podJsonApply: '적용',
@@ -263,6 +267,10 @@
       pod_row_title: 'Data hall PODs — {n} × {cap}kW = {mw}MW · per set {sets}',
       pod_row_title_split: 'Data hall PODs — {n} × {cap}kW = {mw}MW · split {split} ways → {blocks} feed blocks × {blockKW}kW · per set {sets}',
       label_podSplit: 'POD feed split',
+      assign_label: 'POD to set',
+      assign_auto: 'Auto',
+      assign_auto_note: 'Assigned automatically to the least loaded set — pick one to pin that block.',
+      assign_manual_note: 'Pinned blocks (outlined) stay where you put them; the rest fill in automatically.',
       btn_podStudy: 'POD study ↗',
       btn_podJson: 'Apply config JSON',
       btn_podJsonApply: 'Apply',
@@ -997,27 +1005,46 @@
   // 전부에서 급전받는다 — 4개 중 3개만 살아 있어도 POD 전량을 커버하는 게 3oo4의 의미다.
   // POD를 세트에 배분하고 세트별 설계부하·변압기 대수를 낸다.
   // ③ 계산 결과와 ④ 다이어그램이 같은 숫자를 쓰도록 한 곳에서만 계산한다.
+  // POD 블록을 어느 세트에 붙일지 직접 지정한 값 (블록 번호 → 세트 번호).
+  // 비어 있으면 자동 배분(부하가 적은 세트부터, 같은 POD의 갈래는 서로 다른 세트)을 쓴다.
+  let podSetOverride = {};
+  function clearPodSetOverride() {
+    podSetOverride = {};
+    calculate();
+  }
+
   function planRoomSets(podPlan, N, perSet, effectiveCap) {
     const S = getRoomSetCount();
     // 매번 부하가 가장 적은 세트에 POD를 넣어 가능한 한 고르게 나눈다.
     const setPods = Array.from({ length: S }, () => []);
     const setLoad = new Array(S).fill(0);
     const split = podPlan.split || 1;
-    const usedBySamePod = new Set();
+    const assigned = new Array(podPlan.count).fill(-1);
+
+    // 직접 지정한 블록을 먼저 꽂는다 — 자동 배분이 남은 자리를 메운다.
     for (let p = 0; p < podPlan.count; p++) {
-      if (p % split === 0) usedBySamePod.clear();   // 새 POD 시작
-      // 같은 POD의 갈래는 서로 다른 세트에 둔다 — 한 세트에 몰리면 쪼갠 의미가 없다.
-      // 그 조건을 만족하는 세트 중 부하가 가장 적은 곳을 고르고, 없으면 그냥 최소 부하.
+      const want = podSetOverride[p];
+      if (want !== undefined && want >= 0 && want < S) {
+        assigned[p] = want;
+        setLoad[want] += podPlan.perPodKW;
+      }
+    }
+    for (let p = 0; p < podPlan.count; p++) {
+      if (assigned[p] >= 0) continue;
+      // 같은 POD의 다른 갈래가 이미 쓴 세트는 피한다 — 한 세트에 몰리면 쪼갠 의미가 없다.
+      const podStart = Math.floor(p / split) * split;
+      const taken = new Set();
+      for (let q = podStart; q < podStart + split; q++) if (assigned[q] >= 0) taken.add(assigned[q]);
       let best = -1;
       for (let i = 0; i < S; i++) {
-        if (usedBySamePod.has(i)) continue;
+        if (taken.has(i)) continue;
         if (best < 0 || setLoad[i] < setLoad[best]) best = i;
       }
       if (best < 0) { best = 0; for (let i = 1; i < S; i++) if (setLoad[i] < setLoad[best]) best = i; }
-      usedBySamePod.add(best);
-      setPods[best].push(p);
+      assigned[p] = best;
       setLoad[best] += podPlan.perPodKW;
     }
+    for (let p = 0; p < podPlan.count; p++) setPods[assigned[p]].push(p);
     const splitHonoured = split <= S;
     const fixedCap = getRoomCapacityKW();
     // 세트가 감당해야 하는 설계부하: 완전이중화는 트레인 1개가 세트 전량, 그 외는 N개가 분담.
@@ -1415,6 +1442,7 @@
     const podSet = new Array(podCount).fill(0);
     roomPlan.setPods.forEach((list, si) => list.forEach(p => { podSet[p] = si; }));
     const firstRoomOfSet = si => si * roomPlan.perSet;
+    renderPodSetAssign(podPlan, roomPlan, podSet);
 
     // ----- 급전 회선 배정 -----
     // 모선형: POD는 자기 세트의 전기실 전부에서 급전받는다. 3oo4면 4회선이 들어가고
@@ -2469,6 +2497,61 @@
     }
   });
 
+  // POD별 세트 배정 선택 UI — 블록마다 어느 세트로 보낼지 직접 고른다.
+  function renderPodSetAssign(podPlan, roomPlan, podSet) {
+    const box = document.getElementById('podSetAssign');
+    if (!box) return;
+    box.innerHTML = '';
+    if (roomPlan.sets < 2) { box.style.display = 'none'; return; }
+    box.style.display = 'flex';
+
+    const label = document.createElement('span');
+    label.className = 'assign-label';
+    label.textContent = t('assign_label');
+    box.appendChild(label);
+
+    const manual = Object.keys(podSetOverride).length > 0;
+    for (let gi = 0; gi < podPlan.pods; gi++) {
+      const group = document.createElement('span');
+      group.className = 'assign-group';
+      const name = document.createElement('b');
+      name.textContent = 'POD ' + (gi + 1);
+      group.appendChild(name);
+      for (let bi = 0; bi < podPlan.split; bi++) {
+        const p = gi * podPlan.split + bi;
+        const sel = document.createElement('select');
+        sel.title = podBlockLabel(p, podPlan.split);
+        for (let si = 0; si < roomPlan.sets; si++) {
+          const opt = document.createElement('option');
+          opt.value = si;
+          opt.textContent = (podPlan.split > 1 ? 'ABCDEFGH'[bi] + '→' : '') + t('set_label', { n: si + 1 });
+          sel.appendChild(opt);
+        }
+        sel.value = podSet[p];
+        if (podSetOverride[p] !== undefined) sel.classList.add('pinned');
+        sel.addEventListener('change', () => {
+          podSetOverride[p] = parseInt(sel.value, 10);
+          calculate();
+        });
+        group.appendChild(sel);
+      }
+      box.appendChild(group);
+    }
+
+    const auto = document.createElement('button');
+    auto.className = 'quick-btn';
+    auto.textContent = t('assign_auto');
+    auto.disabled = !manual;
+    auto.addEventListener('click', clearPodSetOverride);
+    box.appendChild(auto);
+
+    const note = document.createElement('span');
+    note.className = 'hint';
+    note.style.margin = '0';
+    note.textContent = t(manual ? 'assign_manual_note' : 'assign_auto_note');
+    box.appendChild(note);
+  }
+
   // ===== POD 구성 스터디 연동 =====
   // ai-factory-study 의 "구성 JSON" 은 랙 종류별 수량(counts)과 랙당 kW(kw)를 담고 있다.
   // 둘을 곱해 더하면 POD 1개의 IT 부하가 나오고, 그 값을 ①번 POD 부하로 가져온다.
@@ -2967,6 +3050,7 @@
     const activeOpt = Array.prototype.findIndex.call(redundancyOpts, o => o.classList.contains('active'));
     return {
       v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode,
+      podSet: Object.assign({}, podSetOverride),
       sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey })),
     };
   }
@@ -2990,6 +3074,7 @@
       sets = snap.sets.map(st => ({ id: setIdCounter++, loadMW: st.loadMW, presetKey: st.presetKey }));
     }
     manualFail4.clear();
+    podSetOverride = Object.assign({}, snap.podSet || {});
     diagramMode = 'normal';
     updateDiagramModeButtons();
     distMode = snap.dist === 'comb' ? 'comb' : 'bus';
