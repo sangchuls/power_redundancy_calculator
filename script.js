@@ -167,6 +167,14 @@
       plan_snap: '격자 맞춤',
       plan_magnet: '블럭 붙이기',
       plan_all: '한번에 보기',
+      h_sched: "설계개요표 (실 일람표)",
+      sched_floor: "층",
+      sched_group: "분야",
+      sched_name: "실명",
+      sched_area: "면적 (㎡)",
+      sched_note: "비고",
+      sched_empty: "블럭을 추가하면 이 표에 실(室)이 쌓입니다. 행을 누르면 평면에서 그 블럭이 선택됩니다.",
+      sched_sum: "층 {floors}개 · 실 {rooms}개 · 연면적 {total}㎡ ({detail})",
       unit_room: '실',
       plan_auto: '자동 작성',
       plan_auto_confirm: '지금 작성한 평면이 모두 지워지고 자동 생성 결과로 바뀝니다. 계속할까요?',
@@ -458,6 +466,14 @@
       plan_snap: 'Snap to grid',
       plan_magnet: 'Snap to blocks',
       plan_all: 'View all',
+      h_sched: "Room schedule",
+      sched_floor: "Level",
+      sched_group: "Discipline",
+      sched_name: "Room",
+      sched_area: "Area (m²)",
+      sched_note: "Notes",
+      sched_empty: "Rooms appear here as you add blocks. Click a row to select that block on the plan.",
+      sched_sum: "{floors} levels · {rooms} rooms · {total} m² total ({detail})",
       unit_room: ' rooms',
       plan_auto: 'Auto layout',
       plan_auto_confirm: 'This replaces every tab you have drawn with a generated layout. Continue?',
@@ -2107,6 +2123,8 @@
   ];
   const PLAN_KINDS = [];
   PLAN_GROUPS.forEach(gr => gr.kinds.forEach(k => PLAN_KINDS.push({ key: k, color: gr.color })));
+  const PLAN_KIND_GROUP = {};
+  PLAN_GROUPS.forEach(gr => gr.kinds.forEach(k => { PLAN_KIND_GROUP[k] = gr.key; }));
   const PLAN_KIND_COLOR = {};
   PLAN_KINDS.forEach(k => { PLAN_KIND_COLOR[k.key] = k.color; });
 
@@ -2258,7 +2276,7 @@
     const b = {
       id: 'b' + (++planSeq), kind,
       x: 40 + (n % 6) * 120, y: 40 + Math.floor(n / 6) * 90,
-      w: 110, h: 70, label: t('plan_kind_' + kind),
+      w: 110, h: 70, label: t('plan_kind_' + kind), m2: 50, note: '',
     };
     blocks.push(b);
     planSelected = b.id;
@@ -2298,7 +2316,8 @@
   // 한 줄로 늘어놓으며 x를 전진시키는 작은 도우미
   function planRow(blocks, kind, label, area, ratio, cur, y) {
     const sz = planSize(area, ratio, label);
-    blocks.push({ id: 'b' + (++planSeq), kind, label, x: cur.x, y, w: sz.w, h: sz.h });
+    blocks.push({ id: 'b' + (++planSeq), kind, label, x: cur.x, y, w: sz.w, h: sz.h,
+      m2: Math.round(area), note: '' });
     cur.x += sz.w + 10;
     cur.maxH = Math.max(cur.maxH || 0, sz.h);
     return sz;
@@ -2353,10 +2372,10 @@
     // --- 단면: 층을 위아래로 쌓아 본다 ---
     const sect = [];
     const sw = Math.max(320, Math.min(620, corridorW));
-    sect.push({ id: 'b' + (++planSeq), kind: 'hall', label: t('plan_sect_upper', { n: c.pods, kw: fmtN(Math.round(c.podKW)) }), x: 40, y: 40, w: sw, h: 90 });
-    sect.push({ id: 'b' + (++planSeq), kind: 'shaft', label: t('plan_kind_shaft'), x: 40 + sw + 10, y: 40, w: 60, h: 220 });
-    sect.push({ id: 'b' + (++planSeq), kind: 'tr', label: t('plan_sect_lower', { sets: c.sets, rooms: c.rooms }), x: 40, y: 140, w: sw, h: 60 });
-    sect.push({ id: 'b' + (++planSeq), kind: 'chiller', label: t('plan_sect_mech'), x: 40, y: 210, w: sw, h: 50 });
+    sect.push({ m2: 0, note: '', id: 'b' + (++planSeq), kind: 'hall', label: t('plan_sect_upper', { n: c.pods, kw: fmtN(Math.round(c.podKW)) }), x: 40, y: 40, w: sw, h: 90 });
+    sect.push({ m2: 0, note: '', id: 'b' + (++planSeq), kind: 'shaft', label: t('plan_kind_shaft'), x: 40 + sw + 10, y: 40, w: 60, h: 220 });
+    sect.push({ m2: 0, note: '', id: 'b' + (++planSeq), kind: 'tr', label: t('plan_sect_lower', { sets: c.sets, rooms: c.rooms }), x: 40, y: 140, w: sw, h: 60 });
+    sect.push({ m2: 0, note: '', id: 'b' + (++planSeq), kind: 'chiller', label: t('plan_sect_mech'), x: 40, y: 210, w: sw, h: 50 });
 
     planTabs = [
       { name: t('plan_auto_tab_upper'), blocks: upper },
@@ -2577,7 +2596,139 @@
     }
   }
 
-  function drawPlan() {
+  // ----- 설계개요표 (실 일람표) -----
+  // 모든 탭의 블럭을 한 표로 모아 층·실명·면적·비고를 직접 고칠 수 있게 한다.
+  // 표에서 고치면 평면이 따라 바뀌고, 평면에서 고치면 표가 따라 바뀐다.
+  function planAreaOf(b) { return Number(b.m2) || 0; }
+
+  function renderPlanSchedule() {
+    const box = document.getElementById('planSchedule');
+    if (!box) return;
+    box.innerHTML = '';
+
+    const table = document.createElement('table');
+    table.className = 'plan-sched';
+    const head = document.createElement('tr');
+    ['sched_floor', 'sched_group', 'sched_name', 'sched_area', 'sched_note', ''].forEach(k => {
+      const th = document.createElement('th');
+      th.textContent = k ? t(k) : '';
+      head.appendChild(th);
+    });
+    table.appendChild(head);
+
+    let total = 0;
+    const floorTotal = planTabs.map(() => 0);
+    planTabs.forEach((tab, ti) => {
+      tab.blocks.forEach(b => {
+        const area = planAreaOf(b);
+        total += area; floorTotal[ti] += area;
+        const tr = document.createElement('tr');
+
+        // 층 — 고르면 그 블럭이 해당 탭으로 옮겨간다
+        const tdFloor = document.createElement('td');
+        const sel = document.createElement('select');
+        planTabs.forEach((o, oi) => {
+          const opt = document.createElement('option');
+          opt.value = oi; opt.textContent = o.name;
+          sel.appendChild(opt);
+        });
+        sel.value = ti;
+        sel.addEventListener('change', () => {
+          const to = parseInt(sel.value, 10);
+          if (to === ti) return;
+          tab.blocks = tab.blocks.filter(x => x.id !== b.id);
+          planTabs[to].blocks.push(b);
+          planSelected = null;
+          savePlans(); drawPlan();
+        });
+        tdFloor.appendChild(sel);
+        tr.appendChild(tdFloor);
+
+        const tdGroup = document.createElement('td');
+        tdGroup.className = 'muted';
+        tdGroup.textContent = t('plan_group_' + (PLAN_KIND_GROUP[b.kind] || 'misc'));
+        tr.appendChild(tdGroup);
+
+        const tdName = document.createElement('td');
+        const name = document.createElement('input');
+        name.type = 'text'; name.value = b.label;
+        name.addEventListener('input', () => {
+          b.label = name.value;
+          savePlans(); drawPlan({ keepSchedule: true });
+        });
+        tdName.appendChild(name);
+        tr.appendChild(tdName);
+
+        const tdArea = document.createElement('td');
+        const ar = document.createElement('input');
+        ar.type = 'number'; ar.min = '0'; ar.step = '5'; ar.value = area || '';
+        ar.addEventListener('input', () => {
+          b.m2 = parseFloat(ar.value) || 0;
+          savePlans(); updatePlanTotals();
+        });
+        tdArea.appendChild(ar);
+        tr.appendChild(tdArea);
+
+        const tdNote = document.createElement('td');
+        const note = document.createElement('input');
+        note.type = 'text'; note.value = b.note || '';
+        note.addEventListener('input', () => { b.note = note.value; savePlans(); });
+        tdNote.appendChild(note);
+        tr.appendChild(tdNote);
+
+        const tdDel = document.createElement('td');
+        const del = document.createElement('button');
+        del.className = 'sched-del'; del.textContent = '✕';
+        del.title = t('plan_del');
+        del.addEventListener('click', () => {
+          tab.blocks = tab.blocks.filter(x => x.id !== b.id);
+          if (planSelected === b.id) planSelected = null;
+          savePlans(); drawPlan();
+        });
+        tdDel.appendChild(del);
+        tr.appendChild(tdDel);
+
+        // 표에서 행을 누르면 그 블럭이 평면에서 선택된다
+        tr.addEventListener('click', e => {
+          if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'BUTTON') return;
+          planAllMode = false; planActive = ti; planSelected = b.id;
+          renderPlanTabs(); drawPlan();
+        });
+        table.appendChild(tr);
+      });
+    });
+
+    if (!total && !planTabs.some(tb => tb.blocks.length)) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = 6; td.className = 'muted'; td.textContent = t('sched_empty');
+      tr.appendChild(td); table.appendChild(tr);
+    }
+    box.appendChild(table);
+
+    const sum = document.createElement('div');
+    sum.className = 'plan-sched-sum';
+    sum.id = 'planSchedSum';
+    box.appendChild(sum);
+    updatePlanTotals();
+  }
+
+  function updatePlanTotals() {
+    const el = document.getElementById('planSchedSum');
+    if (!el) return;
+    let total = 0;
+    const parts = planTabs.map(tab => {
+      const a = tab.blocks.reduce((n, b) => n + planAreaOf(b), 0);
+      total += a;
+      return tab.name + ' ' + fmtN(Math.round(a)) + '㎡';
+    });
+    const rooms = planTabs.reduce((n, tab) => n + tab.blocks.length, 0);
+    el.textContent = t('sched_sum', {
+      floors: planTabs.length, rooms, total: fmtN(Math.round(total)), detail: parts.join(' · '),
+    });
+  }
+
+  function drawPlan(opts) {
     const svg = document.getElementById('planSvg');
     if (!svg) return;
     planZoom.clear();
@@ -2615,6 +2766,7 @@
       });
       planZoom.reset();
       syncPlanFields();
+      if (!(opts && opts.keepSchedule)) renderPlanSchedule();
       return;
     }
 
@@ -2656,6 +2808,7 @@
     }
     planZoom.reset();
     syncPlanFields();
+    if (!(opts && opts.keepSchedule)) renderPlanSchedule();
   }
 
   // 드래그(이동/크기조절)는 창 전체에서 받아, 커서가 블럭을 벗어나도 끊기지 않게 한다
