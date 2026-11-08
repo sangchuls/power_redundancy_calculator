@@ -11,6 +11,50 @@
       label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
       label_itSync: "데이터홀 합계와 연동",
       label_loadSource: "분석할 데이터홀",
+      h_hall_title: "데이터홀 평면 검토",
+      h_hall_desc: "POD 1개의 랙 배치와 기계·전기 평면/단면을 위 설정값에서 자동으로 작도합니다",
+      label_hallPod: "검토할 POD",
+      label_hallCooling: "냉각 방식",
+      label_hallRackKW: "랙당 전력 (kW/랙)",
+      label_hallRacksPerRow: "열당 랙 수",
+      label_hallRackW: "랙 폭 (mm)",
+      label_hallRackD: "랙 깊이 (mm)",
+      label_hallCold: "콜드 통로 (mm)",
+      label_hallHot: "핫 통로 (mm)",
+      label_hallCduKW: "CDU 용량 (kW/대)",
+      label_hallElecW: "전기실 폭 (mm)",
+      label_hallRaised: "이중바닥 (mm)",
+      label_hallRackH: "랙 높이 (mm)",
+      label_hallBusway: "버스웨이 레벨 (mm)",
+      label_hallCeil: "층고 (mm)",
+      cool_dlc: "DLC 액냉 (고밀도)",
+      cool_air: "공랭 (In-Row / CRAH)",
+      cool_hybrid: "혼합 (DLC + 공랭 보조)",
+      hall_cool_dlc: "랙 직결 액냉 — 100~133kW/랙 수준의 고밀도 배치에 적용",
+      hall_cool_air: "공조기 기반 — 통상 30~40kW/랙, 콜드/핫 통로 폐쇄 필요",
+      hall_cool_hybrid: "DLC로 주열 제거 + 공조기로 잔열 처리 — 80kW/랙 내외",
+      hall_view_plan: "평면",
+      hall_view_sect: "단면",
+      hint_hall: "휠로 확대/축소 · 드래그로 이동 — 치수는 mm, 위 입력값을 바꾸면 즉시 다시 작도됩니다",
+      hall_pod_opt: "POD {n} — {kw}kW",
+      hall_pod_note: "④번에서 산정한 POD {n}개 중 1개({kw}kW)를 펼쳐 봅니다.",
+      hall_rack_note: "랙 {racks}개 · {rows}열",
+      hall_cdu_note: "소요 {n}대 + 예비 1대 = {total}대 (N+1)",
+      hall_elec_room: "전기실",
+      hall_hot_aisle: "핫",
+      hall_cold_aisle: "콜드",
+      hall_raised: "이중바닥",
+      hall_rack_top: "랙 상단",
+      hall_busway: "버스웨이",
+      hall_ceil: "층고",
+      hall_rack_row: "랙 {n}대 × {kw}kW",
+      hall_summary: "POD {pod} · {kw}kW → 랙 {racks}개({rackKW}kW/랙) · {rows}열 × {perRow}대 · CDU {cdu}대 · 소요 {w}×{depth}mm ≒ {area}㎡",
+      pipe_chw_s: "20°C 냉수 공급 (CHW)",
+      pipe_chw_r: "28°C 공조기 환수 (CHW)",
+      pipe_cdu_ps: "40°C CDU 1차 공급",
+      pipe_cdu_pr: "48°C CDU 1차 환수",
+      pipe_cdu_ss: "45°C CDU 2차 공급",
+      pipe_cdu_sr: "55°C CDU 2차 환수",
       src_avg: "⓪번 홀당 평균 용량 — 데이터홀 {n}개 평균 {mw}MW",
       src_hall: "데이터홀 {n} — {mw}MW · {topo}",
       src_manual: "직접 입력",
@@ -336,6 +380,51 @@
       label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
       label_itSync: "Follow the data hall total",
       label_loadSource: "Data hall to analyse",
+      h_hall_title: "Data hall layout review",
+      h_hall_desc: "Draws the rack layout and the mechanical/electrical plan and section for one POD from the settings above",
+      label_hallPod: "POD to review",
+      label_hallCooling: "Cooling",
+      label_hallRackKW: "Power per rack (kW)",
+      label_hallRacksPerRow: "Racks per row",
+      label_hallRackW: "Rack width (mm)",
+      label_hallRackD: "Rack depth (mm)",
+      label_hallCold: "Cold aisle (mm)",
+      label_hallHot: "Hot aisle (mm)",
+      label_hallCduKW: "CDU capacity (kW each)",
+      label_hallElecW: "Electrical room width (mm)",
+      label_hallRaised: "Raised floor (mm)",
+      label_hallRackH: "Rack height (mm)",
+      label_hallBusway: "Busway level (mm)",
+      label_hallCeil: "Floor height (mm)",
+      cool_dlc: "DLC liquid (high density)",
+      cool_air: "Air (In-Row / CRAH)",
+      cool_hybrid: "Hybrid (DLC + air trim)",
+      hall_cool_dlc: "Direct liquid to the rack — for 100-133kW per rack densities",
+      hall_cool_air: "Air handlers — typically 30-40kW per rack, needs aisle containment",
+      hall_cool_air_x: "",
+      hall_cool_hybrid: "DLC takes the bulk, air trims the rest — around 80kW per rack",
+      hall_view_plan: "Plan",
+      hall_view_sect: "Section",
+      hint_hall: "Wheel to zoom, drag to pan — dimensions in mm, redrawn as you change the inputs above",
+      hall_pod_opt: "POD {n} — {kw}kW",
+      hall_pod_note: "Expands one of the {n} PODs ({kw}kW) sized in section ④.",
+      hall_rack_note: "{racks} racks · {rows} rows",
+      hall_cdu_note: "{n} required + 1 spare = {total} (N+1)",
+      hall_elec_room: "Electrical room",
+      hall_hot_aisle: "Hot",
+      hall_cold_aisle: "Cold",
+      hall_raised: "Raised floor",
+      hall_rack_top: "Rack top",
+      hall_busway: "Busway",
+      hall_ceil: "Floor height",
+      hall_rack_row: "{n} racks × {kw}kW",
+      hall_summary: "POD {pod} · {kw}kW → {racks} racks at {rackKW}kW · {rows} rows × {perRow} · {cdu} CDUs · {w}×{depth}mm ≈ {area} m²",
+      pipe_chw_s: "20°C supply CHW",
+      pipe_chw_r: "28°C air cooler return CHW",
+      pipe_cdu_ps: "40°C CDU primary supply",
+      pipe_cdu_pr: "48°C CDU primary return",
+      pipe_cdu_ss: "45°C CDU secondary supply",
+      pipe_cdu_sr: "55°C CDU secondary return",
       src_avg: "Average per hall — {n} halls, {mw}MW each",
       src_hall: "Data hall {n} — {mw}MW · {topo}",
       src_manual: "Enter manually",
@@ -692,6 +781,7 @@
     renderSets();
     if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     if (typeof refreshPlanTexts === 'function') { try { refreshPlanTexts(); } catch (e) {} }
+    if (typeof refreshHallTexts === 'function') { try { refreshHallTexts(); } catch (e) {} }
     if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
     if (typeof refreshPresetOptions === 'function') { try { refreshPresetOptions(presetSelect.value); } catch (e) {} }
   }
@@ -1501,7 +1591,7 @@
     if (zoom) zoom.reset();
   }
   // planZoom은 아래쪽 ⑤ 섹션에서 선언되므로 클릭 시점에 찾는다 (여기서 바로 읽으면 TDZ)
-  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom], ['sldExpandBtn', 'sldSvg', () => sldZoom]]
+  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom], ['hallExpandBtn', 'hallSvg', () => hallZoom], ['sldExpandBtn', 'sldSvg', () => sldZoom]]
     .forEach(([btnId, svgId, getZoom]) => {
       const btn = document.getElementById(btnId);
       if (!btn) return;
@@ -1722,6 +1812,10 @@
       setPlanContext({ loadKW, pods: podPlan.pods, podKW: podPlan.podKW,
         sets: roomPlan.sets, perSet: roomPlan.perSet, rooms: rooms.length,
         rating, txPerRoom: rooms.length ? rooms[0].txCount : 1 });
+    }
+    // ⑥ 데이터홀 평면은 이 구성에서 랙 수를 뽑으므로 함께 갱신한다
+    if (typeof refreshHallPodOptions === 'function') {
+      try { refreshHallPodOptions(); drawHall(); } catch (e) {}
     }
 
     renderReview({
@@ -3087,7 +3181,406 @@
   }
   refreshPlanTexts();
 
-  // ===== ⑥ SLD (단선결선도) 에디터 =====
+  // ===== ⑥ 데이터홀 평면 검토 =====
+  // POD 1개를 실제 랙 배치로 펼쳐 본다. 랙 수는 POD 부하 ÷ 랙당 전력에서 나오고,
+  // 열 구성·통로·CDU·전기실까지 위 설정값과 아래 치수 입력으로 작도한다.
+  // 모든 좌표 단위는 mm, 그릴 때만 축척을 곱한다.
+  const HALL_PIPES = [
+    { key: 'chw_s', color: '#1F4E9C' },
+    { key: 'chw_r', color: '#7CB342' },
+    { key: 'cdu_ps', color: '#29A8E0' },
+    { key: 'cdu_pr', color: '#F5A623' },
+    { key: 'cdu_ss', color: '#9FD6F2' },
+    { key: 'cdu_sr', color: '#D0021B' },
+  ];
+  const hallZoom = makeZoomable('hallSvg');
+  let hallView = 'plan';
+
+  const hallNum = (id, dflt) => {
+    const el = document.getElementById(id);
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : dflt;
+  };
+
+  // 위 섹션에서 정한 POD 구성 + 이 섹션의 치수 입력 → 배치 계산
+  function hallPlanData() {
+    const c = planLastContext;
+    const sel = document.getElementById('hallPodSel');
+    const podIdx = sel && sel.value !== '' ? parseInt(sel.value, 10) : 0;
+    const podKW = c ? c.podKW : 6000;
+    const rackKW = hallNum('hallRackKW', 133);
+    const perRow = Math.max(2, Math.round(hallNum('hallRacksPerRow', 20)));
+    const rackW = hallNum('hallRackW', 600);
+    const rackD = hallNum('hallRackD', 1200);
+    const cold = hallNum('hallCold', 1200);
+    const hot = hallNum('hallHot', 1000);
+    const cduKW = hallNum('hallCduKW', 1800);
+    const elecW = hallNum('hallElecW', 4600);
+
+    const racks = Math.max(1, Math.ceil(podKW / rackKW));
+    const rows = Math.max(1, Math.ceil(racks / perRow));
+    // 열은 등을 맞대 짝으로 세운다: 짝 사이는 핫 통로, 짝과 짝 사이는 콜드 통로
+    const pairs = Math.ceil(rows / 2);
+    const rowLen = perRow * rackW;
+    const cduQty = Math.max(1, Math.ceil(podKW / cduKW)) + 1;   // N+1
+    const cduW = 1500, aisleEnd = 2000, manifoldW = 800;
+
+    // 가로: 전기실 | 전실 | 랙열 | 매니폴드 | CDU
+    const bands = [
+      { key: 'elec', mm: elecW },
+      { key: 'front', mm: aisleEnd },
+      { key: 'racks', mm: rowLen },
+      { key: 'manifold', mm: manifoldW },
+      { key: 'cdu', mm: cduW + 1200 },
+    ];
+    const totalW = bands.reduce((n, b) => n + b.mm, 0);
+
+    // 세로: 상·하 여유 + (열 + 통로)
+    const edge = 1200;
+    let depth = edge * 2 + rows * rackD;
+    depth += (pairs - 1) * cold + Math.min(pairs, Math.floor(rows / 2)) * hot;
+
+    const areaM2 = (totalW / 1000) * (depth / 1000);
+    return {
+      podIdx, podKW, rackKW, racks, rows, perRow, pairs, rackW, rackD, cold, hot,
+      rowLen, cduQty, cduKW, cduW, manifoldW, aisleEnd, elecW, edge,
+      bands, totalW, depth, areaM2,
+      raised: hallNum('hallRaised', 800), rackH: hallNum('hallRackH', 2200),
+      busway: hallNum('hallBusway', 3202), ceil: hallNum('hallCeil', 6000),
+      cooling: (document.getElementById('hallCooling') || {}).value || 'dlc',
+    };
+  }
+
+  // 치수선 (mm 표기)
+  function hallDim(target, x1, y1, x2, y2, text, side) {
+    const col = '#8A8072';
+    target.appendChild(svgEl('path', { d: `M${x1},${y1} L${x2},${y2}`, stroke: col, 'stroke-width': 0.8 }));
+    const tick = 3;
+    if (y1 === y2) {
+      [x1, x2].forEach(x => target.appendChild(svgEl('path', { d: `M${x},${y1 - tick} L${x},${y1 + tick}`, stroke: col, 'stroke-width': 0.8 })));
+    } else {
+      [y1, y2].forEach(y => target.appendChild(svgEl('path', { d: `M${x1 - tick},${y} L${x1 + tick},${y}`, stroke: col, 'stroke-width': 0.8 })));
+    }
+    const el = svgEl('text', {
+      x: (x1 + x2) / 2, y: (y1 + y2) / 2 + (y1 === y2 ? -4 : 0),
+      'text-anchor': 'middle', 'font-size': 7.5, 'font-weight': 600, fill: col, 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': 2.2, 'paint-order': 'stroke',
+    });
+    if (y1 !== y2) el.setAttribute('transform', `rotate(-90 ${x1} ${(y1 + y2) / 2})`);
+    if (y1 !== y2) { el.setAttribute('x', x1); el.setAttribute('y', (y1 + y2) / 2); }
+    el.textContent = text;
+    target.appendChild(el);
+  }
+
+  function drawHallPlan(target, d, sc, ox, oy) {
+    const X = mm => ox + mm * sc, Y = mm => oy + mm * sc, S = mm => mm * sc;
+    const navy = '#3A2E75';
+
+    // 외벽
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(0), width: S(d.totalW), height: S(d.depth),
+      fill: '#FFFFFF', stroke: '#5A5A5A', 'stroke-width': 2,
+    }));
+
+    // 가로 밴드 경계
+    let cursor = 0;
+    const bandX = {};
+    d.bands.forEach(b => { bandX[b.key] = cursor; cursor += b.mm; });
+
+    // 전기실 / UPS
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(0), width: S(d.elecW), height: S(d.depth),
+      fill: hexToRgba('#6F5FBF', 0.1), stroke: '#6F5FBF', 'stroke-width': 1.4,
+    }));
+    const elecLabel = svgEl('text', {
+      x: X(d.elecW / 2), y: Y(d.depth / 2), 'text-anchor': 'middle',
+      'font-size': 11, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif',
+    });
+    elecLabel.textContent = t('hall_elec_room');
+    target.appendChild(elecLabel);
+    const elecSub = svgEl('text', {
+      x: X(d.elecW / 2), y: Y(d.depth / 2) + 13, 'text-anchor': 'middle',
+      'font-size': 8, 'font-weight': 600, fill: '#6F5FBF', 'font-family': 'sans-serif',
+    });
+    elecSub.textContent = 'UPS / ' + t('plan_kind_batt');
+    target.appendChild(elecSub);
+
+    // 랙 열
+    const rackX = bandX.racks;
+    let y = d.edge;
+    const rowYs = [];
+    for (let r = 0; r < d.rows; r++) {
+      rowYs.push(y);
+      for (let i = 0; i < d.perRow; i++) {
+        const n = r * d.perRow + i;
+        if (n >= d.racks) break;
+        target.appendChild(svgEl('rect', {
+          x: X(rackX + i * d.rackW), y: Y(y), width: S(d.rackW) - 0.6, height: S(d.rackD),
+          fill: hexToRgba(navy, 0.16), stroke: navy, 'stroke-width': 0.7,
+        }));
+      }
+      // 짝 안쪽은 핫 통로, 짝 사이는 콜드 통로
+      y += d.rackD + ((r % 2 === 0) ? d.hot : d.cold);
+    }
+
+    // 통로 표시
+    for (let r = 0; r < d.rows - 1; r++) {
+      const gapTop = rowYs[r] + d.rackD, gapBot = rowYs[r + 1];
+      const isHot = (r % 2 === 0);
+      target.appendChild(svgEl('rect', {
+        x: X(rackX), y: Y(gapTop), width: S(d.rowLen), height: S(gapBot - gapTop),
+        fill: isHot ? hexToRgba('#D0021B', 0.07) : hexToRgba('#29A8E0', 0.09),
+        stroke: 'none',
+      }));
+      const lab = svgEl('text', {
+        x: X(rackX + d.rowLen / 2), y: Y((gapTop + gapBot) / 2) + 3, 'text-anchor': 'middle',
+        'font-size': 7.5, 'font-weight': 700, fill: isHot ? '#D0021B' : '#1F7FB5', 'font-family': 'sans-serif',
+      });
+      lab.textContent = t(isHot ? 'hall_hot_aisle' : 'hall_cold_aisle') + ' ' + Math.round(gapBot - gapTop);
+      target.appendChild(lab);
+    }
+
+    // 매니폴드 + CDU
+    target.appendChild(svgEl('rect', {
+      x: X(bandX.manifold), y: Y(d.edge), width: S(d.manifoldW), height: S(d.depth - d.edge * 2),
+      fill: hexToRgba('#9013FE', 0.12), stroke: '#9013FE', 'stroke-width': 1,
+    }));
+    const cduGap = (d.depth - d.edge * 2) / d.cduQty;
+    for (let i = 0; i < d.cduQty; i++) {
+      const cy = d.edge + i * cduGap + cduGap * 0.1;
+      target.appendChild(svgEl('rect', {
+        x: X(bandX.cdu + 400), y: Y(cy), width: S(d.cduW), height: S(cduGap * 0.8),
+        fill: hexToRgba('#0F6E56', 0.12), stroke: '#0F6E56', 'stroke-width': 1.2,
+      }));
+      const cl = svgEl('text', {
+        x: X(bandX.cdu + 400 + d.cduW / 2), y: Y(cy + cduGap * 0.4) + 3, 'text-anchor': 'middle',
+        'font-size': 8, 'font-weight': 700, fill: '#0F6E56', 'font-family': 'sans-serif',
+      });
+      cl.textContent = 'CDU ' + (i + 1);
+      target.appendChild(cl);
+    }
+
+    // 배관 — 매니폴드에서 각 열로, 색은 범례와 같다
+    const pipeBase = bandX.manifold + d.manifoldW / 2;
+    HALL_PIPES.forEach((pp, pi) => {
+      const px = pipeBase + (pi - 2.5) * (d.manifoldW / 7);
+      target.appendChild(svgEl('path', {
+        d: `M${X(px)},${Y(d.edge)} L${X(px)},${Y(d.depth - d.edge)}`,
+        stroke: pp.color, 'stroke-width': 1.4, fill: 'none',
+      }));
+    });
+    rowYs.forEach((ry, r) => {
+      const c1 = HALL_PIPES[4].color, c2 = HALL_PIPES[5].color;
+      target.appendChild(svgEl('path', {
+        d: `M${X(rackX)},${Y(ry + d.rackD * 0.3)} L${X(pipeBase)},${Y(ry + d.rackD * 0.3)}`,
+        stroke: c1, 'stroke-width': 1.2, fill: 'none',
+      }));
+      target.appendChild(svgEl('path', {
+        d: `M${X(rackX)},${Y(ry + d.rackD * 0.7)} L${X(pipeBase)},${Y(ry + d.rackD * 0.7)}`,
+        stroke: c2, 'stroke-width': 1.2, fill: 'none',
+      }));
+    });
+
+    // 치수
+    hallDim(target, X(0), Y(d.depth) + 26, X(d.totalW), Y(d.depth) + 26, Math.round(d.totalW) + '', 'b');
+    let bx = 0;
+    d.bands.forEach(b => {
+      hallDim(target, X(bx), Y(d.depth) + 12, X(bx + b.mm), Y(d.depth) + 12, Math.round(b.mm) + '');
+      bx += b.mm;
+    });
+    hallDim(target, X(0) - 26, Y(0), X(0) - 26, Y(d.depth), Math.round(d.depth) + '');
+  }
+
+  function drawHallSection(target, d, sc, ox, oy) {
+    const X = mm => ox + mm * sc, S = mm => mm * sc;
+    const base = oy + d.ceil * sc;              // 바닥 슬래브 기준선
+    const Y = mm => base - mm * sc;             // 높이는 위로
+    const navy = '#3A2E75';
+    const widthMM = d.totalW;
+
+    // 슬래브 / 외벽
+    target.appendChild(svgEl('rect', { x: X(0), y: Y(0), width: S(widthMM), height: 8, fill: '#8A8072' }));
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.ceil), width: S(widthMM), height: S(d.ceil),
+      fill: 'none', stroke: '#5A5A5A', 'stroke-width': 2,
+    }));
+
+    // 이중바닥
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.raised), width: S(widthMM), height: S(d.raised),
+      fill: hexToRgba('#8A8072', 0.12), stroke: '#8A8072', 'stroke-width': 0.8,
+    }));
+    const rf = svgEl('text', { x: X(d.elecW / 2), y: Y(d.raised / 2) + 3, 'text-anchor': 'middle', 'font-size': 7.5, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
+    rf.textContent = t('hall_raised') + ' ' + Math.round(d.raised);
+    target.appendChild(rf);
+
+    // 전기실
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.ceil), width: S(d.elecW), height: S(d.ceil),
+      fill: hexToRgba('#6F5FBF', 0.08), stroke: '#6F5FBF', 'stroke-width': 1.2,
+    }));
+    const el = svgEl('text', { x: X(d.elecW / 2), y: Y(d.ceil * 0.6), 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif' });
+    el.textContent = t('hall_elec_room');
+    target.appendChild(el);
+
+    // 랙 (열 단면)
+    const rackStart = d.elecW + d.aisleEnd;
+    for (let i = 0; i < d.perRow; i++) {
+      const x = rackStart + i * d.rackW;
+      if (x + d.rackW > widthMM) break;
+      target.appendChild(svgEl('rect', {
+        x: X(x), y: Y(d.raised + d.rackH), width: S(d.rackW) - 0.6, height: S(d.rackH),
+        fill: hexToRgba(navy, 0.14), stroke: navy, 'stroke-width': 0.7,
+      }));
+    }
+    const rl = svgEl('text', {
+      x: X(rackStart + d.rowLen / 2), y: Y(d.raised + d.rackH / 2), 'text-anchor': 'middle',
+      'font-size': 9, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+    });
+    rl.textContent = t('hall_rack_row', { n: d.perRow, kw: fmtN(d.rackKW) });
+    target.appendChild(rl);
+
+    // 버스웨이 (2단) + 배관
+    [0, 1].forEach(k => {
+      const by = d.busway + k * 420;
+      target.appendChild(svgEl('path', {
+        d: `M${X(rackStart - 400)},${Y(by)} L${X(widthMM - 600)},${Y(by)}`,
+        stroke: '#7A6BCB', 'stroke-width': 3, fill: 'none',
+      }));
+    });
+    const bl = svgEl('text', { x: X(rackStart - 420), y: Y(d.busway + 500), 'text-anchor': 'start', 'font-size': 7.5, 'font-weight': 700, fill: '#7A6BCB', 'font-family': 'sans-serif' });
+    bl.textContent = t('hall_busway') + ' ' + Math.round(d.busway);
+    target.appendChild(bl);
+
+    const pipeY = Math.max(d.busway + 900, d.ceil - 1200);
+    HALL_PIPES.slice(0, 4).forEach((pp, pi) => {
+      target.appendChild(svgEl('path', {
+        d: `M${X(rackStart - 200)},${Y(pipeY + pi * 160)} L${X(widthMM - 300)},${Y(pipeY + pi * 160)}`,
+        stroke: pp.color, 'stroke-width': 2, fill: 'none',
+      }));
+    });
+
+    // 높이 치수
+    [[d.raised, 'hall_raised'], [d.raised + d.rackH, 'hall_rack_top'], [d.busway, 'hall_busway'], [d.ceil, 'hall_ceil']]
+      .forEach(([v], i) => {
+        const dx = X(widthMM) + 18 + i * 22;
+        hallDim(target, dx, Y(0), dx, Y(v), Math.round(v) + '');
+      });
+  }
+
+  function drawHall() {
+    const svg = document.getElementById('hallSvg');
+    if (!svg) return;
+    hallZoom.clear();
+    const target = hallZoom.group;
+    const d = hallPlanData();
+
+    const margin = 70;
+    const availW = 900;
+    const sc = hallView === 'plan'
+      ? Math.min(availW / d.totalW, 460 / d.depth)
+      : Math.min(availW / d.totalW, 320 / d.ceil);
+    const w = d.totalW * sc + margin * 2;
+    const hgt = (hallView === 'plan' ? d.depth : d.ceil) * sc + margin * 2;
+    svg.setAttribute('width', Math.max(760, w));
+    svg.setAttribute('height', Math.max(360, hgt));
+    svg.setAttribute('viewBox', `0 0 ${Math.max(760, w)} ${Math.max(360, hgt)}`);
+    const ox = (Math.max(760, w) - d.totalW * sc) / 2;
+    const oy = margin * 0.6;
+
+    if (hallView === 'plan') drawHallPlan(target, d, sc, ox, oy);
+    else drawHallSection(target, d, sc, ox, oy);
+
+    hallZoom.reset();
+    renderHallLegend();
+    updateHallSummary(d);
+  }
+
+  function renderHallLegend() {
+    const box = document.getElementById('hallLegend');
+    if (!box) return;
+    box.innerHTML = '';
+    HALL_PIPES.forEach(pp => {
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span class="swatch" style="background:${pp.color}"></span>${t('pipe_' + pp.key)}`;
+      box.appendChild(div);
+    });
+  }
+
+  function updateHallSummary(d) {
+    const el = document.getElementById('hallSummary');
+    if (el) {
+      el.textContent = t('hall_summary', {
+        pod: d.podIdx + 1, kw: fmtN(Math.round(d.podKW)), racks: d.racks, rackKW: fmtN(d.rackKW),
+        rows: d.rows, perRow: d.perRow, cdu: d.cduQty,
+        w: Math.round(d.totalW), depth: Math.round(d.depth), area: fmtN(Math.round(d.areaM2)),
+      });
+    }
+    const note = document.getElementById('hallRackNote');
+    if (note) note.textContent = t('hall_rack_note', { racks: d.racks, rows: d.rows });
+    const cdu = document.getElementById('hallCduNote');
+    if (cdu) cdu.textContent = t('hall_cdu_note', { n: d.cduQty - 1, total: d.cduQty });
+    const cool = document.getElementById('hallCoolNote');
+    if (cool) cool.textContent = t('hall_cool_' + d.cooling);
+  }
+
+  function refreshHallPodOptions() {
+    const sel = document.getElementById('hallPodSel');
+    if (!sel) return;
+    const c = planLastContext;
+    const keep = sel.value;
+    sel.innerHTML = '';
+    const n = c ? c.pods : 1;
+    for (let i = 0; i < n; i++) {
+      const o = document.createElement('option');
+      o.value = i;
+      o.textContent = t('hall_pod_opt', { n: i + 1, kw: fmtN(Math.round(c ? c.podKW : 0)) });
+      sel.appendChild(o);
+    }
+    if (keep && parseInt(keep, 10) < n) sel.value = keep;
+    const note = document.getElementById('hallPodNote');
+    if (note && c) note.textContent = t('hall_pod_note', { n: c.pods, kw: fmtN(Math.round(c.podKW)) });
+  }
+
+  ['hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD', 'hallCold', 'hallHot',
+   'hallCduKW', 'hallElecW', 'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', drawHall);
+    });
+  ['hallPodSel', 'hallCooling'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      // 냉각 방식을 바꾸면 통상적인 랙 밀도를 기본값으로 제안한다
+      if (id === 'hallCooling') {
+        const v = document.getElementById('hallCooling').value;
+        const dflt = v === 'air' ? 40 : (v === 'hybrid' ? 80 : 133);
+        document.getElementById('hallRackKW').value = dflt;
+      }
+      drawHall();
+    });
+  });
+  document.getElementById('hallPlanBtn').addEventListener('click', () => {
+    hallView = 'plan';
+    document.getElementById('hallPlanBtn').classList.add('active', 'normal');
+    document.getElementById('hallSectBtn').classList.remove('active', 'normal');
+    drawHall();
+  });
+  document.getElementById('hallSectBtn').addEventListener('click', () => {
+    hallView = 'sect';
+    document.getElementById('hallSectBtn').classList.add('active', 'normal');
+    document.getElementById('hallPlanBtn').classList.remove('active', 'normal');
+    drawHall();
+  });
+  document.getElementById('hallZoomIn').addEventListener('click', () => hallZoom.zoomIn());
+  document.getElementById('hallZoomOut').addEventListener('click', () => hallZoom.zoomOut());
+  document.getElementById('hallZoomReset').addEventListener('click', () => hallZoom.reset());
+
+  function refreshHallTexts() { refreshHallPodOptions(); drawHall(); }
+  refreshHallTexts();
+
+  // ===== ⑦ SLD (단선결선도) 에디터 =====
   // 자동 작성: ①~⑤ 계산 결과를 그래프(노드+엣지)로 변환해 그린다 (읽기 전용, 재계산 시 갱신).
   // 수동 작성: 같은 그래프 모델을 직접 편집한다 — 팔레트 클릭으로 블럭 추가, 드래그로 이동,
   //            블럭 2개를 차례로 클릭하면 연결, 선 클릭으로 기본↔예비 전환, 더블클릭으로 삭제.

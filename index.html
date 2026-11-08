@@ -354,7 +354,103 @@
   </div>
 
   <div class="card">
-    <h2>⑥ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
+    <h2>⑥ <span data-i18n="h_hall_title">데이터홀 평면 검토</span> <span class="desc" data-i18n="h_hall_desc">POD 1개의 랙 배치와 기계·전기 평면/단면을 위 설정값에서 자동으로 작도합니다</span></h2>
+
+    <div class="field-row">
+      <div class="field">
+        <label for="hallPodSel" data-i18n="label_hallPod">검토할 POD</label>
+        <select id="hallPodSel"></select>
+        <div class="hint" id="hallPodNote"></div>
+      </div>
+      <div class="field">
+        <label for="hallCooling" data-i18n="label_hallCooling">냉각 방식</label>
+        <select id="hallCooling">
+          <option value="dlc" data-i18n="cool_dlc">DLC 액냉 (고밀도)</option>
+          <option value="air" data-i18n="cool_air">공랭 (In-Row / CRAH)</option>
+          <option value="hybrid" data-i18n="cool_hybrid">혼합 (DLC + 공랭 보조)</option>
+        </select>
+        <div class="hint" id="hallCoolNote"></div>
+      </div>
+      <div class="field">
+        <label for="hallRackKW" data-i18n="label_hallRackKW">랙당 전력 (kW/랙)</label>
+        <input type="number" id="hallRackKW" value="133" step="1" min="1">
+        <div class="hint" id="hallRackNote"></div>
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-top:12px;">
+      <div class="field">
+        <label for="hallRacksPerRow" data-i18n="label_hallRacksPerRow">열당 랙 수</label>
+        <input type="number" id="hallRacksPerRow" value="20" step="1" min="2" max="60">
+      </div>
+      <div class="field">
+        <label for="hallRackW" data-i18n="label_hallRackW">랙 폭 (mm)</label>
+        <input type="number" id="hallRackW" value="600" step="50" min="300">
+      </div>
+      <div class="field">
+        <label for="hallRackD" data-i18n="label_hallRackD">랙 깊이 (mm)</label>
+        <input type="number" id="hallRackD" value="1200" step="50" min="600">
+      </div>
+      <div class="field">
+        <label for="hallCold" data-i18n="label_hallCold">콜드 통로 (mm)</label>
+        <input type="number" id="hallCold" value="1200" step="100" min="600">
+      </div>
+      <div class="field">
+        <label for="hallHot" data-i18n="label_hallHot">핫 통로 (mm)</label>
+        <input type="number" id="hallHot" value="1000" step="100" min="600">
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-top:12px;">
+      <div class="field">
+        <label for="hallCduKW" data-i18n="label_hallCduKW">CDU 용량 (kW/대)</label>
+        <input type="number" id="hallCduKW" value="1800" step="100" min="100">
+        <div class="hint" id="hallCduNote"></div>
+      </div>
+      <div class="field">
+        <label for="hallElecW" data-i18n="label_hallElecW">전기실 폭 (mm)</label>
+        <input type="number" id="hallElecW" value="4600" step="100" min="1000">
+      </div>
+      <div class="field">
+        <label for="hallRaised" data-i18n="label_hallRaised">이중바닥 (mm)</label>
+        <input type="number" id="hallRaised" value="800" step="50" min="0">
+      </div>
+      <div class="field">
+        <label for="hallRackH" data-i18n="label_hallRackH">랙 높이 (mm)</label>
+        <input type="number" id="hallRackH" value="2200" step="50" min="1000">
+      </div>
+      <div class="field">
+        <label for="hallBusway" data-i18n="label_hallBusway">버스웨이 레벨 (mm)</label>
+        <input type="number" id="hallBusway" value="3202" step="50" min="1500">
+      </div>
+      <div class="field">
+        <label for="hallCeil" data-i18n="label_hallCeil">층고 (mm)</label>
+        <input type="number" id="hallCeil" value="6000" step="100" min="2500">
+      </div>
+    </div>
+
+    <div class="hint" id="hallSummary" style="margin:12px 0 4px; font-weight:700; color:var(--primary);"></div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active normal" id="hallPlanBtn" data-i18n="hall_view_plan">평면</button>
+      <button class="mode-btn" id="hallSectBtn" data-i18n="hall_view_sect">단면</button>
+    </div>
+
+    <div class="diagram-wrap">
+      <div class="zoom-controls">
+        <span class="hint" style="margin:4px 8px 0 0;" data-i18n="hint_hall">휠로 확대/축소 · 드래그로 이동 — 치수는 mm, 위 입력값을 바꾸면 즉시 다시 작도됩니다</span>
+        <button class="zoom-btn" id="hallZoomOut">－</button>
+        <button class="zoom-btn" id="hallZoomReset" data-i18n="btn_zoomReset">리셋</button>
+        <button class="zoom-btn" id="hallZoomIn">＋</button>
+        <button class="zoom-btn expand-btn" id="hallExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
+      </div>
+      <svg id="hallSvg" width="980" height="560"></svg>
+    </div>
+    <div class="diagram-legend" id="hallLegend"></div>
+  </div>
+
+  <div class="card">
+    <h2>⑦ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
       <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
