@@ -320,31 +320,29 @@
   </div>
 
   <div class="card">
-    <h2>⑤ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
-    <div class="mode-toggle">
-      <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
-      <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
-    </div>
-    <div id="sldManualUI" style="display:none;">
-      <div class="sld-palette-label" data-i18n="sld_palette_title">장비 팔레트 — 클릭해서 추가</div>
-      <div class="sld-palette" id="sldPalette"></div>
-      <div class="sld-manual-bar">
-        <button id="sldSeedBtn" class="quick-btn" data-i18n="sld_seed">현재 계통 불러오기</button>
-        <button id="sldClearBtn" class="quick-btn" style="border-color:var(--border); color:var(--text-muted);" data-i18n="sld_clear">전체 지우기</button>
-        <span class="hint" id="sldStatus" style="margin:0;"></span>
-      </div>
+    <h2>⑤ <span data-i18n="h_plan_title">건축 평·단면 블럭 다이어그램</span> <span class="desc" data-i18n="h_plan_desc">전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다</span></h2>
+    <div class="plan-tabs" id="planTabs"></div>
+    <div class="plan-toolbar">
+      <select id="planKind"></select>
+      <button class="quick-btn" id="planAddBlock" data-i18n="plan_add">＋ 블럭 추가</button>
+      <input type="text" id="planName" data-i18n-placeholder="plan_name_ph" placeholder="선택한 블럭 이름">
+      <input type="number" id="planW" min="20" step="10" title="W">
+      <input type="number" id="planH" min="20" step="10" title="H">
+      <button class="quick-btn" id="planDelBlock" data-i18n="plan_del">블럭 삭제</button>
+      <label class="plan-check"><input type="checkbox" id="planSnap" checked> <span data-i18n="plan_snap">격자 맞춤</span></label>
+      <button class="quick-btn" id="planAllView" data-i18n="plan_all">한번에 보기</button>
+      <span class="hint" id="planStatus" style="margin:0;"></span>
     </div>
     <div class="diagram-wrap">
       <div class="zoom-controls">
-        <span class="hint" style="margin:4px 8px 0 0;" id="sldHint" data-i18n="hint_sld">휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다</span>
-        <button class="zoom-btn" id="sldZoomOut">－</button>
-        <button class="zoom-btn" id="sldZoomReset" data-i18n="btn_zoomReset">리셋</button>
-        <button class="zoom-btn" id="sldZoomIn">＋</button>
-        <button class="zoom-btn expand-btn" id="sldExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
+        <span class="hint" style="margin:4px 8px 0 0;" data-i18n="hint_plan">블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 더블클릭: 이름 편집 · Delete: 삭제</span>
+        <button class="zoom-btn" id="planZoomOut">－</button>
+        <button class="zoom-btn" id="planZoomReset" data-i18n="btn_zoomReset">리셋</button>
+        <button class="zoom-btn" id="planZoomIn">＋</button>
+        <button class="zoom-btn expand-btn" id="planExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
       </div>
-      <svg id="sldSvg" width="760" height="360"></svg>
+      <svg id="planSvg" width="760" height="420"></svg>
     </div>
-    <div class="diagram-legend" id="sldLegend"></div>
   </div>
 
   </div>
