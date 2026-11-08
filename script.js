@@ -9,6 +9,9 @@
       label_utility: '수전용량 (MW)', label_it: 'IT용량 (MW)', label_pue: 'PUE (수전 ÷ IT, 자동계산)',
       label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
       label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
+      label_itSync: "데이터홀 합계와 연동",
+      hint_itSync_on: " — 아래 데이터홀 {n}개의 용량 합계 {mw}MW를 그대로 씁니다. 목표값을 직접 넣으려면 체크 해제.",
+      hint_itSync_off: " — 직접 입력한 목표값입니다 (데이터홀 합계 {mw}MW). \"데이터홀 개수로 균등 자동 분할\"로 아래 표에 나눠 담으세요.",
       hint_maxSetCapacity: '유효용량 × N × 모듈당 변압기 대수로 ①~③번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
       btn_autoSplit: '데이터홀 개수로 균등 자동 분할', btn_addSet: '+ 데이터홀 수동 추가',
       th_hall: '데이터홀', th_itCap: 'IT용량 (MW)', th_topo: '이중화 방식', th_perRoomTx: '전기실당 변압기',
@@ -324,6 +327,9 @@
       label_utility: 'Utility capacity (MW)', label_it: 'IT capacity (MW)', label_pue: 'PUE (utility ÷ IT, auto)',
       label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
       label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
+      label_itSync: "Follow the data hall total",
+      hint_itSync_on: " — uses the {mw}MW sum of the {n} data halls below. Uncheck to enter a target instead.",
+      hint_itSync_off: " — a target you entered (halls below total {mw}MW). Use \\u201csplit evenly\\u201d to distribute it.",
       hint_maxSetCapacity: 'Derived from ①~③ as effective capacity × N × transformers per module — halls above it are flagged in the table below',
       btn_autoSplit: 'Auto-split evenly by hall count', btn_addSet: '+ Add hall manually',
       th_hall: 'Data hall', th_itCap: 'IT capacity (MW)', th_topo: 'Redundancy', th_perRoomTx: 'Tx per room',
@@ -3745,8 +3751,9 @@
   if (roomCapAutoCheckbox) roomCapAutoCheckbox.addEventListener('change', onRoomSettingChange);
 
 
-  function fmtN(n) {
-    return Number(n).toLocaleString('ko-KR', { maximumFractionDigits: 1 });
+  // digits를 주면 그 자리까지 (IT용량처럼 소수 둘째 자리가 필요한 값), 없으면 한 자리.
+  function fmtN(n, digits) {
+    return Number(n).toLocaleString('ko-KR', { maximumFractionDigits: digits === undefined ? 1 : digits });
   }
 
   function selectRedundancy(opt) {
@@ -3852,6 +3859,31 @@
   let sets = []; // { id, loadMW, presetKey }  (데이터홀 목록)
   let setIdCounter = 0;
 
+  function isItSyncedToSets() {
+    const el = document.getElementById('itSyncSets');
+    return el ? el.checked : false;
+  }
+  function setsTotalMW() {
+    return sets.reduce((n, st) => n + (parseFloat(st.loadMW) || 0), 0);
+  }
+  // 연동이 켜져 있으면 IT용량은 데이터홀 용량의 합이고(읽기 전용), 끄면 직접 넣는 목표값이다.
+  function syncItCapacityFromSets() {
+    const note = document.getElementById('itSyncNote');
+    const synced = isItSyncedToSets();
+    itCapacityInput.disabled = synced;
+    itCapacityInput.style.background = synced ? 'var(--primary-bg)' : '';
+    itCapacityInput.style.color = synced ? 'var(--primary)' : '';
+    itCapacityInput.style.fontWeight = synced ? '700' : '';
+    if (synced && sets.length) {
+      const total = Number(setsTotalMW().toFixed(2));
+      if (parseFloat(itCapacityInput.value) !== total) itCapacityInput.value = total;
+    }
+    if (note) {
+      note.textContent = synced
+        ? ' ' + t('hint_itSync_on', { n: sets.length, mw: fmtN(setsTotalMW(), 2) })
+        : ' ' + t('hint_itSync_off', { mw: fmtN(setsTotalMW(), 2) });
+    }
+  }
   function computeItCapacity() {
     const it = parseFloat(itCapacityInput.value);
     return (it && it > 0) ? it : null;
@@ -3885,7 +3917,7 @@
 
   function updatePueDisplay() {
     const pue = computePue();
-    pueDisplay.value = pue ? fmtN(pue, 3) : '-';
+    pueDisplay.value = pue ? fmtN(pue, 2) : '-';   // PUE는 통상 소수 둘째 자리까지
   }
 
   function updateHallCapacityDisplay() {
@@ -3967,6 +3999,7 @@
   }
 
   function renderSets() {
+    if (typeof syncItCapacityFromSets === 'function') { try { syncItCapacityFromSets(); } catch (e) {} }
     setsTbody.innerHTML = '';
     const maxCap = parseFloat(maxSetCapacityInput.value) || null;
 
@@ -3986,12 +4019,15 @@
       const tdLoad = document.createElement('td');
       const loadInputEl = document.createElement('input');
       loadInputEl.type = 'number';
-      loadInputEl.step = '0.1';
+      loadInputEl.step = '0.01';
       loadInputEl.min = '0';
       loadInputEl.value = set.loadMW;
       if (overCap) loadInputEl.style.borderColor = 'var(--warn)';
       loadInputEl.addEventListener('input', () => {
         set.loadMW = parseFloat(loadInputEl.value) || 0;
+        syncItCapacityFromSets();
+        updatePueDisplay();
+        updateHallCapacityDisplay();
         renderSets();
       });
       tdLoad.appendChild(loadInputEl);
@@ -4122,6 +4158,13 @@
     updateHallCapacityDisplay();
   }));
   hallCountInput.addEventListener('input', updateHallCapacityDisplay);
+  const itSyncCheckbox = document.getElementById('itSyncSets');
+  if (itSyncCheckbox) itSyncCheckbox.addEventListener('change', () => {
+    syncItCapacityFromSets();
+    updatePueDisplay();
+    updateHallCapacityDisplay();
+    renderSets();
+  });
   [ratingInput, safetyInput, pfInput, upsEfficiencyInput].forEach(el => el.addEventListener('input', () => {
     refreshMaxSetCapacityHint();
     renderSets();
