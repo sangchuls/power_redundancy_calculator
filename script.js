@@ -143,6 +143,22 @@
       alloc_over_emergency: '⚠ 상실 시 용량 초과 — 평상시 최대 {ratio}%는 괜찮지만, {lost}실 상실 시 남은 {n}실이 {emergency}%까지 올라갑니다. 전기실 용량을 키우거나 세트를 늘리세요.',
       alloc_unfed: '⚠ 분배 결과 — 급전원이 모두 상실된 POD {unfed}개 발생. 이 이중화 방식으로는 감당할 수 없는 상실 조합입니다.',
       label_roomSets: '전기실 세트 수',
+      h6_title: 'SLD (단선결선도)', h6_desc: '한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영',
+      hint_sld: '휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다',
+      sld_utility: '한전 수전', sld_utility_sub: '상시 2회선', sld_generator: '비상발전기', sld_generator_sub: '병렬운전',
+      sld_mainbus: '주모선', sld_legend_note: '실선=상시 가동 경로 · 점선=대기/상실 경로 (④번 평상시·비상시 상태와 동일)',
+      sld_mode_auto: '자동 작성', sld_mode_manual: '수동 작성',
+      sld_palette_title: '장비 팔레트 — 클릭해서 추가', sld_seed: '현재 계통 불러오기', sld_clear: '전체 지우기',
+      hint_sld_manual: '블럭 드래그=이동 · 블럭 2개를 차례로 클릭=연결 · 블럭 선택 후 선 클릭=그 선에서 분기(배터리·발전기 등) · 선만 클릭=기본↔예비 전환 · 블럭/선 더블클릭=삭제',
+      sld_status_idle: '블럭을 클릭하면 연결이 시작됩니다 (블럭 {n}개 · 연결선 {e}개)',
+      sld_status_selected: '“{name}” 선택됨 — 연결할 블럭을 클릭하거나, 분기할 선을 클릭하세요 (같은 블럭 재클릭 시 취소)',
+      sld_edge_main: '기본', sld_edge_standby: '예비',
+      sld_legend_manual: '실선=기본(주) 경로 · 점선=예비 경로 — 선을 클릭하면 서로 전환됩니다',
+      sldb_kepco: '한전 변전소', sldb_ds: '단로기', sldb_gcb: '가스차단기', sldb_vcb: '진공차단기',
+      sldb_acb: '기중차단기', sldb_mccb: '배선용차단기', sldb_mtr: '주변압기', sldb_tr: '변압기',
+      sldb_bus: '모선', sldb_gen: '비상발전기', sldb_gcp: '발전기 제어반', sldb_syn: '동기 병렬반',
+      sldb_ctts: '무순단 절체기', sldb_sts: '정지형 절체기', sldb_ups: '무정전전원장치', sldb_bat: '축전지',
+      sldb_pdu: '전력분배반', sldb_pod: '랙 그룹(POD)', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       hint_plan: '블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 더블클릭: 이름 편집 · Delete: 삭제',
@@ -151,6 +167,16 @@
       plan_snap: '격자 맞춤',
       plan_magnet: '블럭 붙이기',
       plan_all: '한번에 보기',
+      unit_room: '실',
+      plan_auto: '자동 작성',
+      plan_auto_confirm: '지금 작성한 평면이 모두 지워지고 자동 생성 결과로 바뀝니다. 계속할까요?',
+      plan_auto_done: '✓ IT {mw}MW · 전산실 {pods}개 · 전기실 {rooms}개 기준으로 3개 탭을 작성했습니다 (개념 면적 약 {area}㎡ — 원단위 추정값이므로 끌어서 조정하세요)',
+      plan_auto_tab_upper: '상층 평면 (전산·통신)',
+      plan_auto_tab_lower: '하층 평면 (전기·기계)',
+      plan_auto_tab_sect: 'A-A 단면',
+      plan_sect_upper: '상층 · 전산실 {n}개 × {kw}kW',
+      plan_sect_lower: '하층 · 전기실 {sets}세트 {rooms}실',
+      plan_sect_mech: '지하 · 기계 (냉동기·펌프·수처리)',
       plan_name_ph: '선택한 블럭 이름',
       plan_tab_add: '＋ 탭',
       plan_tab_del: '탭 삭제',
@@ -159,15 +185,41 @@
       plan_empty: '＋ 블럭 추가로 실(室)을 올리고, 끌어서 배치하세요',
       plan_status_tab: '{name} · 블럭 {n}개',
       plan_status_all: '탭 {n}개를 나란히 보는 중 — 편집하려면 탭을 고르세요',
-      plan_kind_elec: '전기실',
-      plan_kind_mech: '기계실',
-      plan_kind_hall: '데이터홀',
-      plan_kind_ups: 'UPS실',
-      plan_kind_batt: '배터리실',
-      plan_kind_gen: '발전기실',
-      plan_kind_corridor: '통로',
-      plan_kind_shaft: '샤프트',
-      plan_kind_etc: '기타실',
+      plan_group_elec: "전기",
+      plan_group_mech: "기계",
+      plan_group_it: "IT · 통신",
+      plan_group_ops: "운영 · 지원",
+      plan_group_misc: "기타",
+      plan_kind_main_elec: "주전기실",
+      plan_kind_mv: "특고압 배전반실",
+      plan_kind_lv: "저압 배전반실",
+      plan_kind_tr: "변압기실",
+      plan_kind_ups: "무정전전원장치실",
+      plan_kind_batt: "축전지실",
+      plan_kind_gen: "발전기실",
+      plan_kind_sts: "정지형 절체스위치실",
+      plan_kind_mech: "기계실",
+      plan_kind_chiller: "냉동기실",
+      plan_kind_pump: "펌프실",
+      plan_kind_crah: "전산실 공조기실",
+      plan_kind_cdu: "냉각수 분배장치실",
+      plan_kind_water: "수처리실",
+      plan_kind_hall: "전산실 / 서버실",
+      plan_kind_mmr: "통신사업자 접속실",
+      plan_kind_mdf: "주배선반실",
+      plan_kind_idf: "중간배선반실",
+      plan_kind_network: "네트워크실",
+      plan_kind_noc: "네트워크 운영센터",
+      plan_kind_soc: "보안관제실",
+      plan_kind_control: "중앙제어실",
+      plan_kind_bms: "건물관리시스템 운영실",
+      plan_kind_security: "보안실",
+      plan_kind_staging: "장비 반입·설치 준비실",
+      plan_kind_storage: "창고",
+      plan_kind_dock: "하역장",
+      plan_kind_corridor: "통로",
+      plan_kind_shaft: "샤프트",
+      plan_kind_etc: "기타실",
       h_review_title: "시스템 검토 의견",
       h_review_desc: "현재 입력값으로 구성된 계통을 용량·이중화·분배 관점에서 자동 점검합니다",
       rv_unfed_h: "급전원을 모두 잃는 POD가 있습니다",
@@ -382,6 +434,22 @@
       alloc_over_emergency: '⚠ Over capacity on a loss — {ratio}% is fine normally, but losing {lost} room(s) pushes the surviving {n} to {emergency}%. Raise room capacity or add a set.',
       alloc_unfed: '⚠ Allocation — {unfed} POD(s) lost every feeder. This redundancy scheme cannot cover that combination of losses.',
       label_roomSets: 'Room sets',
+      h6_title: 'SLD (Single Line Diagram)', h6_desc: 'Utility feed → emergency generator → main bus → per-module transformer/UPS → PDU → rack PODs — mirrors the same normal/emergency state as ④',
+      hint_sld: 'Wheel to zoom · drag to pan · automatically mirrors the same normal/emergency state as the ④ configuration diagram',
+      sld_utility: 'Utility feed', sld_utility_sub: 'dual feed, always-on', sld_generator: 'Emergency generator', sld_generator_sub: 'parallel operation',
+      sld_mainbus: 'Main bus', sld_legend_note: 'Solid = always-energized path · Dashed = standby/lost path (same as ④\'s normal/emergency state)',
+      sld_mode_auto: 'Auto-generate', sld_mode_manual: 'Manual draw',
+      sld_palette_title: 'Equipment palette — click to add', sld_seed: 'Load current system', sld_clear: 'Clear all',
+      hint_sld_manual: 'Drag a block to move · click two blocks in turn to connect · select a block then click a line to tap off it (battery, generator…) · click a line alone to toggle main↔standby · double-click a block/line to delete',
+      sld_status_idle: 'Click a block to start a connection ({n} blocks · {e} lines)',
+      sld_status_selected: '“{name}” selected — click a block to connect to, or click a line to tap off it (click it again to cancel)',
+      sld_edge_main: 'Main', sld_edge_standby: 'Standby',
+      sld_legend_manual: 'Solid = main path · Dashed = standby path — click a line to toggle between them',
+      sldb_kepco: 'Utility substation', sldb_ds: 'Disconnecting switch', sldb_gcb: 'Gas circuit breaker', sldb_vcb: 'Vacuum circuit breaker',
+      sldb_acb: 'Air circuit breaker', sldb_mccb: 'Molded case CB', sldb_mtr: 'Main transformer', sldb_tr: 'Transformer',
+      sldb_bus: 'Bus bar', sldb_gen: 'Emergency generator', sldb_gcp: 'Gen. control panel', sldb_syn: 'Synchronizing panel',
+      sldb_ctts: 'Closed transition TS', sldb_sts: 'Static transfer switch', sldb_ups: 'Uninterruptible PS', sldb_bat: 'Battery',
+      sldb_pdu: 'Power distribution unit', sldb_pod: 'Rack group (POD)', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       hint_plan: 'Drag a block to move it · select it and drag an edge to resize · double-click to rename · Delete to remove',
@@ -390,6 +458,16 @@
       plan_snap: 'Snap to grid',
       plan_magnet: 'Snap to blocks',
       plan_all: 'View all',
+      unit_room: ' rooms',
+      plan_auto: 'Auto layout',
+      plan_auto_confirm: 'This replaces every tab you have drawn with a generated layout. Continue?',
+      plan_auto_done: '✓ Laid out 3 tabs for {mw}MW IT · {pods} data halls · {rooms} electrical rooms (about {area} m² of concept area — rule-of-thumb figures, drag to adjust)',
+      plan_auto_tab_upper: 'Upper plan (IT & telecom)',
+      plan_auto_tab_lower: 'Lower plan (electrical & mechanical)',
+      plan_auto_tab_sect: 'Section A-A',
+      plan_sect_upper: 'Upper · {n} data halls × {kw}kW',
+      plan_sect_lower: 'Lower · {sets} room sets, {rooms} rooms',
+      plan_sect_mech: 'Basement · mechanical (chillers, pumps, water)',
       plan_name_ph: 'Name of the selected block',
       plan_tab_add: '+ Tab',
       plan_tab_del: 'Delete tab',
@@ -398,15 +476,41 @@
       plan_empty: 'Add a block and drag it into place',
       plan_status_tab: '{name} · {n} blocks',
       plan_status_all: 'Showing all {n} tabs — pick a tab to edit',
-      plan_kind_elec: 'Electrical room',
-      plan_kind_mech: 'Mechanical room',
-      plan_kind_hall: 'Data hall',
-      plan_kind_ups: 'UPS room',
-      plan_kind_batt: 'Battery room',
-      plan_kind_gen: 'Generator room',
-      plan_kind_corridor: 'Corridor',
-      plan_kind_shaft: 'Shaft',
-      plan_kind_etc: 'Other room',
+      plan_group_elec: "Electrical",
+      plan_group_mech: "Mechanical",
+      plan_group_it: "IT & telecom",
+      plan_group_ops: "Operations",
+      plan_group_misc: "Other",
+      plan_kind_main_elec: "Main electrical room",
+      plan_kind_mv: "MV switchgear room",
+      plan_kind_lv: "LV switchgear room",
+      plan_kind_tr: "Transformer room",
+      plan_kind_ups: "UPS room",
+      plan_kind_batt: "Battery room",
+      plan_kind_gen: "Generator room",
+      plan_kind_sts: "STS room",
+      plan_kind_mech: "Mechanical room",
+      plan_kind_chiller: "Chiller room",
+      plan_kind_pump: "Pump room",
+      plan_kind_crah: "CRAH room",
+      plan_kind_cdu: "CDU room",
+      plan_kind_water: "Water treatment room",
+      plan_kind_hall: "Data hall",
+      plan_kind_mmr: "Meet-me room",
+      plan_kind_mdf: "MDF room",
+      plan_kind_idf: "IDF room",
+      plan_kind_network: "Network room",
+      plan_kind_noc: "NOC",
+      plan_kind_soc: "SOC",
+      plan_kind_control: "Control room",
+      plan_kind_bms: "BMS room",
+      plan_kind_security: "Security room",
+      plan_kind_staging: "Staging room",
+      plan_kind_storage: "Storage room",
+      plan_kind_dock: "Loading dock",
+      plan_kind_corridor: "Corridor",
+      plan_kind_shaft: "Shaft",
+      plan_kind_etc: "Other room",
       h_review_title: "System review",
       h_review_desc: "Checks the current configuration for capacity, redundancy and distribution",
       rv_unfed_h: "Some PODs lose every feeder",
@@ -519,6 +623,7 @@
     calculate();
     renderSets();
     if (typeof refreshPlanTexts === 'function') { try { refreshPlanTexts(); } catch (e) {} }
+    if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
     if (typeof refreshPresetOptions === 'function') { try { refreshPresetOptions(presetSelect.value); } catch (e) {} }
   }
 
@@ -1321,7 +1426,7 @@
     if (zoom) zoom.reset();
   }
   // planZoom은 아래쪽 ⑤ 섹션에서 선언되므로 클릭 시점에 찾는다 (여기서 바로 읽으면 TDZ)
-  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom]]
+  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom], ['sldExpandBtn', 'sldSvg', () => sldZoom]]
     .forEach(([btnId, svgId, getZoom]) => {
       const btn = document.getElementById(btnId);
       if (!btn) return;
@@ -1536,6 +1641,13 @@
     const needPerRoom = Math.max(...roomPlan.designPerRoom);
     const gotPerRoom = Math.max(...rooms.map(r => r.capacityKW));
     const minSetLoad = Math.min(...roomPlan.setLoad), maxSetLoad = Math.max(...roomPlan.setLoad);
+    buildAutoSLD(rooms, N, C, perModuleUnits, load, rating, effectiveCap);
+
+    if (typeof setPlanContext === 'function') {
+      setPlanContext({ loadKW, pods: podPlan.pods, podKW: podPlan.podKW,
+        sets: roomPlan.sets, perSet: roomPlan.perSet, rooms: rooms.length });
+    }
+
     renderReview({
       worstNormal: worstRatio, worstEmergency, unfedPods,
       N, M, perSet: roomPlan.perSet, sets: roomPlan.sets, rooms: rooms.length,
@@ -1985,22 +2097,22 @@
   // ===== ⑤ 건축 평·단면 블럭 다이어그램 =====
   // 층별(또는 단면별) 탭마다 자유 배치 캔버스를 두고, 실명을 붙인 블럭을 올려 크기를
   // 조절한다. "한번에 보기"는 모든 탭을 나란히 축소해 한 화면에 깔아 비교용으로 쓴다.
-  const PLAN_KINDS = [
-    { key: 'elec', color: '#6F5FBF' },
-    { key: 'mech', color: '#0F6E56' },
-    { key: 'hall', color: '#3A2E75' },
-    { key: 'ups', color: '#185FA5' },
-    { key: 'batt', color: '#993C1D' },
-    { key: 'gen', color: '#854F0B' },
-    { key: 'corridor', color: '#8A8072' },
-    { key: 'shaft', color: '#993556' },
-    { key: 'etc', color: '#3B6D11' },
+  // 실(室) 분류 — 건축·전기·기계·통신 분야별 표준 실명칭
+  const PLAN_GROUPS = [
+    { key: 'elec', color: '#6F5FBF', kinds: ['main_elec', 'mv', 'lv', 'tr', 'ups', 'batt', 'gen', 'sts'] },
+    { key: 'mech', color: '#0F6E56', kinds: ['mech', 'chiller', 'pump', 'crah', 'cdu', 'water'] },
+    { key: 'it', color: '#3A2E75', kinds: ['hall', 'mmr', 'mdf', 'idf', 'network', 'noc', 'soc'] },
+    { key: 'ops', color: '#854F0B', kinds: ['control', 'bms', 'security', 'staging', 'storage', 'dock'] },
+    { key: 'misc', color: '#8A8072', kinds: ['corridor', 'shaft', 'etc'] },
   ];
+  const PLAN_KINDS = [];
+  PLAN_GROUPS.forEach(gr => gr.kinds.forEach(k => PLAN_KINDS.push({ key: k, color: gr.color })));
   const PLAN_KIND_COLOR = {};
   PLAN_KINDS.forEach(k => { PLAN_KIND_COLOR[k.key] = k.color; });
 
   const PLAN_SNAP = 10;
   const planZoom = makeZoomable('planSvg');
+  const sldZoom = makeZoomable('sldSvg');
   let planTabs = loadPlans();
   let planActive = 0;
   let planSelected = null;   // 선택한 블럭 id
@@ -2153,6 +2265,121 @@
     savePlans();
     drawPlan();
   }
+  // ----- 스페이스 프로그램 자동 작성 -----
+  // ①~④에서 나온 구성(POD 수·부하, 전기실 세트, 총 변압기)을 받아 층별 평면과 단면을
+  // 블럭으로 깔아준다. 면적은 아래 원단위(㎡/MW)로 잡은 개념 값이고, 깐 뒤에는 자유롭게
+  // 끌어서 고치면 된다.
+  const PLAN_AREA = {        // ㎡ per MW of IT load
+    hall: 22, main_elec: 6, tr: 5, ups: 7, batt: 5, gen: 7,
+    chiller: 10, cdu: 5, pump: 3,
+  };
+  const PLAN_FIXED = {       // 부하와 무관하게 대략 일정한 실 (㎡)
+    mmr: 60, mdf: 45, network: 40, noc: 70, control: 50, security: 30,
+    staging: 80, storage: 60, dock: 90, water: 40, bms: 30,
+  };
+  const PLAN_PX_PER_M = 1.9;   // ㎡ → 화면 크기 환산 (√면적 × 이 값)
+
+  // 면적(㎡)을 가로세로 비율 ratio의 블럭 크기로 바꾼다
+  function planSize(area, ratio, label) {
+    const a = Math.max(8, area);
+    const r = ratio || 1.5;
+    const side = Math.sqrt(a / r) * PLAN_PX_PER_M;
+    // 실명이 들어갈 만큼은 확보한다 (한글 한 자 ≈ 7px, 최대 190px)
+    const need = label ? Math.min(200, label.length * 9.5 + 16) : 0;
+    return {
+      w: Math.max(50, need, Math.round(side * r / 10) * 10),
+      h: Math.max(34, Math.round(side / 10) * 10),
+    };
+  }
+
+  let planLastContext = null;   // ④가 계산해 둔 최신 구성
+  function setPlanContext(ctx) { planLastContext = ctx; }
+
+  // 한 줄로 늘어놓으며 x를 전진시키는 작은 도우미
+  function planRow(blocks, kind, label, area, ratio, cur, y) {
+    const sz = planSize(area, ratio, label);
+    blocks.push({ id: 'b' + (++planSeq), kind, label, x: cur.x, y, w: sz.w, h: sz.h });
+    cur.x += sz.w + 10;
+    cur.maxH = Math.max(cur.maxH || 0, sz.h);
+    return sz;
+  }
+
+  function planAutoGenerate() {
+    const c = planLastContext;
+    if (!c) return;
+    const mw = c.loadKW / 1000;
+    const perSetMW = mw / Math.max(1, c.sets);
+    const A = (k, m) => PLAN_AREA[k] * (m === undefined ? mw : m);
+
+    // --- 상층: 전산실 + IT/통신 ---
+    const upper = [];
+    let cur = { x: 40 };
+    for (let i = 0; i < c.pods; i++) {
+      planRow(upper, 'hall', t('plan_kind_hall') + ' ' + (i + 1) + ' (' + fmtN(Math.round(c.podKW)) + 'kW)',
+        A('hall', c.podKW / 1000), 1.6, cur, 40);
+    }
+    const hallH = cur.maxH;
+    const corridorW = Math.max(120, cur.x - 50);
+    upper.push({ id: 'b' + (++planSeq), kind: 'corridor', label: t('plan_kind_corridor'), x: 40, y: 40 + hallH + 10, w: corridorW, h: 40 });
+    cur = { x: 40 };
+    const supY = 40 + hallH + 60;
+    [['mmr', PLAN_FIXED.mmr], ['mdf', PLAN_FIXED.mdf], ['network', PLAN_FIXED.network], ['noc', PLAN_FIXED.noc]]
+      .forEach(([k, a]) => planRow(upper, k, t('plan_kind_' + k), a, 1.4, cur, supY));
+
+    // --- 하층: 전기 + 기계 ---
+    const lower = [];
+    cur = { x: 40 };
+    for (let si = 0; si < c.sets; si++) {
+      const tag = c.sets > 1 ? ' S' + (si + 1) : '';
+      planRow(lower, 'tr', t('plan_kind_tr') + tag + ' (' + c.perSet + t('unit_room') + ')', A('tr', perSetMW), 1.8, cur, 40);
+      planRow(lower, 'ups', t('plan_kind_ups') + tag, A('ups', perSetMW), 1.5, cur, 40);
+      planRow(lower, 'batt', t('plan_kind_batt') + tag, A('batt', perSetMW), 1.5, cur, 40);
+    }
+    const elecH = cur.maxH;
+    cur = { x: 40 };
+    const mechY = 40 + elecH + 50;
+    planRow(lower, 'main_elec', t('plan_kind_main_elec'), A('main_elec'), 1.6, cur, mechY);
+    planRow(lower, 'gen', t('plan_kind_gen'), A('gen'), 1.8, cur, mechY);
+    planRow(lower, 'chiller', t('plan_kind_chiller'), A('chiller'), 1.6, cur, mechY);
+    planRow(lower, 'cdu', t('plan_kind_cdu'), A('cdu'), 1.4, cur, mechY);
+    planRow(lower, 'pump', t('plan_kind_pump'), A('pump'), 1.4, cur, mechY);
+    const mechH = cur.maxH;
+    cur = { x: 40 };
+    const opsY = mechY + mechH + 50;
+    [['control', PLAN_FIXED.control], ['bms', PLAN_FIXED.bms], ['security', PLAN_FIXED.security],
+     ['staging', PLAN_FIXED.staging], ['storage', PLAN_FIXED.storage], ['dock', PLAN_FIXED.dock]]
+      .forEach(([k, a]) => planRow(lower, k, t('plan_kind_' + k), a, 1.4, cur, opsY));
+
+    // --- 단면: 층을 위아래로 쌓아 본다 ---
+    const sect = [];
+    const sw = Math.max(320, Math.min(620, corridorW));
+    sect.push({ id: 'b' + (++planSeq), kind: 'hall', label: t('plan_sect_upper', { n: c.pods, kw: fmtN(Math.round(c.podKW)) }), x: 40, y: 40, w: sw, h: 90 });
+    sect.push({ id: 'b' + (++planSeq), kind: 'shaft', label: t('plan_kind_shaft'), x: 40 + sw + 10, y: 40, w: 60, h: 220 });
+    sect.push({ id: 'b' + (++planSeq), kind: 'tr', label: t('plan_sect_lower', { sets: c.sets, rooms: c.rooms }), x: 40, y: 140, w: sw, h: 60 });
+    sect.push({ id: 'b' + (++planSeq), kind: 'chiller', label: t('plan_sect_mech'), x: 40, y: 210, w: sw, h: 50 });
+
+    planTabs = [
+      { name: t('plan_auto_tab_upper'), blocks: upper },
+      { name: t('plan_auto_tab_lower'), blocks: lower },
+      { name: t('plan_auto_tab_sect'), blocks: sect },
+    ];
+    planActive = 0;
+    planAllMode = false;
+    planSelected = null;
+    savePlans();
+    renderPlanTabs();
+    drawPlan();
+    const status = document.getElementById('planStatus');
+    if (status) {
+      status.textContent = t('plan_auto_done', {
+        mw: fmtN(Math.round(mw * 10) / 10), pods: c.pods, rooms: c.rooms,
+        area: fmtN(Math.round(mw * 22 + mw * 30)),
+      });
+      status.style.color = 'var(--primary)';
+      status.style.fontWeight = '700';
+    }
+  }
+
   function planDeleteSelected() {
     if (!planSelected) return;
     planCur().blocks = planCur().blocks.filter(b => b.id !== planSelected);
@@ -2226,6 +2453,24 @@
     return { x: x1 - 20, y: y1 - 20, w: (x2 - x1) + 40, h: (y2 - y1) + 40 };
   }
 
+  // 글자가 블럭보다 넓으면 먼저 글자 크기를 줄이고, 그래도 넘치면 끝을 잘라 말줄임한다.
+  // (getComputedTextLength는 붙인 뒤에만 쓸 수 있어 그리고 나서 손본다.)
+  function planFitText(el, text, maxW, baseSize) {
+    if (!el.getComputedTextLength || maxW <= 0) return;
+    let size = baseSize;
+    const min = Math.max(5, baseSize * 0.62);
+    while (el.getComputedTextLength() > maxW && size > min) {
+      size -= 0.5;
+      el.setAttribute('font-size', size);
+    }
+    if (el.getComputedTextLength() <= maxW) return;
+    let cut = text.length;
+    while (cut > 1 && el.getComputedTextLength() > maxW) {
+      cut -= 1;
+      el.textContent = text.slice(0, cut) + '…';
+    }
+  }
+
   // 블럭 하나를 target 안에 그린다 (ox/oy/scale로 "한번에 보기"에서도 재사용)
   function drawPlanBlock(target, b, opts) {
     const o = opts || {};
@@ -2234,6 +2479,7 @@
     const x = ox + b.x * sc, y = oy + b.y * sc, w = b.w * sc, h = b.h * sc;
     const selected = !o.readonly && b.id === planSelected;
     const grp = svgEl('g', o.readonly ? {} : { cursor: 'move' });
+    target.appendChild(grp);   // 먼저 붙여야 아래 planFitText가 글자 폭을 잴 수 있다
     grp.appendChild(svgEl('rect', {
       x, y, width: w, height: h, rx: 4,
       fill: hexToRgba(color, 0.14), stroke: color,
@@ -2246,6 +2492,7 @@
     });
     label.textContent = b.label;
     grp.appendChild(label);
+    planFitText(label, b.label, w - 8, fs);
     if (h > 34 * sc) {
       const dim = svgEl('text', {
         x: x + w / 2, y: y + h / 2 + fs, 'text-anchor': 'middle',
@@ -2264,7 +2511,6 @@
       });
       grp.addEventListener('dblclick', e => { e.stopPropagation(); planEditLabel(b); });
     }
-    target.appendChild(grp);
 
     // 선택한 블럭에만 모서리 핸들 — 끌어서 크기를 바꾼다
     if (selected) {
@@ -2483,6 +2729,10 @@
     if (planAllMode) { planAllMode = false; renderPlanTabs(); }
     planAddBlock();
   });
+  document.getElementById('planAutoBtn').addEventListener('click', () => {
+    if (planTabs.some(tab => tab.blocks.length) && !window.confirm(t('plan_auto_confirm'))) return;
+    planAutoGenerate();
+  });
   document.getElementById('planDelBlock').addEventListener('click', planDeleteSelected);
   document.getElementById('planSnap').addEventListener('change', () => {});
   document.getElementById('planAllView').addEventListener('click', () => {
@@ -2508,6 +2758,9 @@
       savePlans(); drawPlan();
     });
   });
+  document.getElementById('sldZoomIn').addEventListener('click', () => sldZoom.zoomIn());
+  document.getElementById('sldZoomOut').addEventListener('click', () => sldZoom.zoomOut());
+  document.getElementById('sldZoomReset').addEventListener('click', () => sldZoom.reset());
   document.getElementById('planZoomIn').addEventListener('click', () => planZoom.zoomIn());
   document.getElementById('planZoomOut').addEventListener('click', () => planZoom.zoomOut());
   document.getElementById('planZoomReset').addEventListener('click', () => planZoom.reset());
@@ -2517,11 +2770,16 @@
     if (sel) {
       const keep = sel.value;
       sel.innerHTML = '';
-      PLAN_KINDS.forEach(k => {
-        const opt = document.createElement('option');
-        opt.value = k.key;
-        opt.textContent = t('plan_kind_' + k.key);
-        sel.appendChild(opt);
+      PLAN_GROUPS.forEach(gr => {
+        const og = document.createElement('optgroup');
+        og.label = t('plan_group_' + gr.key);
+        gr.kinds.forEach(k => {
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = t('plan_kind_' + k);
+          og.appendChild(opt);
+        });
+        sel.appendChild(og);
       });
       if (keep) sel.value = keep;
     }
@@ -2529,6 +2787,538 @@
     drawPlan();
   }
   refreshPlanTexts();
+
+  // ===== ⑥ SLD (단선결선도) 에디터 =====
+  // 자동 작성: ①~⑤ 계산 결과를 그래프(노드+엣지)로 변환해 그린다 (읽기 전용, 재계산 시 갱신).
+  // 수동 작성: 같은 그래프 모델을 직접 편집한다 — 팔레트 클릭으로 블럭 추가, 드래그로 이동,
+  //            블럭 2개를 차례로 클릭하면 연결, 선 클릭으로 기본↔예비 전환, 더블클릭으로 삭제.
+  //            편집 내용은 localStorage에 저장되어 새로고침 후에도 유지된다.
+  const SLD_CATS = {
+    source: '#3A2E75', switch: '#6759B0', breaker: '#7A6BCB', tr: '#0F6E56',
+    bus: '#2E2419', gen: '#993C1D', transfer: '#854F0B', ups: '#185FA5', load: '#993556',
+    pod: '#3B6D11',
+  };
+  const SLD_EDGE_COLORS = { main: '#3A2E75', standby: '#854F0B', lost: '#DB8478' };
+  const SLD_BLOCK_TYPES = [
+    { key: 'kepco', abbr: 'KEPCO', cat: 'source' },
+    { key: 'ds', abbr: 'DS', cat: 'switch' },
+    { key: 'gcb', abbr: 'GCB', cat: 'breaker' },
+    { key: 'vcb', abbr: 'VCB', cat: 'breaker' },
+    { key: 'acb', abbr: 'ACB', cat: 'breaker' },
+    { key: 'mccb', abbr: 'MCCB', cat: 'breaker' },
+    { key: 'mtr', abbr: 'MTR', cat: 'tr' },
+    { key: 'tr', abbr: 'TR', cat: 'tr' },
+    { key: 'bus', abbr: 'BUS', cat: 'bus' },
+    { key: 'gen', abbr: 'GEN', cat: 'gen' },
+    { key: 'gcp', abbr: 'GCP', cat: 'gen' },
+    { key: 'syn', abbr: 'SYN', cat: 'gen' },
+    { key: 'ctts', abbr: 'CTTS', cat: 'transfer' },
+    { key: 'sts', abbr: 'STS', cat: 'transfer' },
+    { key: 'ups', abbr: 'UPS', cat: 'ups' },
+    { key: 'bat', abbr: 'BAT', cat: 'ups' },
+    { key: 'pdu', abbr: 'PDU', cat: 'load' },
+    { key: 'pod', abbr: 'POD', cat: 'pod' },
+    { key: 'rack', abbr: 'RACK', cat: 'load' },
+    { key: 'load', abbr: 'LOAD', cat: 'load' },
+  ];
+  const SLD_TYPE_MAP = {};
+  SLD_BLOCK_TYPES.forEach(b => { SLD_TYPE_MAP[b.key] = b; });
+  // 분기점: 팔레트에는 없고, 선에 분기를 만들 때 자동으로 생성된다 (배터리·발전기처럼
+  // 블럭끼리가 아니라 기존 선에서 따내야 하는 장비를 연결하기 위한 노드).
+  SLD_TYPE_MAP.junction = { key: 'junction', abbr: '', cat: 'bus' };
+
+  let sldMode = localStorage.getItem('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
+  let sldAutoGraph = { nodes: [], edges: [], notes: [] };
+  let sldSelectedId = null;
+  let sldSeq = 0;
+  let sldDrag = null;
+
+  function loadSldManualGraph() {
+    try {
+      const g = JSON.parse(localStorage.getItem('prc_sld_graph') || 'null');
+      if (g && Array.isArray(g.nodes) && Array.isArray(g.edges)) {
+        g.nodes.forEach(n => {
+          const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
+          if (isFinite(num) && num > sldSeq) sldSeq = num;
+        });
+        return { nodes: g.nodes, edges: g.edges, notes: [] };
+      }
+    } catch (e) {}
+    return { nodes: [], edges: [], notes: [] };
+  }
+  let sldManualGraph = loadSldManualGraph();
+
+  function saveSldManualGraph() {
+    try {
+      localStorage.setItem('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges }));
+    } catch (e) {}
+  }
+  function sldGraph() { return sldMode === 'manual' ? sldManualGraph : sldAutoGraph; }
+
+  function makeSldNode(typeKey, x, y, opts) {
+    opts = opts || {};
+    const type = SLD_TYPE_MAP[typeKey] || SLD_TYPE_MAP.load;
+    return {
+      id: 'n' + (++sldSeq), type: typeKey, x, y,
+      w: opts.w || 96, h: opts.h || 44,
+      label: opts.label || type.abbr,
+      sub: opts.sub === undefined ? null : opts.sub,
+      state: opts.state || 'active',
+    };
+  }
+  function sldNodeColor(node) {
+    if (node.type === 'junction') return SLD_EDGE_COLORS.main;
+    if (node.state === 'offline') return SLD_EDGE_COLORS.lost;
+    if (node.state === 'idle') return '#9A90BB';
+    return SLD_CATS[(SLD_TYPE_MAP[node.type] || {}).cat] || SLD_CATS.load;
+  }
+  function sldNodeSub(node) {
+    if (node.sub !== null && node.sub !== undefined) return node.sub;
+    return t('sldb_' + node.type);
+  }
+
+  // ①~④ 계산 결과 → 그래프. 한전 수전 → 주변압기 → 주모선 → (모듈별) 변압기 → UPS → PDU → POD.
+  // modules: ④에서 만든 '전기실' 배열 (각 방의 소속 모듈·상태·변압기 대수를 들고 있다)
+  function buildAutoSLD(modules, N, C, perModuleUnits, load, rating, effectiveCap) {
+    const nodes = [], edges = [], notes = [];
+    const M = modules.length;
+    if (!M) { sldAutoGraph = { nodes, edges, notes }; if (sldMode === 'auto') drawSLD(); return; }
+
+    // POD(랙군) 분할 — 모듈 1개가 감당해야 하는 설계부하를 POD 용량으로 나눠 개수를 정하고,
+    // UPS에서 각 POD로 분배선을 뽑는다. POD 용량을 바꾸면 개수와 분배선이 함께 갱신된다.
+    // 데이터홀 전체 POD 수(①번 공통 설정)를 설계기준으로 모듈에 나눠 담는다 —
+    // 완전이중화는 트레인 1개가 전체 POD를 100% 커버하고, 그 외에는 N개 모듈이 분담한다.
+    const hallPlan = getPodPlan(load);
+    // 설계기준으로 전체 POD를 떠받치는 전기실 수 — 완전이중화는 트레인 1개의 방들이,
+    // 그 외에는 Duty 모듈(N개)에 속한 방들이 전체 POD를 나눠 받는다.
+    const designRooms = currentTopo === 'full'
+      ? ((modules[0] && modules[0].roomsInModule) || 1)
+      : (modules.filter(r => (r.moduleIndex === undefined ? 0 : r.moduleIndex) < N).length || 1);
+    const podCount = Math.max(1, Math.ceil(hallPlan.count / designRooms));
+    const podW = 56, podH = 38, podGap = 6, podRowGap = 10;
+    // POD 용량을 작게 잡으면 개수가 많아지므로 한 줄에 최대 6개씩 줄바꿈해 가로폭을 유지한다.
+    const podPerRow = Math.min(podCount, 6);
+    const podRows = Math.ceil(podCount / podPerRow);
+    const podsRowW = podPerRow * podW + (podPerRow - 1) * podGap;
+
+    const colW = Math.max(116, podsRowW), gap = 20;
+    const totalW = M * colW + (M - 1) * gap;
+    const svgW = Math.max(760, totalW + 100);
+    const startX = (svgW - totalW) / 2;
+    const add = n => { nodes.push(n); return n; };
+    const link = (a, b, kind) => edges.push({ id: 'e' + a.id + '-' + b.id + '-' + (++sldSeq), from: a.id, to: b.id, kind: kind || 'main' });
+
+    const kepco = add(makeSldNode('kepco', startX, 16, { w: 120, sub: t('sld_utility_sub') }));
+    const mtr = add(makeSldNode('mtr', startX, 92, { w: 120 }));
+    const gen = add(makeSldNode('gen', startX + totalW - 120, 16, { w: 120, sub: t('sld_generator_sub') }));
+    const bus = add(makeSldNode('bus', startX, 170, { w: totalW, h: 30, label: t('sld_mainbus') + ' (BUS)', sub: '' }));
+    link(kepco, mtr, 'main');
+    link(mtr, bus, 'main');
+    link(gen, bus, 'standby');
+
+    modules.forEach((mod, i) => {
+      const x = startX + i * (colW + gap);
+      const isActive = mod.state === 'active';
+      const kind = mod.state === 'offline' ? 'lost' : (isActive ? 'main' : 'standby');
+      const mi = mod.moduleIndex === undefined ? i : mod.moduleIndex;
+      let roleLabel = t('module_label_room', { n: i + 1 });
+      if (currentTopo === 'full') roleLabel += ' (' + t('module_label_train', { n: mi + 1 }) + ')';
+      else if (currentTopo === 'standby') roleLabel += ' (' + (mod.role === 'catcher' ? t('module_label_catcher', { n: mi - N + 1 }) : t('module_label_duty', { n: mi + 1 })) + ')';
+      const stateLabel = mod.state === 'offline' ? t('state_offline') : mod.state === 'idle' ? t('state_idle')
+        : (currentTopo === 'standby' && diagramMode === 'emergency' && mod.role === 'catcher') ? t('state_engaged') : t('state_active');
+      notes.push({ x: x + colW / 2, y: 224, text: roleLabel, size: 10.5, weight: 800, color: sldNodeColor({ type: 'tr', state: mod.state }) });
+      notes.push({ x: x + colW / 2, y: 236, text: stateLabel, size: 8, weight: 600, color: mod.state === 'active' ? '#8A8072' : sldNodeColor({ type: 'tr', state: mod.state }) });
+
+      const roomTx = mod.txCount === undefined ? perModuleUnits : mod.txCount;
+      const tr = add(makeSldNode('tr', x, 244, { w: colW, label: `TR ${fmtN(rating)}kVA`, sub: '×' + t('unit_dae', { n: roomTx }), state: mod.state }));
+      const ups = add(makeSldNode('ups', x, 318, { w: colW, sub: isActive ? `${fmtN(mod.loadKW)}kW` : '-', state: mod.state }));
+      const pdu = add(makeSldNode('pdu', x, 392, { w: colW, label: 'PDU', state: mod.state }));
+      link(bus, tr, kind);
+      link(tr, ups, kind);
+      link(ups, pdu, kind);
+
+      // PDU → POD 분배선. POD 개수는 POD 용량에 따라 자동으로 늘거나 줄어든다.
+      const podsStartX = x + (colW - podsRowW) / 2;
+      const podLoadKW = isActive ? mod.loadKW / podCount : 0;
+      for (let p = 0; p < podCount; p++) {
+        const row = Math.floor(p / podPerRow), col = p % podPerRow;
+        const inRow = Math.min(podPerRow, podCount - row * podPerRow);
+        const rowW = inRow * podW + (inRow - 1) * podGap;
+        const rowX = x + (colW - rowW) / 2;
+        const pod = add(makeSldNode('pod', rowX + col * (podW + podGap), 470 + row * (podH + podRowGap), {
+          w: podW, h: podH, label: 'POD ' + (p + 1),
+          sub: isActive ? fmtN(Math.round(podLoadKW)) + 'kW' : '-',
+          state: mod.state,
+        }));
+        link(pdu, pod, kind);
+      }
+    });
+
+    sldAutoGraph = { nodes, edges, notes };
+    if (sldMode === 'auto') drawSLD();
+  }
+
+  function sldEdgePath(a, b) {
+    const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
+    const aTop = a.y, aBot = a.y + a.h, bTop = b.y, bBot = b.y + b.h;
+    if (bTop >= aBot - 4) {
+      const midY = (aBot + bTop) / 2;
+      return `M${acx},${aBot} L${acx},${midY} L${bcx},${midY} L${bcx},${bTop}`;
+    }
+    if (aTop >= bBot - 4) {
+      const midY = (aTop + bBot) / 2;
+      return `M${acx},${aTop} L${acx},${midY} L${bcx},${midY} L${bcx},${bBot}`;
+    }
+    const acy = a.y + a.h / 2, bcy = b.y + b.h / 2;
+    const ax = bcx > acx ? a.x + a.w : a.x;
+    const bx = bcx > acx ? b.x : b.x + b.w;
+    const midX = (ax + bx) / 2;
+    return `M${ax},${acy} L${midX},${acy} L${midX},${bcy} L${bx},${bcy}`;
+  }
+
+  function sldClientToGraph(evt) {
+    const svg = document.getElementById('sldSvg');
+    const m = sldZoom.group.getScreenCTM();
+    if (!svg || !m) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(m.inverse());
+  }
+
+  function drawSLD() {
+    const svg = document.getElementById('sldSvg');
+    if (!svg) return;
+    const g = sldGraph();
+    const manual = sldMode === 'manual';
+    sldZoom.clear();
+    const target = sldZoom.group;
+
+    let maxX = 700, maxY = 260;
+    g.nodes.forEach(n => { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); });
+    (g.notes || []).forEach(nt => { maxX = Math.max(maxX, nt.x + 60); maxY = Math.max(maxY, nt.y); });
+    const svgW = Math.max(760, maxX + 40);
+    const svgH = Math.max(manual ? 440 : 300, maxY + 40);
+    svg.setAttribute('width', svgW);
+    svg.setAttribute('height', svgH);
+    svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
+    svg.classList.toggle('sld-editing', manual);
+
+    const byId = {};
+    g.nodes.forEach(n => { byId[n.id] = n; });
+
+    // ----- 연결선 -----
+    g.edges.forEach(edge => {
+      const a = byId[edge.from], b = byId[edge.to];
+      if (!a || !b) return;
+      const d = sldEdgePath(a, b);
+      const color = SLD_EDGE_COLORS[edge.kind] || SLD_EDGE_COLORS.main;
+      target.appendChild(svgEl('path', {
+        d, fill: 'none', stroke: color,
+        'stroke-width': edge.kind === 'main' ? 2 : 1.6,
+        'stroke-dasharray': edge.kind === 'main' ? 'none' : '5,4',
+      }));
+      if (edge.kind !== 'main') {
+        const mid = sldEdgeMidpoint(a, b);
+        const lbl = svgEl('text', {
+          x: mid.x, y: mid.y - 3, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 700,
+          fill: color, 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+        });
+        lbl.textContent = t('sld_edge_standby');
+        target.appendChild(lbl);
+      }
+      if (manual) {
+        const hit = svgEl('path', { d, fill: 'none', stroke: 'transparent', 'stroke-width': 14, cursor: 'pointer' });
+        hit.addEventListener('click', e => {
+          e.stopPropagation();
+          // 블럭이 선택된 상태에서 선을 클릭하면 그 선에 분기점을 만들어 연결한다
+          // (배터리·발전기처럼 선에서 따내는 장비). 선택이 없으면 기본↔예비 전환.
+          const selected = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+          if (selected) {
+            tapEdgeWithNode(edge, selected, sldClientToGraph(e));
+          } else {
+            edge.kind = edge.kind === 'main' ? 'standby' : 'main';
+            saveSldManualGraph();
+            drawSLD();
+          }
+        });
+        hit.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          sldManualGraph.edges = sldManualGraph.edges.filter(x => x !== edge);
+          saveSldManualGraph();
+          drawSLD();
+          updateSldStatus();
+        });
+        target.appendChild(hit);
+      }
+    });
+
+    // ----- 주석(자동 작성 모드의 모듈 명칭/상태) -----
+    (g.notes || []).forEach(nt => {
+      const el = svgEl('text', {
+        x: nt.x, y: nt.y, 'text-anchor': 'middle', 'font-size': nt.size || 10,
+        'font-weight': nt.weight || 700, fill: nt.color || '#8A8072', 'font-family': 'sans-serif',
+      });
+      el.textContent = nt.text;
+      target.appendChild(el);
+    });
+
+    // ----- 블럭 -----
+    g.nodes.forEach(node => {
+      const color = sldNodeColor(node);
+      const selected = manual && node.id === sldSelectedId;
+      const grp = svgEl('g', manual ? { cursor: 'move' } : {});
+      const dashed = node.state !== 'active';
+      if (node.type === 'junction') {
+        // 분기점은 선 위의 점으로만 표시 (라벨 없음)
+        const cxj = node.x + node.w / 2, cyj = node.y + node.h / 2;
+        grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: selected ? 7 : 5, fill: color }));
+        if (selected) grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: 10, fill: 'none', stroke: color, 'stroke-width': 1.5 }));
+        if (manual) grp.appendChild(svgEl('circle', { cx: cxj, cy: cyj, r: 11, fill: 'transparent' }));
+      } else {
+        grp.appendChild(svgEl('rect', {
+          x: node.x, y: node.y, width: node.w, height: node.h, rx: 8,
+          fill: node.state === 'offline' ? '#FBEDE7' : hexToRgba(color, 0.12),
+          stroke: color, 'stroke-width': selected ? 3 : (dashed ? 1.4 : 2),
+          'stroke-dasharray': dashed ? '5,4' : 'none',
+        }));
+        const sub = sldNodeSub(node);
+        const cx = node.x + node.w / 2;
+        const labelY = sub ? node.y + node.h / 2 - 3 : node.y + node.h / 2 + 4;
+        const nameEl = svgEl('text', {
+          x: cx, y: labelY, 'text-anchor': 'middle', 'font-size': 11, 'font-weight': 800,
+          fill: color, 'font-family': 'sans-serif',
+        });
+        nameEl.textContent = node.label;
+        grp.appendChild(nameEl);
+        if (sub) {
+          const subEl = svgEl('text', {
+            x: cx, y: node.y + node.h / 2 + 11, 'text-anchor': 'middle', 'font-size': 8,
+            'font-weight': 600, fill: node.state === 'active' ? '#8A8072' : color, 'font-family': 'sans-serif',
+          });
+          subEl.textContent = sub;
+          grp.appendChild(subEl);
+        }
+      }
+      if (manual) {
+        grp.addEventListener('mousedown', e => {
+          e.stopPropagation();
+          const p = sldClientToGraph(e);
+          sldDrag = { node, dx: p.x - node.x, dy: p.y - node.y, moved: false };
+        });
+        grp.addEventListener('dblclick', e => {
+          e.stopPropagation();
+          removeSldNode(node);
+        });
+      }
+      target.appendChild(grp);
+    });
+
+    renderSldLegend(g, manual);
+    sldZoom.reset();
+  }
+
+  function sldEdgeMidpoint(a, b) {
+    const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
+    const aBot = a.y + a.h, bTop = b.y;
+    if (bTop >= aBot - 4) return { x: (acx + bcx) / 2, y: (aBot + bTop) / 2 };
+    return { x: (acx + bcx) / 2, y: (a.y + a.h / 2 + b.y + b.h / 2) / 2 };
+  }
+
+  function renderSldLegend(g, manual) {
+    const legend = document.getElementById('sldLegend');
+    if (!legend) return;
+    legend.innerHTML = '';
+    if (manual) {
+      [['main', t('sld_edge_main')], ['standby', t('sld_edge_standby')]].forEach(([kind, label]) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="swatch" style="background:${SLD_EDGE_COLORS[kind]}"></span>${label}`;
+        legend.appendChild(div);
+      });
+      const note = document.createElement('div');
+      note.className = 'item';
+      note.style.width = '100%';
+      note.style.marginTop = '4px';
+      note.textContent = t('sld_legend_manual');
+      legend.appendChild(note);
+      return;
+    }
+    const seen = {};
+    g.nodes.forEach(n => {
+      const cat = (SLD_TYPE_MAP[n.type] || {}).cat;
+      if (!cat || seen[cat]) return;
+      seen[cat] = true;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span class="swatch" style="background:${SLD_CATS[cat]}"></span>${t('sldb_' + n.type)}`;
+      legend.appendChild(div);
+    });
+    const note = document.createElement('div');
+    note.className = 'item';
+    note.style.width = '100%';
+    note.style.marginTop = '4px';
+    note.textContent = t('sld_legend_note');
+    legend.appendChild(note);
+  }
+
+  function updateSldStatus() {
+    const el = document.getElementById('sldStatus');
+    if (!el) return;
+    if (sldMode !== 'manual') { el.textContent = ''; return; }
+    const sel = sldManualGraph.nodes.find(n => n.id === sldSelectedId);
+    el.textContent = sel
+      ? t('sld_status_selected', { name: sel.label })
+      : t('sld_status_idle', { n: sldManualGraph.nodes.length, e: sldManualGraph.edges.length });
+  }
+
+  // 기존 선에 분기점을 끼워 넣고 그 분기점에서 블럭으로 선을 뽑는다.
+  // 원래 선은 (시작→분기점) + (분기점→끝)으로 쪼개져 kind(기본/예비)를 그대로 유지한다.
+  function tapEdgeWithNode(edge, node, point) {
+    const g = sldManualGraph;
+    if (edge.from === node.id || edge.to === node.id) { sldSelectedId = null; drawSLD(); updateSldStatus(); return; }
+    const j = makeSldNode('junction', point.x - 6, point.y - 6, { w: 12, h: 12, label: '', sub: '' });
+    g.nodes.push(j);
+    g.edges = g.edges.filter(e => e !== edge);
+    g.edges.push({ id: 'e' + edge.from + '-' + j.id + '-' + (++sldSeq), from: edge.from, to: j.id, kind: edge.kind });
+    g.edges.push({ id: 'e' + j.id + '-' + edge.to + '-' + (++sldSeq), from: j.id, to: edge.to, kind: edge.kind });
+    g.edges.push({ id: 'e' + j.id + '-' + node.id + '-' + (++sldSeq), from: j.id, to: node.id, kind: 'main' });
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  }
+
+  // 분기점을 지울 때는 통과 경로를 다시 하나로 이어줘야 한다 — 그러지 않으면 분기만
+  // 지웠는데 본선까지 두 동으로 끊어져 사라진 것처럼 보인다.
+  function removeSldNode(node) {
+    const g = sldManualGraph;
+    const attached = g.edges.filter(e => e.from === node.id || e.to === node.id);
+    if (node.type === 'junction') {
+      const other = e => (e.from === node.id ? e.to : e.from);
+      const byKind = {};
+      attached.forEach(e => { (byKind[e.kind] = byKind[e.kind] || []).push(e); });
+      Object.keys(byKind).forEach(kind => {
+        const list = byKind[kind];
+        if (list.length < 2) return;
+        const a = other(list[0]), b = other(list[1]);
+        const dup = g.edges.some(e => (e.from === a && e.to === b) || (e.from === b && e.to === a));
+        if (a !== b && !dup) g.edges.push({ id: 'e' + a + '-' + b + '-' + (++sldSeq), from: a, to: b, kind });
+      });
+    }
+    g.nodes = g.nodes.filter(n => n !== node);
+    g.edges = g.edges.filter(e => e.from !== node.id && e.to !== node.id);
+    if (sldSelectedId === node.id) sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  }
+
+  function handleSldNodeClick(node) {
+    if (sldMode !== 'manual') return;
+    if (!sldSelectedId) {
+      sldSelectedId = node.id;
+    } else if (sldSelectedId === node.id) {
+      sldSelectedId = null;
+    } else {
+      const from = sldSelectedId, to = node.id;
+      const dup = sldManualGraph.edges.some(e => (e.from === from && e.to === to) || (e.from === to && e.to === from));
+      if (!dup) sldManualGraph.edges.push({ id: 'e' + from + '-' + to + '-' + (++sldSeq), from, to, kind: 'main' });
+      sldSelectedId = null;
+      saveSldManualGraph();
+    }
+    drawSLD();
+    updateSldStatus();
+  }
+
+  window.addEventListener('mousemove', e => {
+    if (!sldDrag) return;
+    const p = sldClientToGraph(e);
+    const nx = p.x - sldDrag.dx, ny = p.y - sldDrag.dy;
+    if (Math.abs(nx - sldDrag.node.x) > 2 || Math.abs(ny - sldDrag.node.y) > 2) sldDrag.moved = true;
+    sldDrag.node.x = Math.max(0, nx);
+    sldDrag.node.y = Math.max(0, ny);
+    drawSLD();
+  });
+  window.addEventListener('mouseup', () => {
+    if (!sldDrag) return;
+    const { node, moved } = sldDrag;
+    sldDrag = null;
+    if (moved) saveSldManualGraph();
+    else handleSldNodeClick(node);
+  });
+
+  function renderSldPalette() {
+    const pal = document.getElementById('sldPalette');
+    if (!pal) return;
+    pal.innerHTML = '';
+    SLD_BLOCK_TYPES.forEach(b => {
+      const color = SLD_CATS[b.cat];
+      const chip = document.createElement('button');
+      chip.className = 'sld-chip';
+      chip.style.borderColor = color;
+      chip.innerHTML = `<span class="abbr" style="color:${color}">${b.abbr}</span><span class="desc">${t('sldb_' + b.key)}</span>`;
+      chip.addEventListener('click', () => {
+        const n = sldManualGraph.nodes.length;
+        sldManualGraph.nodes.push(makeSldNode(b.key, 50 + (n % 7) * 120, 40 + Math.floor(n / 7) * 78));
+        saveSldManualGraph();
+        drawSLD();
+        updateSldStatus();
+      });
+      pal.appendChild(chip);
+    });
+  }
+
+  function setSldMode(mode) {
+    sldMode = mode === 'manual' ? 'manual' : 'auto';
+    localStorage.setItem('prc_sld_mode', sldMode);
+    document.getElementById('sldAutoBtn').classList.toggle('active', sldMode === 'auto');
+    document.getElementById('sldManualBtn').classList.toggle('active', sldMode === 'manual');
+    document.getElementById('sldManualUI').style.display = sldMode === 'manual' ? 'block' : 'none';
+    const hintEl = document.getElementById('sldHint');
+    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
+    sldSelectedId = null;
+    sldDrag = null;
+    drawSLD();
+    updateSldStatus();
+  }
+
+  function refreshSldTexts() {
+    renderSldPalette();
+    const hintEl = document.getElementById('sldHint');
+    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
+    drawSLD();
+    updateSldStatus();
+  }
+
+  document.getElementById('sldAutoBtn').addEventListener('click', () => setSldMode('auto'));
+  document.getElementById('sldManualBtn').addEventListener('click', () => setSldMode('manual'));
+  document.getElementById('sldSeedBtn').addEventListener('click', () => {
+    const clone = JSON.parse(JSON.stringify({ nodes: sldAutoGraph.nodes, edges: sldAutoGraph.edges }));
+    clone.nodes.forEach(n => { n.state = 'active'; });
+    clone.edges.forEach(e => { if (e.kind === 'lost') e.kind = 'standby'; });
+    sldManualGraph = { nodes: clone.nodes, edges: clone.edges, notes: [] };
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  });
+  document.getElementById('sldClearBtn').addEventListener('click', () => {
+    sldManualGraph = { nodes: [], edges: [], notes: [] };
+    sldSelectedId = null;
+    saveSldManualGraph();
+    drawSLD();
+    updateSldStatus();
+  });
+  document.getElementById('sldSvg').addEventListener('click', e => {
+    if (sldMode === 'manual' && e.target === e.currentTarget && sldSelectedId) {
+      sldSelectedId = null;
+      drawSLD();
+      updateSldStatus();
+    }
+  });
+
+  renderSldPalette();
+  setSldMode(sldMode);
 
   // POD별 세트 배정 선택 UI — 블록마다 어느 세트로 보낼지 직접 고른다.
   function renderPodSetAssign(podPlan, roomPlan, podSet) {
