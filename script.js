@@ -10,6 +10,13 @@
       label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
       label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
       label_itSync: "데이터홀 합계와 연동",
+      label_loadSource: "분석할 데이터홀",
+      src_avg: "⓪번 홀당 평균 용량 — 데이터홀 {n}개 평균 {mw}MW",
+      src_hall: "데이터홀 {n} — {mw}MW · {topo}",
+      src_manual: "직접 입력",
+      src_note_avg: "⓪번 IT용량 ÷ 데이터홀 개수를 그대로 씁니다. 아래 총부하 칸은 자동으로 채워집니다.",
+      src_note_hall: "이 홀의 용량 {mw}MW와 ⓪번 표에서 지정한 이중화 방식을 ②번까지 함께 가져옵니다.",
+      src_note_manual: "아래 총부하 칸에 직접 입력하세요. ⓪번과 연동되지 않습니다.",
       hint_itSync_on: " — 아래 데이터홀 {n}개의 용량 합계 {mw}MW를 그대로 씁니다. 목표값을 직접 넣으려면 체크 해제.",
       hint_itSync_off: " — 직접 입력한 목표값입니다 (데이터홀 합계 {mw}MW). \"데이터홀 개수로 균등 자동 분할\"로 아래 표에 나눠 담으세요.",
       hint_maxSetCapacity: '유효용량 × N × 모듈당 변압기 대수로 ①~③번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
@@ -328,6 +335,13 @@
       label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
       label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
       label_itSync: "Follow the data hall total",
+      label_loadSource: "Data hall to analyse",
+      src_avg: "Average per hall — {n} halls, {mw}MW each",
+      src_hall: "Data hall {n} — {mw}MW · {topo}",
+      src_manual: "Enter manually",
+      src_note_avg: "Uses the IT capacity in ⓪ divided by the hall count; the total load below fills in automatically.",
+      src_note_hall: "Takes this hall's {mw}MW and the redundancy scheme set for it in ⓪, carried through to ②.",
+      src_note_manual: "Type the total load below. It will not follow ⓪.",
       hint_itSync_on: " — uses the {mw}MW sum of the {n} data halls below. Uncheck to enter a target instead.",
       hint_itSync_off: " — a target you entered (halls below total {mw}MW). Use \\u201csplit evenly\\u201d to distribute it.",
       hint_maxSetCapacity: 'Derived from ①~③ as effective capacity × N × transformers per module — halls above it are flagged in the table below',
@@ -676,6 +690,7 @@
     updateRatingCapStyle();
     calculate();
     renderSets();
+    if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     if (typeof refreshPlanTexts === 'function') { try { refreshPlanTexts(); } catch (e) {} }
     if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
     if (typeof refreshPresetOptions === 'function') { try { refreshPresetOptions(presetSelect.value); } catch (e) {} }
@@ -1353,6 +1368,12 @@
       if (parseFloat(loadEl.value) !== target) {
         if (loadSyncCheckbox && loadSyncCheckbox.checked) {
           loadSyncCheckbox.checked = false;
+          // POD 합계가 총부하를 끌고 가므로 ⓪ 연동은 풀린다 — 선택칸도 같이 맞춘다
+          if (typeof loadSource !== 'undefined') {
+            loadSource = 'manual';
+            const sel = document.getElementById('loadSource');
+            if (sel) { sel.value = 'manual'; if (typeof updateLoadSourceNote === 'function') updateLoadSourceNote(); }
+          }
           loadEl.disabled = false;
           loadEl.style.background = '';
         }
@@ -3931,6 +3952,94 @@
     return perHall;
   }
 
+  // ----- 분석할 데이터홀 고르기 -----
+  // ①에 값을 넣기 전에 "어느 데이터홀을 보는가"부터 정한다.
+  //  · 홀당 평균: ⓪의 IT용량 ÷ 데이터홀 개수 (기존 연동 동작)
+  //  · 개별 홀:   그 홀의 용량과 ⓪ 표에서 고른 이중화 방식을 함께 가져온다
+  //  · 직접 입력: 아래 칸에 자유롭게
+  const loadSourceSel = document.getElementById('loadSource');
+  const loadSourceNote = document.getElementById('loadSourceNote');
+  let loadSource = 'avg';
+
+  function refreshLoadSourceOptions() {
+    if (!loadSourceSel) return;
+    const keep = loadSource;
+    loadSourceSel.innerHTML = '';
+    const add = (value, label) => {
+      const o = document.createElement('option');
+      o.value = value; o.textContent = label;
+      loadSourceSel.appendChild(o);
+    };
+    const count = sets.length;
+    add('avg', t('src_avg', { n: count, mw: fmtN(count ? setsTotalMW() / count : 0, 2) }));
+    sets.forEach((st, i) => {
+      const preset = TOPO_PRESETS[st.presetKey] || TOPO_PRESETS['3oo4'];
+      add('set:' + st.id, t('src_hall', {
+        n: i + 1, mw: fmtN(st.loadMW, 2), topo: t(preset.labelKey),
+      }));
+    });
+    add('manual', t('src_manual'));
+    // 홀이 지워졌으면 평균으로 되돌린다
+    const has = [...loadSourceSel.options].some(o => o.value === keep);
+    loadSourceSel.value = has ? keep : 'avg';
+    loadSource = loadSourceSel.value;
+    updateLoadSourceNote();
+  }
+
+  function updateLoadSourceNote() {
+    if (!loadSourceNote) return;
+    if (loadSource === 'avg') loadSourceNote.textContent = t('src_note_avg');
+    else if (loadSource === 'manual') loadSourceNote.textContent = t('src_note_manual');
+    else {
+      const st = sets.find(x => 'set:' + x.id === loadSource);
+      loadSourceNote.textContent = st
+        ? t('src_note_hall', { mw: fmtN(st.loadMW, 2) })
+        : t('src_note_avg');
+    }
+  }
+
+  function applyLoadSource() {
+    const synced = loadSource === 'avg';
+    loadSyncCheckbox.checked = synced;
+    loadInput.disabled = synced;
+    loadInput.style.background = synced ? 'var(--primary-bg)' : 'var(--surface)';
+    if (synced) {
+      const podAutoEl = document.getElementById('podAuto');
+      if (podAutoEl && !podAutoEl.checked) { podAutoEl.checked = true; updatePodControls(); }
+      updateHallCapacityDisplay(); updateLoadSourceNote(); calculate(); return;
+    }
+    if (loadSource === 'manual') { updateLoadSourceNote(); calculate(); return; }
+    const st = sets.find(x => 'set:' + x.id === loadSource);
+    if (!st) { updateLoadSourceNote(); return; }
+    // 홀을 고르면 그 홀 부하가 기준이 되므로, POD 수량은 거기서 자동 산정되게 돌려놓는다
+    // (POD 주도 모드로 두면 POD 합계가 다시 총부하를 덮어쓴다).
+    const podAuto = document.getElementById('podAuto');
+    if (podAuto && !podAuto.checked) { podAuto.checked = true; updatePodControls(); }
+    // 그 홀에 지정해 둔 이중화 방식까지 함께 가져온다
+    const preset = TOPO_PRESETS[st.presetKey];
+    if (preset) {
+      nInput.value = preset.n;
+      cInput.value = preset.c;
+      currentTopo = preset.topo;
+      Array.prototype.forEach.call(redundancyOpts, o => {
+        o.classList.toggle('active', o.dataset.topo === preset.topo && o.dataset.n == preset.n && o.dataset.c == preset.c);
+      });
+      manualFail4.clear();
+      diagramMode = 'normal';
+      updateDiagramModeButtons();
+      applyTopoMeta();
+    }
+    updateLoadSourceNote();
+    applyMainLoad(st.loadMW);
+  }
+
+  if (loadSourceSel) {
+    loadSourceSel.addEventListener('change', () => {
+      loadSource = loadSourceSel.value;
+      applyLoadSource();
+    });
+  }
+
   loadSyncCheckbox.addEventListener('change', () => {
     loadInput.disabled = loadSyncCheckbox.checked;
     loadInput.style.background = loadSyncCheckbox.checked ? 'var(--primary-bg)' : 'var(--surface)';
@@ -3940,7 +4049,7 @@
   function computeSetResult(set) {
     const rating = parseFloat(ratingInput.value);
     const { pf, upsEff, safety } = getGlobalDeratingFactors();
-    const preset = TOPO_PRESETS[set.presetKey];
+    const preset = TOPO_PRESETS[set.presetKey] || TOPO_PRESETS['3oo4'];
     const loadKW = set.loadMW * 1000;
     const effectiveCap = computeEffectiveCapacity(rating, pf, safety, upsEff);
     const { topo, n, c } = preset;
@@ -4000,6 +4109,7 @@
 
   function renderSets() {
     if (typeof syncItCapacityFromSets === 'function') { try { syncItCapacityFromSets(); } catch (e) {} }
+    if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     setsTbody.innerHTML = '';
     const maxCap = parseFloat(maxSetCapacityInput.value) || null;
 
@@ -4080,21 +4190,11 @@
       detailBtn.className = 'set-row-btn';
       detailBtn.textContent = t('btn_detail');
       detailBtn.addEventListener('click', () => {
-        loadSyncCheckbox.checked = false;
-        loadInput.disabled = false;
-        loadInput.style.background = 'var(--surface)';
-        nInput.value = preset.n;
-        cInput.value = preset.c;
-        currentTopo = preset.topo;
-        manualFail4.clear();
-        diagramMode = 'normal';
-        updateDiagramModeButtons();
-        redundancyOpts.forEach(o => {
-          o.classList.toggle('active', o.dataset.topo === preset.topo && o.dataset.n == preset.n && o.dataset.c == preset.c);
-        });
-        applyTopoMeta();
-        applyMainLoad(set.loadMW); // also refreshes ⑤번 총IT부하 if still linked to ①번
-        loadInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // ①의 "분석할 데이터홀"을 이 홀로 맞추면 용량과 이중화 방식이 함께 따라온다
+        loadSource = 'set:' + set.id;
+        refreshLoadSourceOptions();
+        applyLoadSource();
+        loadSourceSel.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
       const delBtn = document.createElement('button');
       delBtn.className = 'set-row-btn del';
@@ -4175,6 +4275,7 @@
   refreshMaxSetCapacityHint();
   updateHallCapacityDisplay();
   autoSplitSets();
+  refreshLoadSourceOptions();
 
   // ===== 설정 저장 / 불러오기 =====
   // 규모가 다른 데이터센터를 여러 개 검토할 수 있도록 입력값 전체를 이름 붙여 저장한다.
@@ -4206,7 +4307,7 @@
     const activeOpt = Array.prototype.findIndex.call(redundancyOpts, o => o.classList.contains('active'));
     return {
       v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode,
-      podSet: Object.assign({}, podSetOverride),
+      podSet: Object.assign({}, podSetOverride), loadSource,
       sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey })),
     };
   }
@@ -4231,6 +4332,7 @@
     }
     manualFail4.clear();
     podSetOverride = Object.assign({}, snap.podSet || {});
+    if (snap.loadSource) loadSource = snap.loadSource;
     diagramMode = 'normal';
     updateDiagramModeButtons();
     distMode = snap.dist === 'comb' ? 'comb' : 'bus';
