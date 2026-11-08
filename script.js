@@ -149,6 +149,7 @@
       plan_add: '＋ 블럭 추가',
       plan_del: '블럭 삭제',
       plan_snap: '격자 맞춤',
+      plan_magnet: '블럭 붙이기',
       plan_all: '한번에 보기',
       plan_name_ph: '선택한 블럭 이름',
       plan_tab_add: '＋ 탭',
@@ -387,6 +388,7 @@
       plan_add: '+ Add block',
       plan_del: 'Delete block',
       plan_snap: 'Snap to grid',
+      plan_magnet: 'Snap to blocks',
       plan_all: 'View all',
       plan_name_ph: 'Name of the selected block',
       plan_tab_add: '+ Tab',
@@ -2050,6 +2052,80 @@
   }
   function planSnapV(v) { return planSnapOn() ? Math.round(v / PLAN_SNAP) * PLAN_SNAP : Math.round(v); }
 
+  const PLAN_MAGNET = 9;     // 이 거리 안에 들어오면 이웃 블럭에 달라붙는다
+  let planGuides = [];       // 스냅이 걸린 자리에 보여줄 안내선
+
+  function planMagnetOn() {
+    const el = document.getElementById('planMagnet');
+    return el ? el.checked : true;
+  }
+
+  // 움직이는 사각형을 이웃 블럭의 면에 맞춘다.
+  // 가로/세로 각각 가장 가까운 후보 하나씩만 적용하고, 멀어지면 자연히 떨어진다.
+  //  · 벽 맞대기: 내 왼쪽 ↔ 남의 오른쪽, 내 오른쪽 ↔ 남의 왼쪽
+  //  · 줄 맞추기: 내 왼쪽 ↔ 남의 왼쪽, 내 오른쪽 ↔ 남의 오른쪽, 중심 ↔ 중심
+  function planSnapBox(box, selfId) {
+    planGuides = [];
+    if (!planMagnetOn()) return box;
+    const others = planCur().blocks.filter(o => o.id !== selfId);
+    if (!others.length) return box;
+
+    const pick = cands => {
+      let best = null;
+      cands.forEach(c => {
+        if (c.d <= PLAN_MAGNET && (!best || c.d < best.d)) best = c;
+      });
+      return best;
+    };
+    const out = { x: box.x, y: box.y, w: box.w, h: box.h };
+
+    const xc = [];
+    others.forEach(o => {
+      [o.x + o.w, o.x, o.x + o.w / 2 - box.w / 2].forEach(v => xc.push({ at: v, o, line: v }));
+      [o.x, o.x + o.w].forEach(v => xc.push({ at: v - box.w, o, line: v }));
+    });
+    xc.forEach(c => { c.d = Math.abs(c.at - box.x); });
+    const hx = pick(xc);
+    if (hx) {
+      out.x = hx.at;
+      planGuides.push({
+        x1: hx.line, x2: hx.line,
+        y1: Math.min(out.y, hx.o.y), y2: Math.max(out.y + out.h, hx.o.y + hx.o.h),
+      });
+    }
+
+    const yc = [];
+    others.forEach(o => {
+      [o.y + o.h, o.y, o.y + o.h / 2 - box.h / 2].forEach(v => yc.push({ at: v, o, line: v }));
+      [o.y, o.y + o.h].forEach(v => yc.push({ at: v - box.h, o, line: v }));
+    });
+    yc.forEach(c => { c.d = Math.abs(c.at - box.y); });
+    const hy = pick(yc);
+    if (hy) {
+      out.y = hy.at;
+      planGuides.push({
+        y1: hy.line, y2: hy.line,
+        x1: Math.min(out.x, hy.o.x), x2: Math.max(out.x + out.w, hy.o.x + hy.o.w),
+      });
+    }
+    return out;
+  }
+
+  // 리사이즈로 끌고 있는 변 하나를 이웃 블럭의 면에 맞춘다
+  function planSnapEdge(value, selfId, horizontal) {
+    if (!planMagnetOn()) return null;
+    let best = null;
+    planCur().blocks.forEach(o => {
+      if (o.id === selfId) return;
+      const cands = horizontal ? [o.x, o.x + o.w] : [o.y, o.y + o.h];
+      cands.forEach(v => {
+        const d = Math.abs(v - value);
+        if (d <= PLAN_MAGNET && (!best || d < best.d)) best = { d: d, v: v };
+      });
+    });
+    return best ? best.v : null;
+  }
+
   // 화면 좌표 → 캔버스 좌표 (줌/팬을 되돌린다)
   function planPoint(evt) {
     const svg = document.getElementById('planSvg');
@@ -2316,6 +2392,14 @@
 
     tab.blocks.forEach(b => drawPlanBlock(target, b, {}));
 
+    // 붙은 자리를 알려주는 안내선
+    planGuides.forEach(gd => {
+      target.appendChild(svgEl('path', {
+        d: 'M' + gd.x1 + ',' + gd.y1 + ' L' + gd.x2 + ',' + gd.y2,
+        stroke: '#C8604F', 'stroke-width': 1.4, 'stroke-dasharray': '4,3',
+      }));
+    });
+
     if (!tab.blocks.length) {
       const hint = svgEl('text', {
         x: svgW / 2, y: 70, 'text-anchor': 'middle', 'font-size': 12,
@@ -2335,27 +2419,54 @@
     if (!b) { planDrag = null; return; }
     const p = planPoint(e);
     if (planDrag.mode === 'move') {
-      b.x = Math.max(0, planSnapV(p.x - planDrag.dx));
-      b.y = Math.max(0, planSnapV(p.y - planDrag.dy));
+      // 이웃에 붙는 쪽이 우선이고, 걸리는 이웃이 없는 축만 격자로 떨어뜨린다
+      const raw = { x: Math.max(0, p.x - planDrag.dx), y: Math.max(0, p.y - planDrag.dy), w: b.w, h: b.h };
+      const snapped = planSnapBox(raw, b.id);
+      b.x = Math.max(0, snapped.x !== raw.x ? snapped.x : planSnapV(raw.x));
+      b.y = Math.max(0, snapped.y !== raw.y ? snapped.y : planSnapV(raw.y));
     } else {
+      planGuides = [];
       const st = planDrag.start, k = planDrag.handle;
       const dx = p.x - planDrag.from.x, dy = p.y - planDrag.from.y;
       let x = st.x, y = st.y, w = st.w, h = st.h;
-      if (k.indexOf('e') >= 0) w = st.w + dx;
-      if (k.indexOf('s') >= 0) h = st.h + dy;
-      if (k.indexOf('w') >= 0) { x = st.x + dx; w = st.w - dx; }
-      if (k.indexOf('n') >= 0) { y = st.y + dy; h = st.h - dy; }
+      // 끌고 있는 변만 이웃 면에 붙인다
+      if (k.indexOf('e') >= 0) {
+        const edge = planSnapEdge(st.x + st.w + dx, b.id, true);
+        const right = edge !== null ? edge : planSnapV(st.x + st.w + dx);
+        if (edge !== null) planGuides.push({ x1: edge, y1: st.y, x2: edge, y2: st.y + st.h });
+        w = right - st.x;
+      }
+      if (k.indexOf('s') >= 0) {
+        const edge = planSnapEdge(st.y + st.h + dy, b.id, false);
+        const bottom = edge !== null ? edge : planSnapV(st.y + st.h + dy);
+        if (edge !== null) planGuides.push({ x1: st.x, y1: edge, x2: st.x + st.w, y2: edge });
+        h = bottom - st.y;
+      }
+      if (k.indexOf('w') >= 0) {
+        const edge = planSnapEdge(st.x + dx, b.id, true);
+        const left = Math.max(0, edge !== null ? edge : planSnapV(st.x + dx));
+        if (edge !== null) planGuides.push({ x1: edge, y1: st.y, x2: edge, y2: st.y + st.h });
+        w = st.x + st.w - left; x = left;
+      }
+      if (k.indexOf('n') >= 0) {
+        const edge = planSnapEdge(st.y + dy, b.id, false);
+        const top = Math.max(0, edge !== null ? edge : planSnapV(st.y + dy));
+        if (edge !== null) planGuides.push({ x1: st.x, y1: edge, x2: st.x + st.w, y2: edge });
+        h = st.y + st.h - top; y = top;
+      }
       if (w < 30) { if (k.indexOf('w') >= 0) x = st.x + st.w - 30; w = 30; }
       if (h < 24) { if (k.indexOf('n') >= 0) y = st.y + st.h - 24; h = 24; }
-      b.x = Math.max(0, planSnapV(x)); b.y = Math.max(0, planSnapV(y));
-      b.w = planSnapV(w); b.h = planSnapV(h);
+      b.x = Math.max(0, Math.round(x)); b.y = Math.max(0, Math.round(y));
+      b.w = Math.round(w); b.h = Math.round(h);
     }
     drawPlan();
   });
   window.addEventListener('pointerup', () => {
     if (!planDrag) return;
     planDrag = null;
+    planGuides = [];
     savePlans();
+    drawPlan();
   });
 
   document.getElementById('planSvg').addEventListener('pointerdown', e => {
