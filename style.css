@@ -445,8 +445,12 @@
     padding: 6px 8px; border-bottom: 1.5px solid var(--border); white-space: nowrap;
   }
   table.rack-mix th:nth-child(2), table.rack-mix th:nth-child(3), table.rack-mix th:nth-child(4) { text-align: right; }
+  table.rack-mix { table-layout: fixed; }
   table.rack-mix td { padding: 3px 6px; border-bottom: 1px solid var(--border); }
-  table.rack-mix td:first-child { display: flex; align-items: center; gap: 7px; }
+  /* 이 칸을 flex 로 두면 테이블 열 계산에서 빠져나가 헤더 폭만큼 흰 공백이 남는다 */
+  table.rack-mix td:first-child { white-space: nowrap; }
+  table.rack-mix td:first-child .rack-dot { display: inline-block; vertical-align: middle; margin-right: 7px; }
+  table.rack-mix td:first-child input { display: inline-block; vertical-align: middle; width: calc(100% - 21px); }
   table.rack-mix th:nth-child(1), table.rack-mix td:nth-child(1) { width: 42%; }
   table.rack-mix th:nth-child(2), table.rack-mix td:nth-child(2) { width: 16%; }
   table.rack-mix th:nth-child(3), table.rack-mix td:nth-child(3) { width: 18%; }
@@ -462,7 +466,7 @@
   table.rack-mix input:focus { outline: none; border-color: var(--primary); background: var(--bg-color); }
   table.rack-mix td.sub { text-align: right; font-weight: 700; color: var(--text-main); }
   table.rack-mix tr.total td { background: var(--surface); font-weight: 800; color: var(--primary); border-bottom: none; }
-  .rack-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .rack-dot { width: 10px; height: 10px; border-radius: 3px; }
   .rack-mix-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
 
   /* POD 제너레이티브 디자인 */
@@ -529,7 +533,7 @@
     margin: 16px 0 8px;
   }
   #planSchedule { overflow-x: auto; }
-  table.plan-sched { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.plan-sched { width: 100%; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
   table.plan-sched th {
     text-align: left; font-weight: 800; color: var(--text-muted);
     padding: 6px 8px; border-bottom: 1.5px solid var(--border); white-space: nowrap;
