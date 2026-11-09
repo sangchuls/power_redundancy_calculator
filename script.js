@@ -3867,24 +3867,45 @@
     };
   }
 
-  // 치수선 (mm 표기)
-  function hallDim(target, x1, y1, x2, y2, text, side) {
+  // 치수선 (mm 표기). 글씨는 도면 축척과 무관하게 읽히도록 크게 잡는다.
+  const HALL_DIM_FS = 22;
+  function hallDim(target, x1, y1, x2, y2, text, opts) {
+    const o = opts || {};
     const col = '#8A8072';
-    target.appendChild(svgEl('path', { d: `M${x1},${y1} L${x2},${y2}`, stroke: col, 'stroke-width': 0.8 }));
-    const tick = 3;
+    const fs = o.size || HALL_DIM_FS;
+    target.appendChild(svgEl('path', { d: `M${x1},${y1} L${x2},${y2}`, stroke: col, 'stroke-width': 1.2 }));
+    const tick = Math.max(4, fs * 0.28);
     if (y1 === y2) {
-      [x1, x2].forEach(x => target.appendChild(svgEl('path', { d: `M${x},${y1 - tick} L${x},${y1 + tick}`, stroke: col, 'stroke-width': 0.8 })));
+      [x1, x2].forEach(x => target.appendChild(svgEl('path', { d: `M${x},${y1 - tick} L${x},${y1 + tick}`, stroke: col, 'stroke-width': 1.2 })));
     } else {
-      [y1, y2].forEach(y => target.appendChild(svgEl('path', { d: `M${x1 - tick},${y} L${x1 + tick},${y}`, stroke: col, 'stroke-width': 0.8 })));
+      [y1, y2].forEach(y => target.appendChild(svgEl('path', { d: `M${x1 - tick},${y} L${x1 + tick},${y}`, stroke: col, 'stroke-width': 1.2 })));
     }
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
     const el = svgEl('text', {
-      x: (x1 + x2) / 2, y: (y1 + y2) / 2 + (y1 === y2 ? -4 : 0),
-      'text-anchor': 'middle', 'font-size': 7.5, 'font-weight': 600, fill: col, 'font-family': 'sans-serif',
-      stroke: '#FFFFFF', 'stroke-width': 2.2, 'paint-order': 'stroke',
+      'text-anchor': 'middle', 'font-size': fs, 'font-weight': 700, fill: col, 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': Math.max(3, fs * 0.3), 'paint-order': 'stroke',
     });
-    if (y1 !== y2) el.setAttribute('transform', `rotate(-90 ${x1} ${(y1 + y2) / 2})`);
-    if (y1 !== y2) { el.setAttribute('x', x1); el.setAttribute('y', (y1 + y2) / 2); }
+    if (y1 === y2) {
+      el.setAttribute('x', mx);
+      el.setAttribute('y', my - fs * 0.35 - (o.stagger ? fs * 1.05 : 0));
+    } else {
+      el.setAttribute('x', x1);
+      el.setAttribute('y', my);
+      el.setAttribute('transform', `rotate(-90 ${x1} ${my})`);
+    }
     el.textContent = text;
+    target.appendChild(el);
+  }
+
+  // 콜드/핫 아일 치수 — 띠가 얇아도 읽히도록 흰 테두리를 깔고 크게 적는다
+  function hallAisleLabel(target, cx, cy, isHot, mm) {
+    const el = svgEl('text', {
+      x: cx, y: cy + HALL_DIM_FS * 0.35, 'text-anchor': 'middle',
+      'font-size': HALL_DIM_FS, 'font-weight': 800,
+      fill: isHot ? '#C0392B' : '#1F7FB5', 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': Math.max(3, HALL_DIM_FS * 0.3), 'paint-order': 'stroke',
+    });
+    el.textContent = t(isHot ? 'hall_hot_aisle' : 'hall_cold_aisle') + ' ' + Math.round(mm);
     target.appendChild(el);
   }
 
@@ -3964,10 +3985,11 @@
           target.appendChild(kwEl);
         }
       }
-      // 열 이름
+      // 열 이름 — 통로 치수가 커져서 행 위에 두면 겹친다. 행 왼쪽 바깥에 세운다.
       const rowLab = svgEl('text', {
-        x: X(rackX + d.rowLen / 2), y: Y(y) - 4, 'text-anchor': 'middle',
-        'font-size': 8.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+        x: X(rackX) - 8, y: Y(y + d.rackD / 2) + 5, 'text-anchor': 'end',
+        'font-size': 15, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
       });
       rowLab.textContent = t('hall_row_label', { letter: 'ABCDEFGH'[r] || (r + 1) });
       target.appendChild(rowLab);
@@ -3984,12 +4006,7 @@
         fill: isHot ? hexToRgba('#D0021B', 0.07) : hexToRgba('#29A8E0', 0.09),
         stroke: 'none',
       }));
-      const lab = svgEl('text', {
-        x: X(rackX + d.rowLen / 2), y: Y((gapTop + gapBot) / 2) + 3, 'text-anchor': 'middle',
-        'font-size': 7.5, 'font-weight': 700, fill: isHot ? '#D0021B' : '#1F7FB5', 'font-family': 'sans-serif',
-      });
-      lab.textContent = t(isHot ? 'hall_hot_aisle' : 'hall_cold_aisle') + ' ' + Math.round(gapBot - gapTop);
-      target.appendChild(lab);
+      hallAisleLabel(target, X(rackX + d.rowLen / 2), Y((gapTop + gapBot) / 2), isHot, gapBot - gapTop);
     }
 
     // 매니폴드 + CDU
@@ -4034,13 +4051,14 @@
     });
 
     // 치수
-    hallDim(target, X(0), Y(d.depth) + 26, X(d.totalW), Y(d.depth) + 26, Math.round(d.totalW) + '', 'b');
     let bx = 0;
-    d.bands.forEach(b => {
-      hallDim(target, X(bx), Y(d.depth) + 12, X(bx + b.mm), Y(d.depth) + 12, Math.round(b.mm) + '');
+    d.bands.forEach((b, i) => {
+      // 한 칸씩 위아래로 엇갈려 적어 이웃 치수와 겹치지 않게 한다
+      hallDim(target, X(bx), Y(d.depth) + 30, X(bx + b.mm), Y(d.depth) + 30, Math.round(b.mm) + '', { stagger: i % 2 === 1 });
       bx += b.mm;
     });
-    hallDim(target, X(0) - 26, Y(0), X(0) - 26, Y(d.depth), Math.round(d.depth) + '');
+    hallDim(target, X(0), Y(d.depth) + 74, X(d.totalW), Y(d.depth) + 74, Math.round(d.totalW) + '');
+    hallDim(target, X(0) - 34, Y(0), X(0) - 34, Y(d.depth), Math.round(d.depth) + '');
   }
 
   function drawHallSection(target, d, sc, ox, oy) {
@@ -4062,7 +4080,7 @@
       x: X(0), y: Y(d.raised), width: S(widthMM), height: S(d.raised),
       fill: hexToRgba('#8A8072', 0.12), stroke: '#8A8072', 'stroke-width': 0.8,
     }));
-    const rf = svgEl('text', { x: X(d.elecW / 2), y: Y(d.raised / 2) + 3, 'text-anchor': 'middle', 'font-size': 7.5, 'font-weight': 600, fill: '#8A8072', 'font-family': 'sans-serif' });
+    const rf = svgEl('text', { x: X(d.elecW / 2), y: Y(d.raised / 2) + 4, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke' });
     rf.textContent = t('hall_raised') + ' ' + Math.round(d.raised);
     target.appendChild(rf);
 
@@ -4100,7 +4118,7 @@
         stroke: '#7A6BCB', 'stroke-width': 3, fill: 'none',
       }));
     });
-    const bl = svgEl('text', { x: X(rackStart - 420), y: Y(d.busway + 500), 'text-anchor': 'start', 'font-size': 7.5, 'font-weight': 700, fill: '#7A6BCB', 'font-family': 'sans-serif' });
+    const bl = svgEl('text', { x: X(rackStart - 420), y: Y(d.busway + 500), 'text-anchor': 'start', 'font-size': 13, 'font-weight': 700, fill: '#7A6BCB', 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke' });
     bl.textContent = t('hall_busway') + ' ' + Math.round(d.busway);
     target.appendChild(bl);
 
@@ -4115,7 +4133,7 @@
     // 높이 치수
     [[d.raised, 'hall_raised'], [d.raised + d.rackH, 'hall_rack_top'], [d.busway, 'hall_busway'], [d.ceil, 'hall_ceil']]
       .forEach(([v], i) => {
-        const dx = X(widthMM) + 18 + i * 22;
+        const dx = X(widthMM) + 26 + i * 40;
         hallDim(target, dx, Y(0), dx, Y(v), Math.round(v) + '');
       });
   }
@@ -4202,15 +4220,7 @@
             x: X(ux), y: Y(ry + d.rackD), width: S(d.rowLen), height: S(gapH),
             fill: isHot ? hexToRgba('#D0021B', 0.12) : hexToRgba('#29A8E0', 0.14), stroke: 'none',
           }));
-          if (S(gapH) > 9 && i === 0) {
-            const lab = svgEl('text', {
-              x: X(ux + d.rowLen / 2), y: Y(ry + d.rackD + gapH / 2) + 3, 'text-anchor': 'middle',
-              'font-size': 7, 'font-weight': 700,
-              fill: isHot ? '#D0021B' : '#1F7FB5', 'font-family': 'sans-serif',
-            });
-            lab.textContent = t(isHot ? 'hall_hot_aisle' : 'hall_cold_aisle') + ' ' + Math.round(gapH);
-            target.appendChild(lab);
-          }
+          hallAisleLabel(target, X(ux + d.rowLen / 2), Y(ry + d.rackD + gapH / 2), isHot, gapH);
           ry += d.rackD + gapH;
         }
       }
@@ -4221,15 +4231,15 @@
         }));
       }
       const tag = svgEl('text', {
-        x: X(ux + c.unitW / 2), y: Y(uy) - 5, 'text-anchor': 'middle',
-        'font-size': 9, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+        x: X(ux + c.unitW / 2), y: Y(uy) - 8, 'text-anchor': 'middle',
+        'font-size': 15, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
       });
       tag.textContent = t('hall_unit_tag', { n: i + 1, kw: fmtN(Math.round(d.podKW)) });
       target.appendChild(tag);
     }
 
-    hallDim(target, X(0), Y(c.hallD) + 22, X(c.hallW), Y(c.hallD) + 22, Math.round(c.hallW) + '');
-    hallDim(target, X(0) - 24, Y(0), X(0) - 24, Y(c.hallD), Math.round(c.hallD) + '');
+    hallDim(target, X(0), Y(c.hallD) + 34, X(c.hallW), Y(c.hallD) + 34, Math.round(c.hallW) + '');
+    hallDim(target, X(0) - 34, Y(0), X(0) - 34, Y(c.hallD), Math.round(c.hallD) + '');
   }
 
   function drawHall() {
@@ -4239,7 +4249,7 @@
     const target = hallZoom.group;
     const d = hallPlanData();
 
-    const margin = 70;
+    const margin = hallView === 'sect' ? 70 : 100;
     const availW = 900;
     const cl = hallCluster(d);
     const baseW = hallView === 'cluster' ? cl.hallW : d.totalW;
