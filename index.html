@@ -31,6 +31,7 @@
     <button class="zoom-btn" id="presetResetBtn" data-i18n="preset_reset">기본값</button>
     <button class="zoom-btn" id="presetFileSave" data-i18n="preset_file_save">파일로 저장</button>
     <button class="zoom-btn" id="presetFileLoad" data-i18n="preset_file_load">파일 불러오기</button>
+    <button class="zoom-btn" id="fbOpenBtn" data-i18n="fb_open">개선 의견</button>
     <input type="file" id="presetFileInput" accept="application/json,.json" style="display:none;">
     <span class="hint" id="presetStatus" style="margin:0;"></span>
   </div>
@@ -609,6 +610,43 @@
 </div>
 
 <div id="printReport" class="print-only"></div>
+
+
+<div id="fbModal" class="fb-modal" aria-hidden="true">
+  <div class="fb-panel">
+    <div class="fb-head">
+      <span class="fb-title" data-i18n="fb_title">개선 의견</span>
+      <span class="hint" id="fbStatus" style="margin:0;"></span>
+      <button class="zoom-btn" id="fbCloseBtn" data-i18n="btn_modalClose">닫기 ✕</button>
+    </div>
+    <div class="fb-body">
+      <div class="fb-form">
+        <div class="fb-row">
+          <select id="fbCategory"></select>
+          <input type="text" id="fbTitle" data-i18n-placeholder="fb_title_ph" placeholder="한 줄 요약">
+        </div>
+        <textarea id="fbBody" rows="4" data-i18n-placeholder="fb_body_ph" placeholder="무엇이 불편했고 어떻게 되면 좋을지 적어주세요"></textarea>
+        <div class="fb-row">
+          <label class="plan-check"><input type="checkbox" id="fbAttach" checked> <span data-i18n="fb_attach">현재 설정 요약 첨부</span></label>
+          <button class="quick-btn" id="fbAddBtn" style="border-style:solid;" data-i18n="fb_add">＋ 의견 등록</button>
+        </div>
+      </div>
+
+      <div class="fb-bar">
+        <span class="fb-count" id="fbCount"></span>
+        <select id="fbFilter"></select>
+        <button class="quick-btn" id="fbMailBtn" data-i18n="fb_mail">주간 취합 메일 보내기</button>
+        <button class="quick-btn" id="fbCopyBtn" data-i18n="fb_copy">취합 내용 복사</button>
+        <button class="quick-btn" id="fbExportBtn" data-i18n="fb_export">내보내기 (.json)</button>
+        <button class="quick-btn" id="fbImportBtn" data-i18n="fb_import">불러오기</button>
+        <input type="file" id="fbImportInput" accept="application/json,.json" style="display:none;">
+      </div>
+
+      <div id="fbList" class="fb-list"></div>
+      <div class="fb-note" data-i18n="fb_note">의견은 이 브라우저에 저장됩니다. 메일 버튼은 기본 메일 앱을 열어 본문을 채워 주며, 실제 발송은 직접 확인 후 누르시면 됩니다.</div>
+    </div>
+  </div>
+</div>
 
 <div id="diagramModal" class="diagram-modal" aria-hidden="true">
   <div class="diagram-modal-panel">

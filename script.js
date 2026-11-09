@@ -248,6 +248,40 @@
       preset_reset: '기본값',
       preset_file_save: "파일로 저장",
       preset_file_load: "파일 불러오기",
+      fb_open: "개선 의견",
+      fb_title: "개선 의견",
+      fb_title_ph: "한 줄 요약",
+      fb_body_ph: "무엇이 불편했고 어떻게 되면 좋을지 적어주세요",
+      fb_attach: "현재 설정 요약 첨부",
+      fb_add: "＋ 의견 등록",
+      fb_mail: "주간 취합 메일 보내기",
+      fb_copy: "취합 내용 복사",
+      fb_export: "내보내기 (.json)",
+      fb_import: "불러오기",
+      fb_filter_all: "전체",
+      fb_cat_bug: "버그",
+      fb_cat_calc: "계산·로직",
+      fb_cat_feature: "기능 요청",
+      fb_cat_ui: "화면·사용성",
+      fb_cat_etc: "기타",
+      fb_state_new: "미분류",
+      fb_state_applied: "반영",
+      fb_state_hold: "보류",
+      fb_state_rejected: "미반영",
+      fb_count: "총 {total}건 · 미분류 {n}건",
+      fb_empty: "아직 등록된 의견이 없습니다. 위에 적고 등록을 누르세요.",
+      fb_added: "✓ 등록했습니다",
+      fb_need_text: "⚠ 내용을 입력하세요",
+      fb_digest_head: "# 개선 의견 취합 (최근 {days}일 · {n}건)",
+      fb_mail_subject: "[데이터센터 계산기] 개선 의견 취합 {date}",
+      fb_mail_opened: "✓ 메일 앱을 열었습니다 — 내용 확인 후 보내세요",
+      fb_mail_long: "⚠ 내용이 길어 메일 앱이 잘라낼 수 있습니다 — [취합 내용 복사]로 붙여넣으세요",
+      fb_copied: "✓ 취합 내용을 복사했습니다",
+      fb_copy_fail: "⚠ 복사에 실패했습니다 — 내보내기를 사용하세요",
+      fb_exported: "✓ {name} 으로 내려받았습니다",
+      fb_imported: "✓ {n}건을 불러왔습니다",
+      fb_import_bad: "⚠ 의견 파일이 아닙니다",
+      fb_note: "의견은 이 브라우저에 저장됩니다. 메일 버튼은 기본 메일 앱을 열어 본문을 채워 주며, 실제 발송은 직접 확인 후 누르시면 됩니다.",
       preset_file_default: "데이터센터_검토",
       preset_file_saved: "✓ {name} 으로 내려받았습니다",
       preset_file_loaded: "✓ {name} 을 불러왔습니다 — 입력값·평면·SLD까지 복원",
@@ -697,6 +731,40 @@
       preset_reset: 'Defaults',
       preset_file_save: "Save to file",
       preset_file_load: "Load from file",
+      fb_open: "Feedback",
+      fb_title: "Feedback",
+      fb_title_ph: "One-line summary",
+      fb_body_ph: "What got in the way, and what would be better",
+      fb_attach: "Attach the current settings",
+      fb_add: "+ Add",
+      fb_mail: "Email the weekly digest",
+      fb_copy: "Copy the digest",
+      fb_export: "Export (.json)",
+      fb_import: "Import",
+      fb_filter_all: "All",
+      fb_cat_bug: "Bug",
+      fb_cat_calc: "Calculation",
+      fb_cat_feature: "Feature",
+      fb_cat_ui: "Interface",
+      fb_cat_etc: "Other",
+      fb_state_new: "Unsorted",
+      fb_state_applied: "Applied",
+      fb_state_hold: "On hold",
+      fb_state_rejected: "Not doing",
+      fb_count: "{total} total · {n} unsorted",
+      fb_empty: "Nothing yet. Write one above and add it.",
+      fb_added: "✓ Added",
+      fb_need_text: "⚠ Write something first",
+      fb_digest_head: "# Feedback digest (last {days} days · {n} items)",
+      fb_mail_subject: "[DC calculator] Feedback digest {date}",
+      fb_mail_opened: "✓ Opened your mail app — check it, then send",
+      fb_mail_long: "⚠ Too long for a mail link; use Copy the digest instead",
+      fb_copied: "✓ Digest copied",
+      fb_copy_fail: "⚠ Copy failed — use Export instead",
+      fb_exported: "✓ Downloaded as {name}",
+      fb_imported: "✓ Imported {n} items",
+      fb_import_bad: "⚠ That is not a feedback file",
+      fb_note: "Feedback is kept in this browser. The mail button opens your mail app with the text filled in; you send it yourself.",
       preset_file_default: "datacentre_study",
       preset_file_saved: "✓ Downloaded as {name}",
       preset_file_loaded: "✓ Loaded {name} — inputs, plans and SLD restored",
@@ -939,6 +1007,7 @@
     renderSets();
     if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     if (typeof refreshPlanTexts === 'function') { try { refreshPlanTexts(); } catch (e) {} }
+    if (typeof refreshFeedbackTexts === 'function') { try { refreshFeedbackTexts(); } catch (e) {} }
     if (typeof refreshHallTexts === 'function') { try { refreshHallTexts(); } catch (e) {} }
     if (typeof refreshSldTexts === 'function') { try { refreshSldTexts(); } catch (e) {} }
     if (typeof refreshPresetOptions === 'function') { try { refreshPresetOptions(presetSelect.value); } catch (e) {} }
@@ -1770,7 +1839,11 @@
     });
   document.getElementById('diagramModalClose').addEventListener('click', closeDiagramModal);
   diagramModal.addEventListener('click', e => { if (e.target === diagramModal) closeDiagramModal(); });
-  window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDiagramModal(); });
+  window.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    closeDiagramModal();
+    if (typeof fbOpen === 'function' && fbModal.classList.contains('open')) fbOpen(false);
+  });
 
   // Double-click on empty diagram background (outside any module/room block) => back to 평상시.
   // Per-block dblclick handlers (added inside renderDiagram, since blocks are
@@ -5702,6 +5775,254 @@
     renderSets();
     calculate();
   }
+  // ===== 개선 의견 =====
+  // 쓰는 즉시 이 브라우저에 쌓이고, 주간 취합은 메일 본문 또는 마크다운으로 뽑는다.
+  // 각 항목은 반영 / 보류 / 미반영을 눌러 분류하고 내용은 그 자리에서 고칠 수 있다.
+  const FB_KEY = 'prc_feedback';
+  const FB_MAIL = 'twight2000@gmail.com';
+  const FB_CATS = ['bug', 'calc', 'feature', 'ui', 'etc'];
+  const FB_STATES = ['new', 'applied', 'hold', 'rejected'];
+  let feedback = loadFeedback();
+  let fbFilter = 'all';
+
+  function loadFeedback() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
+      if (Array.isArray(raw)) return raw;
+    } catch (e) {}
+    return [];
+  }
+  function saveFeedback() {
+    try { localStorage.setItem(FB_KEY, JSON.stringify(feedback)); } catch (e) {}
+  }
+
+  // 의견과 함께 남겨 두면 나중에 재현하기 쉬운 현재 상태 한 줄
+  function fbContext() {
+    try {
+      const topo = Array.prototype.filter.call(redundancyOpts, o => o.classList.contains('active'))[0];
+      return [
+        'load=' + loadInput.value + 'MW',
+        'topo=' + (topo ? topo.textContent.trim().split('\n')[0] : '-'),
+        'sets=' + (document.getElementById('roomSets') || {}).value,
+        'pods=' + (document.getElementById('podCount') || {}).value,
+        'podKW=' + (document.getElementById('podCapacity') || {}).value,
+        'dist=' + distMode,
+      ].join(' · ');
+    } catch (e) { return ''; }
+  }
+
+  function fbAdd() {
+    const title = (document.getElementById('fbTitle').value || '').trim();
+    const body = (document.getElementById('fbBody').value || '').trim();
+    if (!title && !body) { fbSay('fb_need_text', null, true); return; }
+    feedback.unshift({
+      id: 'f' + Date.now(),
+      at: new Date().toISOString(),
+      cat: document.getElementById('fbCategory').value || 'etc',
+      title: title || body.slice(0, 40),
+      body,
+      ctx: document.getElementById('fbAttach').checked ? fbContext() : '',
+      status: 'new',
+    });
+    saveFeedback();
+    document.getElementById('fbTitle').value = '';
+    document.getElementById('fbBody').value = '';
+    renderFeedback();
+    fbSay('fb_added');
+  }
+
+  function fbSay(key, vars, bad) {
+    const el = document.getElementById('fbStatus');
+    if (!el) return;
+    el.textContent = key ? t(key, vars || {}) : '';
+    el.style.color = bad ? 'var(--warn)' : 'var(--primary)';
+    el.style.fontWeight = '700';
+  }
+
+  // 최근 7일 항목을 사람이 읽을 수 있는 한 덩어리로
+  function fbDigest(days) {
+    const since = Date.now() - (days || 7) * 86400000;
+    const recent = feedback.filter(f => new Date(f.at).getTime() >= since);
+    const list = recent.length ? recent : feedback;
+    const lines = [t('fb_digest_head', { n: list.length, days: days || 7 }), ''];
+    FB_STATES.forEach(st => {
+      const group = list.filter(f => f.status === st);
+      if (!group.length) return;
+      lines.push('## ' + t('fb_state_' + st) + ' (' + group.length + ')');
+      group.forEach((f, i) => {
+        lines.push((i + 1) + '. [' + t('fb_cat_' + f.cat) + '] ' + f.title);
+        if (f.body) lines.push('   ' + f.body.replace(/\n/g, '\n   '));
+        if (f.ctx) lines.push('   · ' + f.ctx);
+        lines.push('   · ' + new Date(f.at).toLocaleString(currentLang === 'ko' ? 'ko-KR' : 'en-US'));
+      });
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  function renderFeedback() {
+    const box = document.getElementById('fbList');
+    if (!box) return;
+    box.innerHTML = '';
+    const shown = feedback.filter(f => fbFilter === 'all' || f.status === fbFilter);
+    const count = document.getElementById('fbCount');
+    if (count) {
+      count.textContent = t('fb_count', {
+        total: feedback.length,
+        n: feedback.filter(f => f.status === 'new').length,
+      });
+    }
+    if (!shown.length) {
+      const empty = document.createElement('div');
+      empty.className = 'fb-empty';
+      empty.textContent = t('fb_empty');
+      box.appendChild(empty);
+      return;
+    }
+    shown.forEach(f => {
+      const card = document.createElement('div');
+      card.className = 'fb-item ' + f.status;
+
+      const head = document.createElement('div');
+      head.className = 'fb-item-head';
+      const cat = document.createElement('span');
+      cat.className = 'fb-cat';
+      cat.textContent = t('fb_cat_' + f.cat);
+      head.appendChild(cat);
+      const when = document.createElement('span');
+      when.className = 'fb-when';
+      when.textContent = new Date(f.at).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US');
+      head.appendChild(when);
+      // 상태를 눌러서 바꾼다 — 반영 / 보류 / 미반영
+      const states = document.createElement('span');
+      states.className = 'fb-states';
+      ['applied', 'hold', 'rejected'].forEach(st => {
+        const b = document.createElement('button');
+        b.className = 'fb-state' + (f.status === st ? ' on ' + st : '');
+        b.textContent = t('fb_state_' + st);
+        b.addEventListener('click', () => {
+          f.status = (f.status === st) ? 'new' : st;
+          saveFeedback(); renderFeedback();
+        });
+        states.appendChild(b);
+      });
+      head.appendChild(states);
+      const del = document.createElement('button');
+      del.className = 'sched-del';
+      del.textContent = '✕';
+      del.addEventListener('click', () => {
+        feedback = feedback.filter(x => x.id !== f.id);
+        saveFeedback(); renderFeedback();
+      });
+      head.appendChild(del);
+      card.appendChild(head);
+
+      const title = document.createElement('input');
+      title.type = 'text'; title.className = 'fb-edit-title'; title.value = f.title;
+      title.addEventListener('input', () => { f.title = title.value; saveFeedback(); });
+      card.appendChild(title);
+
+      const body = document.createElement('textarea');
+      body.className = 'fb-edit-body'; body.rows = 2; body.value = f.body || '';
+      body.addEventListener('input', () => { f.body = body.value; saveFeedback(); });
+      card.appendChild(body);
+
+      if (f.ctx) {
+        const ctx = document.createElement('div');
+        ctx.className = 'fb-ctx';
+        ctx.textContent = f.ctx;
+        card.appendChild(ctx);
+      }
+      box.appendChild(card);
+    });
+  }
+
+  function refreshFeedbackTexts() {
+    const cat = document.getElementById('fbCategory');
+    if (cat) {
+      const keep = cat.value;
+      cat.innerHTML = '';
+      FB_CATS.forEach(k => {
+        const o = document.createElement('option');
+        o.value = k; o.textContent = t('fb_cat_' + k);
+        cat.appendChild(o);
+      });
+      if (keep) cat.value = keep;
+    }
+    const fil = document.getElementById('fbFilter');
+    if (fil) {
+      const keep = fil.value || 'all';
+      fil.innerHTML = '';
+      ['all'].concat(FB_STATES).forEach(k => {
+        const o = document.createElement('option');
+        o.value = k; o.textContent = k === 'all' ? t('fb_filter_all') : t('fb_state_' + k);
+        fil.appendChild(o);
+      });
+      fil.value = keep;
+    }
+    renderFeedback();
+  }
+
+  const fbModal = document.getElementById('fbModal');
+  function fbOpen(open) {
+    fbModal.classList.toggle('open', open);
+    fbModal.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.body.classList.toggle('modal-open', open);
+    if (open) { refreshFeedbackTexts(); fbSay(null); }
+  }
+  document.getElementById('fbOpenBtn').addEventListener('click', () => fbOpen(true));
+  document.getElementById('fbCloseBtn').addEventListener('click', () => fbOpen(false));
+  fbModal.addEventListener('click', e => { if (e.target === fbModal) fbOpen(false); });
+  document.getElementById('fbAddBtn').addEventListener('click', fbAdd);
+  document.getElementById('fbFilter').addEventListener('change', e => {
+    fbFilter = e.target.value; renderFeedback();
+  });
+
+  document.getElementById('fbMailBtn').addEventListener('click', () => {
+    const subject = t('fb_mail_subject', { date: new Date().toISOString().slice(0, 10) });
+    const url = 'mailto:' + FB_MAIL
+      + '?subject=' + encodeURIComponent(subject)
+      + '&body=' + encodeURIComponent(fbDigest(7));
+    // 본문이 길면 메일 앱이 잘라내므로, 그럴 때는 복사 쪽을 안내한다
+    if (url.length > 1900) { fbSay('fb_mail_long', null, true); return; }
+    window.location.href = url;
+    fbSay('fb_mail_opened');
+  });
+  document.getElementById('fbCopyBtn').addEventListener('click', () => {
+    const text = fbDigest(7);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => fbSay('fb_copied'), () => fbSay('fb_copy_fail', null, true));
+    } else {
+      fbSay('fb_copy_fail', null, true);
+    }
+  });
+  document.getElementById('fbExportBtn').addEventListener('click', () => {
+    const name = 'feedback_' + new Date().toISOString().slice(0, 10) + '.json';
+    downloadBlob(new Blob([JSON.stringify({ app: 'power_redundancy_calculator', kind: 'feedback', items: feedback }, null, 2)],
+      { type: 'application/json' }), name);
+    fbSay('fb_exported', { name });
+  });
+  document.getElementById('fbImportBtn').addEventListener('click', () => document.getElementById('fbImportInput').click());
+  document.getElementById('fbImportInput').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let d = null;
+      try { d = JSON.parse(reader.result); } catch (err) { d = null; }
+      if (!d || !Array.isArray(d.items)) { fbSay('fb_import_bad', null, true); return; }
+      // 같은 id는 들어온 쪽 상태로 덮고, 새 항목은 붙인다
+      const byId = {};
+      feedback.forEach(f => { byId[f.id] = f; });
+      d.items.forEach(f => { byId[f.id] = Object.assign({}, byId[f.id], f); });
+      feedback = Object.keys(byId).map(k => byId[k]).sort((a, b) => (a.at < b.at ? 1 : -1));
+      saveFeedback(); renderFeedback();
+      fbSay('fb_imported', { n: d.items.length });
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
   // ----- 파일로 저장 / 불러오기 -----
   // localStorage 프리셋이 이 브라우저에만 남는 반면, 파일은 들고 다니거나 공유할 수 있다.
   // ⓪~④ 입력값만이 아니라 ⑤ 평면 탭, ⑥ 데이터홀 치수, ⑦ SLD 수동 작도까지 함께 담는다.
