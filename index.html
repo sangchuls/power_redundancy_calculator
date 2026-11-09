@@ -375,16 +375,34 @@
         <div class="hint" id="hallCoolNote"></div>
       </div>
       <div class="field">
-        <label for="hallRackKW" data-i18n="label_hallRackKW">랙당 전력 (kW/랙)</label>
-        <input type="number" id="hallRackKW" value="133" step="1" min="1">
+        <label data-i18n="label_hallMix">랙 구성 합계</label>
+        <input type="text" id="hallMixTotal" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
         <div class="hint" id="hallRackNote"></div>
       </div>
     </div>
 
+    <div class="rack-mix-title" data-i18n="h_rackmix">랙 구성 편집 — 종류별 수량과 랙당 전력</div>
+    <div id="hallRackTable"></div>
+    <div class="rack-mix-bar">
+      <button class="quick-btn" id="hallRackAdd" data-i18n="rackmix_add">＋ 랙 종류 추가</button>
+      <button class="quick-btn" id="hallRackReset" data-i18n="rackmix_reset">NVIDIA 기본 구성</button>
+      <button class="quick-btn" id="hallRackApply" style="border-style:solid;" data-i18n="rackmix_apply">↑ 합계를 ①번 POD 부하로</button>
+      <span class="hint" id="hallRackApplyNote" style="margin:0;"></span>
+    </div>
+
     <div class="field-row" style="margin-top:12px;">
       <div class="field">
-        <label for="hallRacksPerRow" data-i18n="label_hallRacksPerRow">열당 랙 수</label>
-        <input type="number" id="hallRacksPerRow" value="20" step="1" min="2" max="60">
+        <label data-i18n="label_hallRows">배치 보기 (열 수)</label>
+        <div class="mode-toggle" id="hallRowsToggle" style="margin:0;">
+          <button class="mode-btn active normal" data-rows="1">1열</button>
+          <button class="mode-btn" data-rows="2">2열</button>
+          <button class="mode-btn" data-rows="3">3열</button>
+          <button class="mode-btn" data-rows="4">4열</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="hallPerim" data-i18n="label_hallPerim">주변 여유 (mm)</label>
+        <input type="number" id="hallPerim" value="1200" step="100" min="0">
       </div>
       <div class="field">
         <label for="hallRackW" data-i18n="label_hallRackW">랙 폭 (mm)</label>
@@ -433,6 +451,8 @@
     </div>
 
     <div class="hint" id="hallSummary" style="margin:12px 0 4px; font-weight:700; color:var(--primary);"></div>
+    <div id="hallCompare" class="hall-compare"></div>
+    <div id="hallReading" class="hall-reading"></div>
 
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="hallPlanBtn" data-i18n="hall_view_plan">평면</button>

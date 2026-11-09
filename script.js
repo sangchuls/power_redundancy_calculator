@@ -12,11 +12,34 @@
       label_itSync: "데이터홀 합계와 연동",
       label_loadSource: "분석할 데이터홀",
       h_hall_title: "데이터홀 평면 검토",
+      label_hallMix: "랙 구성 합계",
+      label_hallRows: "배치 보기 (열 수)",
+      label_hallPerim: "주변 여유 (mm)",
+      h_rackmix: "랙 구성 편집 — 종류별 수량과 랙당 전력",
+      rackmix_kind: "랙 종류",
+      rackmix_qty: "수량",
+      rackmix_kw: "kW / 랙",
+      rackmix_sub: "소계 kW",
+      rackmix_total: "합계",
+      rackmix_add: "＋ 랙 종류 추가",
+      rackmix_reset: "NVIDIA 기본 구성",
+      rackmix_apply: "↑ 합계를 ①번 POD 부하로",
+      rackmix_applied: "✓ POD 1개 부하를 {kw}kW로 적용했습니다",
+      rackmix_new: "랙 종류 {n}",
+      rackmix_summary: "랙 {racks}개 · {kw}kW ({mw}MW)",
+      hall_cmp_label: "열 수 비교",
+      hall_cmp_rows: "{n}열",
+      hall_cmp_bus: "모선 {m}m",
+      hall_read_title: "이 배치의 특징 — 위 수치에서 바로 읽히는 내용 (검토용)",
+      hall_read_elec_h: "전기",
+      hall_read_mech_h: "설비 (기계)",
+      hall_read_arch_h: "건축",
+      hall_read_elec: "IT {mw}MW, PUE 1.2 가정 시 시설전력 약 {fac}MW. 열당 부하 {rowKW}kW × {rows}열 → 열 단위 busway·분전 용량 기준. 열 끝에 전력 랙(사이드카/In-Row) 자리 확보를 검토.",
+      hall_read_mech: "수랭 열량 약 {kw}kW (IT의 90% 가정). {each}kW CDU 기준 가동 {cdu}대 + 예비 1대 = {total}대. 공급·환수 헤더가 열마다 필요 — 천장·바닥 배관 경로가 busway·광케이블과 겹치지 않게 계획.",
+      hall_read_arch: "외곽 약 {w}×{depth}m = {area}㎡ (전기실·매니폴드·CDU 포함, 치수 가정). {rows}열 × {perRow}대 구성 — 열이 적을수록 길어지고 끝단 간 거리가 커진다.",
       h_hall_desc: "POD 1개의 랙 배치와 기계·전기 평면/단면을 위 설정값에서 자동으로 작도합니다",
       label_hallPod: "검토할 POD",
       label_hallCooling: "냉각 방식",
-      label_hallRackKW: "랙당 전력 (kW/랙)",
-      label_hallRacksPerRow: "열당 랙 수",
       label_hallRackW: "랙 폭 (mm)",
       label_hallRackD: "랙 깊이 (mm)",
       label_hallCold: "콜드 통로 (mm)",
@@ -38,7 +61,7 @@
       hint_hall: "휠로 확대/축소 · 드래그로 이동 — 치수는 mm, 위 입력값을 바꾸면 즉시 다시 작도됩니다",
       hall_pod_opt: "POD {n} — {kw}kW",
       hall_pod_note: "④번에서 산정한 POD {n}개 중 1개({kw}kW)를 펼쳐 봅니다.",
-      hall_rack_note: "랙 {racks}개 · {rows}열",
+      hall_rack_note: "랙 {racks}개 · {rows}열 × {perRow}대",
       hall_cdu_note: "소요 {n}대 + 예비 1대 = {total}대 (N+1)",
       hall_elec_room: "전기실",
       hall_hot_aisle: "핫",
@@ -388,11 +411,34 @@
       label_itSync: "Follow the data hall total",
       label_loadSource: "Data hall to analyse",
       h_hall_title: "Data hall layout review",
+      label_hallMix: "Rack mix total",
+      label_hallRows: "Layout (rows)",
+      label_hallPerim: "Perimeter clearance (mm)",
+      h_rackmix: "Rack mix — quantity and power per rack",
+      rackmix_kind: "Rack type",
+      rackmix_qty: "Qty",
+      rackmix_kw: "kW / rack",
+      rackmix_sub: "Subtotal kW",
+      rackmix_total: "Total",
+      rackmix_add: "+ Add rack type",
+      rackmix_reset: "NVIDIA default",
+      rackmix_apply: "↑ Use total as the POD load in ①",
+      rackmix_applied: "✓ Load per POD set to {kw}kW",
+      rackmix_new: "Rack type {n}",
+      rackmix_summary: "{racks} racks · {kw}kW ({mw}MW)",
+      hall_cmp_label: "Compare rows",
+      hall_cmp_rows: "{n} row(s)",
+      hall_cmp_bus: "busway {m}m",
+      hall_read_title: "What this layout implies — read straight off the numbers above",
+      hall_read_elec_h: "Electrical",
+      hall_read_mech_h: "Mechanical",
+      hall_read_arch_h: "Architectural",
+      hall_read_elec: "{mw}MW IT, about {fac}MW facility at PUE 1.2. {rowKW}kW per row across {rows} row(s) sets the busway and distribution rating; allow for power racks at the row ends.",
+      hall_read_mech: "About {kw}kW to liquid (90% of IT). At {each}kW per CDU that is {cdu} running plus 1 spare, {total} in all. Supply and return headers run per row — keep them clear of the busway and fibre routes.",
+      hall_read_arch: "Roughly {w}×{depth}m = {area} m² including the electrical room, manifold and CDUs. {rows} row(s) of {perRow} — fewer rows run longer and spread the ends further apart.",
       h_hall_desc: "Draws the rack layout and the mechanical/electrical plan and section for one POD from the settings above",
       label_hallPod: "POD to review",
       label_hallCooling: "Cooling",
-      label_hallRackKW: "Power per rack (kW)",
-      label_hallRacksPerRow: "Racks per row",
       label_hallRackW: "Rack width (mm)",
       label_hallRackD: "Rack depth (mm)",
       label_hallCold: "Cold aisle (mm)",
@@ -415,7 +461,7 @@
       hint_hall: "Wheel to zoom, drag to pan — dimensions in mm, redrawn as you change the inputs above",
       hall_pod_opt: "POD {n} — {kw}kW",
       hall_pod_note: "Expands one of the {n} PODs ({kw}kW) sized in section ④.",
-      hall_rack_note: "{racks} racks · {rows} rows",
+      hall_rack_note: "{racks} racks · {rows} row(s) of {perRow}",
       hall_cdu_note: "{n} required + 1 spare = {total} (N+1)",
       hall_elec_room: "Electrical room",
       hall_hot_aisle: "Hot",
@@ -3210,6 +3256,174 @@
   const hallZoom = makeZoomable('hallSvg');
   let hallView = 'plan';
 
+  // ----- 랙 구성 (POD 스터디) -----
+  // POD 1개를 어떤 랙으로 채울지 종류별 수량·전력으로 직접 짠다. 합계가 POD 부하가 되고,
+  // 열 수를 1~4로 바꿔가며 외곽 치수와 모선 길이를 비교한다.
+  const RACK_DEFAULTS = [
+    { name: 'Vera Rubin NVL72', qty: 16, kw: 227, color: '#6F5FBF' },
+    { name: 'Groq 3 LPX', qty: 10, kw: 130, color: '#854F0B' },
+    { name: 'Vera CPU 랙', qty: 2, kw: 100, color: '#185FA5' },
+    { name: 'BlueField-4 STX', qty: 2, kw: 40, color: '#993556' },
+    { name: 'Spectrum-6 SPX', qty: 10, kw: 30, color: '#0F6E56' },
+  ];
+  const RACK_PALETTE = ['#6F5FBF', '#854F0B', '#185FA5', '#993556', '#0F6E56', '#993C1D', '#3B6D11', '#2E2419'];
+  let hallRacks = loadHallRacks();
+  let hallRowsOpt = 1;
+  let hallRackSeq = 0;
+
+  function loadHallRacks() {
+    try {
+      const raw = JSON.parse(localStorage.getItem('prc_hallracks') || 'null');
+      if (Array.isArray(raw) && raw.length) return raw;
+    } catch (e) {}
+    return RACK_DEFAULTS.map(r => Object.assign({}, r));
+  }
+  function saveHallRacks() {
+    try { localStorage.setItem('prc_hallracks', JSON.stringify(hallRacks)); } catch (e) {}
+  }
+  function hallRackTotals() {
+    let qty = 0, kw = 0;
+    hallRacks.forEach(r => {
+      const q = Math.max(0, parseInt(r.qty, 10) || 0);
+      const k = Math.max(0, parseFloat(r.kw) || 0);
+      qty += q; kw += q * k;
+    });
+    return { qty, kw };
+  }
+  // 랙을 열에 깔 순서 — 배치 패턴에 따라 종류를 섞거나 모아 둔다
+  function hallRackSequence() {
+    const seq = [];
+    hallRacks.forEach(r => {
+      const q = Math.max(0, parseInt(r.qty, 10) || 0);
+      for (let i = 0; i < q; i++) seq.push(r);
+    });
+    return seq;
+  }
+
+  function renderHallRackTable() {
+    const box = document.getElementById('hallRackTable');
+    if (!box) return;
+    box.innerHTML = '';
+    const table = document.createElement('table');
+    table.className = 'rack-mix';
+    const head = document.createElement('tr');
+    ['rackmix_kind', 'rackmix_qty', 'rackmix_kw', 'rackmix_sub', ''].forEach(k => {
+      const th = document.createElement('th');
+      th.textContent = k ? t(k) : '';
+      head.appendChild(th);
+    });
+    table.appendChild(head);
+
+    hallRacks.forEach((r, i) => {
+      if (!r.color) r.color = RACK_PALETTE[i % RACK_PALETTE.length];
+      const tr = document.createElement('tr');
+
+      const tdName = document.createElement('td');
+      const dot = document.createElement('span');
+      dot.className = 'rack-dot';
+      dot.style.background = r.color;
+      tdName.appendChild(dot);
+      const nm = document.createElement('input');
+      nm.type = 'text'; nm.value = r.name;
+      nm.addEventListener('input', () => { r.name = nm.value; saveHallRacks(); drawHall(); });
+      tdName.appendChild(nm);
+      tr.appendChild(tdName);
+
+      const mkNum = (key, step) => {
+        const td = document.createElement('td');
+        const el = document.createElement('input');
+        el.type = 'number'; el.min = '0'; el.step = step; el.value = r[key];
+        el.addEventListener('input', () => {
+          r[key] = parseFloat(el.value) || 0;
+          saveHallRacks();
+          renderHallRackTotals();
+          drawHall();
+        });
+        td.appendChild(el);
+        return td;
+      };
+      tr.appendChild(mkNum('qty', '1'));
+      tr.appendChild(mkNum('kw', '1'));
+
+      const tdSub = document.createElement('td');
+      tdSub.className = 'sub';
+      tdSub.textContent = fmtN(Math.round((parseInt(r.qty, 10) || 0) * (parseFloat(r.kw) || 0)));
+      tr.appendChild(tdSub);
+
+      const tdDel = document.createElement('td');
+      const del = document.createElement('button');
+      del.className = 'sched-del'; del.textContent = '✕';
+      del.addEventListener('click', () => {
+        hallRacks = hallRacks.filter(x => x !== r);
+        saveHallRacks(); renderHallRackTable(); drawHall();
+      });
+      tdDel.appendChild(del);
+      tr.appendChild(tdDel);
+      table.appendChild(tr);
+    });
+
+    const tot = hallRackTotals();
+    const ftr = document.createElement('tr');
+    ftr.className = 'total';
+    const c1 = document.createElement('td'); c1.textContent = t('rackmix_total'); ftr.appendChild(c1);
+    const c2 = document.createElement('td'); c2.textContent = fmtN(tot.qty); ftr.appendChild(c2);
+    const c3 = document.createElement('td'); c3.textContent = ''; ftr.appendChild(c3);
+    const c4 = document.createElement('td'); c4.className = 'sub'; c4.textContent = fmtN(Math.round(tot.kw)); ftr.appendChild(c4);
+    ftr.appendChild(document.createElement('td'));
+    table.appendChild(ftr);
+    box.appendChild(table);
+    renderHallRackTotals();
+  }
+
+  function renderHallRackTotals() {
+    const tot = hallRackTotals();
+    const el = document.getElementById('hallMixTotal');
+    if (el) el.value = t('rackmix_summary', { racks: fmtN(tot.qty), kw: fmtN(Math.round(tot.kw)), mw: fmtN(tot.kw / 1000, 2) });
+    const box = document.getElementById('hallRackTable');
+    if (box) {
+      const subs = box.querySelectorAll('td.sub');
+      hallRacks.forEach((r, i) => {
+        if (subs[i]) subs[i].textContent = fmtN(Math.round((parseInt(r.qty, 10) || 0) * (parseFloat(r.kw) || 0)));
+      });
+      if (subs[hallRacks.length]) subs[hallRacks.length].textContent = fmtN(Math.round(tot.kw));
+      const qtyCell = box.querySelector('tr.total td:nth-child(2)');
+      if (qtyCell) qtyCell.textContent = fmtN(tot.qty);
+    }
+  }
+
+  document.getElementById('hallRackAdd').addEventListener('click', () => {
+    hallRacks.push({ name: t('rackmix_new', { n: ++hallRackSeq }), qty: 1, kw: 30, color: RACK_PALETTE[hallRacks.length % RACK_PALETTE.length] });
+    saveHallRacks(); renderHallRackTable(); drawHall();
+  });
+  document.getElementById('hallRackReset').addEventListener('click', () => {
+    hallRacks = RACK_DEFAULTS.map(r => Object.assign({}, r));
+    saveHallRacks(); renderHallRackTable(); drawHall();
+  });
+  document.getElementById('hallRackApply').addEventListener('click', () => {
+    const tot = hallRackTotals();
+    if (!tot.kw) return;
+    const cap = document.getElementById('podCapacity');
+    cap.value = Math.round(tot.kw);
+    cap.dispatchEvent(new Event('input', { bubbles: true }));
+    const note = document.getElementById('hallRackApplyNote');
+    if (note) {
+      note.textContent = t('rackmix_applied', { kw: fmtN(Math.round(tot.kw)) });
+      note.style.color = 'var(--primary)';
+      note.style.fontWeight = '700';
+    }
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#hallRowsToggle .mode-btn'), btn => {
+    btn.addEventListener('click', () => {
+      hallRowsOpt = parseInt(btn.dataset.rows, 10) || 1;
+      Array.prototype.forEach.call(document.querySelectorAll('#hallRowsToggle .mode-btn'), b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.classList.toggle('normal', on);
+      });
+      drawHall();
+    });
+  });
+
   const hallNum = (id, dflt) => {
     const el = document.getElementById(id);
     const v = el ? parseFloat(el.value) : NaN;
@@ -3221,9 +3435,12 @@
     const c = planLastContext;
     const sel = document.getElementById('hallPodSel');
     const podIdx = sel && sel.value !== '' ? parseInt(sel.value, 10) : 0;
-    const podKW = c ? c.podKW : 6000;
-    const rackKW = hallNum('hallRackKW', 133);
-    const perRow = Math.max(2, Math.round(hallNum('hallRacksPerRow', 20)));
+    const mix = hallRackTotals();
+    const podKW = mix.kw > 0 ? mix.kw : (c ? c.podKW : 6000);
+    const racksTotal = mix.qty > 0 ? mix.qty : Math.max(1, Math.ceil(podKW / 133));
+    const rackKW = racksTotal ? podKW / racksTotal : 0;
+    const rowsOpt = Math.max(1, hallRowsOpt);
+    const perRow = Math.max(1, Math.ceil(racksTotal / rowsOpt));
     const rackW = hallNum('hallRackW', 600);
     const rackD = hallNum('hallRackD', 1200);
     const cold = hallNum('hallCold', 1200);
@@ -3231,8 +3448,9 @@
     const cduKW = hallNum('hallCduKW', 1800);
     const elecW = hallNum('hallElecW', 4600);
 
-    const racks = Math.max(1, Math.ceil(podKW / rackKW));
-    const rows = Math.max(1, Math.ceil(racks / perRow));
+    const racks = racksTotal;
+    const rows = rowsOpt;
+    const perim = hallNum('hallPerim', 1200);
     // 열은 등을 맞대 짝으로 세운다: 짝 사이는 핫 통로, 짝과 짝 사이는 콜드 통로
     const pairs = Math.ceil(rows / 2);
     const rowLen = perRow * rackW;
@@ -3250,7 +3468,7 @@
     const totalW = bands.reduce((n, b) => n + b.mm, 0);
 
     // 세로: 상·하 여유 + (열 + 통로)
-    const edge = 1200;
+    const edge = perim;
     let depth = edge * 2 + rows * rackD;
     depth += (pairs - 1) * cold + Math.min(pairs, Math.floor(rows / 2)) * hot;
 
@@ -3258,7 +3476,8 @@
     return {
       podIdx, podKW, rackKW, racks, rows, perRow, pairs, rackW, rackD, cold, hot,
       rowLen, cduQty, cduKW, cduW, manifoldW, aisleEnd, elecW, edge,
-      bands, totalW, depth, areaM2,
+      bands, totalW, depth, areaM2, perim, seq: hallRackSequence(),
+      buswayLen: rows * rowLen,
       raised: hallNum('hallRaised', 800), rackH: hallNum('hallRackH', 2200),
       busway: hallNum('hallBusway', 3202), ceil: hallNum('hallCeil', 6000),
       cooling: (document.getElementById('hallCooling') || {}).value || 'dlc',
@@ -3328,9 +3547,11 @@
       for (let i = 0; i < d.perRow; i++) {
         const n = r * d.perRow + i;
         if (n >= d.racks) break;
+        const kind = d.seq[n];
+        const col = (kind && kind.color) || navy;
         target.appendChild(svgEl('rect', {
           x: X(rackX + i * d.rackW), y: Y(y), width: S(d.rackW) - 0.6, height: S(d.rackD),
-          fill: hexToRgba(navy, 0.16), stroke: navy, 'stroke-width': 0.7,
+          fill: hexToRgba(col, 0.2), stroke: col, 'stroke-width': 0.7,
         }));
       }
       // 짝 안쪽은 핫 통로, 짝 사이는 콜드 통로
@@ -3522,6 +3743,74 @@
     });
   }
 
+  // 1~4열을 같은 규칙으로 돌려 외곽 치수를 나란히 비교한다
+  function hallRowOption(rows) {
+    const mix = hallRackTotals();
+    const racks = mix.qty || 1;
+    const perRow = Math.ceil(racks / rows);
+    const rackW = hallNum('hallRackW', 600), rackD = hallNum('hallRackD', 1200);
+    const cold = hallNum('hallCold', 1200), hot = hallNum('hallHot', 1000);
+    const perim = hallNum('hallPerim', 1200);
+    const elecW = hallNum('hallElecW', 4600);
+    const rowLen = perRow * rackW;
+    let gaps = 0;
+    for (let r = 0; r < rows - 1; r++) gaps += (r % 2 === 0) ? hot : cold;
+    const w = elecW + 2000 + rowLen + 800 + 2700;
+    const depth = perim * 2 + rows * rackD + gaps;
+    return { rows, perRow, rowLen, w, depth, area: (w / 1000) * (depth / 1000), busway: rows * rowLen };
+  }
+
+  function renderHallCompare() {
+    const box = document.getElementById('hallCompare');
+    if (!box) return;
+    box.innerHTML = '';
+    const label = document.createElement('span');
+    label.className = 'cmp-label';
+    label.textContent = t('hall_cmp_label');
+    box.appendChild(label);
+    [1, 2, 3, 4].forEach(r => {
+      const o = hallRowOption(r);
+      const div = document.createElement('div');
+      div.className = 'cmp-item' + (r === hallRowsOpt ? ' on' : '');
+      div.innerHTML = `<b>${t('hall_cmp_rows', { n: r })}</b>`
+        + `<span>${Math.round(o.w)}×${Math.round(o.depth)}mm</span>`
+        + `<span>${fmtN(Math.round(o.area))}㎡ · ${t('hall_cmp_bus', { m: fmtN(o.busway / 1000, 1) })}</span>`;
+      div.addEventListener('click', () => {
+        const btn = document.querySelector('#hallRowsToggle .mode-btn[data-rows="' + r + '"]');
+        if (btn) btn.click();
+      });
+      box.appendChild(div);
+    });
+  }
+
+  // 수치에서 바로 읽히는 전기·기계·건축 메모
+  function renderHallReading(d) {
+    const box = document.getElementById('hallReading');
+    if (!box) return;
+    const pue = 1.2;
+    const rows = [
+      ['elec', t('hall_read_elec', {
+        mw: fmtN(d.podKW / 1000, 2), fac: fmtN(d.podKW * pue / 1000, 2),
+        rowKW: fmtN(Math.round(d.rowLen / d.rackW * d.rackKW)), rows: d.rows,
+      })],
+      ['mech', t('hall_read_mech', {
+        kw: fmtN(Math.round(d.podKW * 0.9)), cdu: d.cduQty - 1, total: d.cduQty,
+        each: fmtN(d.cduKW),
+      })],
+      ['arch', t('hall_read_arch', {
+        w: fmtN(d.totalW / 1000, 1), depth: fmtN(d.depth / 1000, 1), area: fmtN(Math.round(d.areaM2)),
+        rows: d.rows, perRow: d.perRow,
+      })],
+    ];
+    box.innerHTML = '<div class="read-head">' + t('hall_read_title') + '</div>';
+    rows.forEach(([k, text]) => {
+      const div = document.createElement('div');
+      div.className = 'read-row';
+      div.innerHTML = `<b>${t('hall_read_' + k + '_h')}</b><span>${text}</span>`;
+      box.appendChild(div);
+    });
+  }
+
   function updateHallSummary(d) {
     const el = document.getElementById('hallSummary');
     if (el) {
@@ -3532,7 +3821,9 @@
       });
     }
     const note = document.getElementById('hallRackNote');
-    if (note) note.textContent = t('hall_rack_note', { racks: d.racks, rows: d.rows });
+    if (note) note.textContent = t('hall_rack_note', { racks: d.racks, rows: d.rows, perRow: d.perRow });
+    renderHallCompare();
+    renderHallReading(d);
     const cdu = document.getElementById('hallCduNote');
     if (cdu) cdu.textContent = t('hall_cdu_note', { n: d.cduQty - 1, total: d.cduQty });
     const cool = document.getElementById('hallCoolNote');
@@ -3557,7 +3848,7 @@
     if (note && c) note.textContent = t('hall_pod_note', { n: c.pods, kw: fmtN(Math.round(c.podKW)) });
   }
 
-  ['hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD', 'hallCold', 'hallHot',
+  ['hallRackW', 'hallRackD', 'hallCold', 'hallHot', 'hallPerim',
    'hallCduKW', 'hallElecW', 'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil']
     .forEach(id => {
       const el = document.getElementById(id);
@@ -3567,11 +3858,6 @@
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', () => {
       // 냉각 방식을 바꾸면 통상적인 랙 밀도를 기본값으로 제안한다
-      if (id === 'hallCooling') {
-        const v = document.getElementById('hallCooling').value;
-        const dflt = v === 'air' ? 40 : (v === 'hybrid' ? 80 : 133);
-        document.getElementById('hallRackKW').value = dflt;
-      }
       drawHall();
     });
   });
@@ -3591,7 +3877,7 @@
   document.getElementById('hallZoomOut').addEventListener('click', () => hallZoom.zoomOut());
   document.getElementById('hallZoomReset').addEventListener('click', () => hallZoom.reset());
 
-  function refreshHallTexts() { refreshHallPodOptions(); drawHall(); }
+  function refreshHallTexts() { refreshHallPodOptions(); renderHallRackTable(); drawHall(); }
   refreshHallTexts();
 
   // ===== ⑦ SLD (단선결선도) 에디터 =====
@@ -4217,7 +4503,12 @@
       kw += c * k;
     }
     if (!(kw > 0)) return { error: 'empty' };
-    return { racks, kw, pue: Number(data.pue) || null };
+    const names = Array.isArray(data.names) ? data.names : [];
+    const rows = [];
+    for (let i = 0; i < n; i++) {
+      rows.push({ name: names[i] || '', qty: Number(data.counts[i]) || 0, kw: Number(data.kw[i]) || 0 });
+    }
+    return { racks, kw, rows, pue: Number(data.pue) || null };
   }
 
   const podJsonToggle = document.getElementById('podJsonToggle');
@@ -4241,6 +4532,15 @@
         status.style.fontWeight = '700';
       };
       if (res.error) { say('podJson_err_' + res.error, {}, true); return; }
+      // 랙 종류별 수량·전력도 그대로 ⑥번 랙 구성표로 옮긴다
+      if (res.rows && res.rows.length && typeof hallRacks !== 'undefined') {
+        hallRacks = res.rows.map((r, i) => ({
+          name: r.name || t('rackmix_new', { n: i + 1 }),
+          qty: r.qty, kw: r.kw, color: RACK_PALETTE[i % RACK_PALETTE.length],
+        }));
+        saveHallRacks();
+        if (typeof renderHallRackTable === 'function') { renderHallRackTable(); drawHall(); }
+      }
       const capInput = document.getElementById('podCapacity');
       capInput.value = Math.round(res.kw);
       capInput.dispatchEvent(new Event('input', { bubbles: true }));
@@ -4873,6 +5173,7 @@
       hall,
       plans: { tabs: planTabs },
       sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges },
+      racks: { list: hallRacks, rows: hallRowsOpt },
       ui: { lang: currentLang, view: document.body.classList.contains('view-dual') ? 'dual' : 'sequential' },
     };
   }
@@ -4897,6 +5198,18 @@
         if (isFinite(num) && num > sldSeq) sldSeq = num;
       });
       saveSldManualGraph();
+    }
+    if (data.racks && Array.isArray(data.racks.list) && data.racks.list.length) {
+      hallRacks = data.racks.list;
+      hallRowsOpt = Math.max(1, Math.min(4, data.racks.rows || 1));
+      saveHallRacks();
+      const btn = document.querySelector('#hallRowsToggle .mode-btn[data-rows="' + hallRowsOpt + '"]');
+      Array.prototype.forEach.call(document.querySelectorAll('#hallRowsToggle .mode-btn'), b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.classList.toggle('normal', on);
+      });
+      if (typeof renderHallRackTable === 'function') renderHallRackTable();
     }
     if (data.hall) {
       Object.keys(data.hall).forEach(id => {
