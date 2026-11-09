@@ -381,6 +381,29 @@
       </div>
     </div>
 
+    <div class="rack-mix-title" data-i18n="h_gen">POD 제너레이티브 디자인 — 타겟에 맞춰 랙 구성을 생성</div>
+    <div class="gen-bar">
+      <div class="gen-field">
+        <label for="genProfile" data-i18n="label_genProfile">타겟 성향</label>
+        <select id="genProfile"></select>
+      </div>
+      <div class="gen-field">
+        <label for="genTargetMW" data-i18n="label_genTarget">목표 POD 부하 (MW)</label>
+        <input type="number" id="genTargetMW" value="6" step="0.5" min="0.5">
+      </div>
+      <div class="gen-field">
+        <label for="genGoal" data-i18n="label_genGoal">우선 기준</label>
+        <select id="genGoal">
+          <option value="area" data-i18n="goal_area">면적 최소</option>
+          <option value="bus" data-i18n="goal_bus">모선 길이 최소</option>
+          <option value="density" data-i18n="goal_density">랙 밀도 최대</option>
+        </select>
+      </div>
+      <button class="quick-btn" id="genRunBtn" style="border-style:solid;" data-i18n="gen_run">구성 생성</button>
+    </div>
+    <div class="gen-note" id="genProfileNote"></div>
+    <div id="genResults" class="gen-results"></div>
+
     <div class="rack-mix-title" data-i18n="h_rackmix">랙 구성 편집 — 종류별 수량과 랙당 전력</div>
     <div id="hallRackTable"></div>
     <div class="rack-mix-bar">

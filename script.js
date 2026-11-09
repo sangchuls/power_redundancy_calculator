@@ -16,6 +16,30 @@
       label_hallRows: "배치 보기 (열 수)",
       label_hallPerim: "주변 여유 (mm)",
       h_rackmix: "랙 구성 편집 — 종류별 수량과 랙당 전력",
+      h_gen: "POD 제너레이티브 디자인 — 타겟에 맞춰 랙 구성을 생성",
+      label_genProfile: "타겟 성향",
+      label_genTarget: "목표 POD 부하 (MW)",
+      label_genGoal: "우선 기준",
+      goal_area: "면적 최소",
+      goal_bus: "모선 길이 최소",
+      goal_density: "랙 밀도 최대",
+      gen_run: "구성 생성",
+      gen_prof_train: "대규모 학습 집중형",
+      gen_prof_infer: "추론 서비스형",
+      gen_prof_cloud: "혼합 클라우드형",
+      gen_prof_edge: "에너지 연계 모듈형",
+      gen_prof_train_d: "프론티어 모델 학습 — 가속기 랙에 전력을 몰아주고 CPU·스토리지는 최소. 고밀도 액냉.",
+      gen_prof_infer_d: "상시 추론 서비스 — 추론 전용 가속기와 CPU 비중이 올라가고 네트워크가 두꺼워집니다.",
+      gen_prof_cloud_d: "학습·추론·일반 워크로드 혼재 — 가속기와 범용 자원을 고르게 배분.",
+      gen_prof_edge_d: "전력 제약 아래 작은 POD를 반복 — 1열 단위로 떼어 증설하기 쉬운 구성.",
+      gen_disclaimer: "※ 작업 성격에서 도출한 설계 원형이며, 특정 사업자가 공개한 사양이 아닙니다. 생성 후 랙 구성표에서 자유롭게 고치세요.",
+      gen_var_as_is: "A · 성향 그대로",
+      gen_var_dense: "B · 가속기 집중",
+      gen_var_broad: "C · 범용 분산",
+      gen_racks: "랙 {n}개",
+      gen_geo: "{rows}열 · {w}×{d}mm · {area}㎡ · 모선 {bus}m",
+      gen_apply: "이 구성 적용",
+      gen_applied: "✓ 생성한 구성을 적용했습니다 — 합계 {kw}kW · {rows}열. 아래 표에서 계속 고치면 됩니다.",
       rackmix_kind: "랙 종류",
       rackmix_qty: "수량",
       rackmix_kw: "kW / 랙",
@@ -415,6 +439,30 @@
       label_hallRows: "Layout (rows)",
       label_hallPerim: "Perimeter clearance (mm)",
       h_rackmix: "Rack mix — quantity and power per rack",
+      h_gen: "POD generative design — compose a rack mix for a target",
+      label_genProfile: "Target profile",
+      label_genTarget: "Target POD load (MW)",
+      label_genGoal: "Optimise for",
+      goal_area: "Smallest area",
+      goal_bus: "Shortest busway",
+      goal_density: "Highest density",
+      gen_run: "Generate",
+      gen_prof_train: "Large-scale training",
+      gen_prof_infer: "Inference service",
+      gen_prof_cloud: "Mixed cloud",
+      gen_prof_edge: "Energy-linked module",
+      gen_prof_train_d: "Frontier model training — power concentrated in accelerator racks, minimal CPU and storage, dense liquid cooling.",
+      gen_prof_infer_d: "Always-on inference — more inference accelerators and CPU, heavier networking.",
+      gen_prof_cloud_d: "Training, inference and general workloads together — accelerators and general compute balanced.",
+      gen_prof_edge_d: "Small PODs repeated under a power constraint — easy to add a row at a time.",
+      gen_disclaimer: "※ These are design archetypes derived from the workload, not specifications published by any operator. Edit the rack table freely after generating.",
+      gen_var_as_is: "A · as profiled",
+      gen_var_dense: "B · accelerator heavy",
+      gen_var_broad: "C · general purpose",
+      gen_racks: "{n} racks",
+      gen_geo: "{rows} row(s) · {w}×{d}mm · {area} m² · busway {bus}m",
+      gen_apply: "Apply this mix",
+      gen_applied: "✓ Applied — {kw}kW total across {rows} row(s). Carry on editing in the table below.",
       rackmix_kind: "Rack type",
       rackmix_qty: "Qty",
       rackmix_kw: "kW / rack",
@@ -3300,6 +3348,156 @@
     return seq;
   }
 
+  // ----- POD 제너레이티브 디자인 -----
+  // 목표 부하와 작업 성향을 주면 랙 구성을 만들어 준다. 성향별 비율은 '어떤 일을 돌리는
+  // POD인가'에서 끌어낸 설계 원형이지, 특정 사업자가 공개한 사양이 아니다 (화면에도 명시).
+  // share = 그 랙 종류가 가져가는 IT 전력 비중, 합계 1.
+  const GEN_PROFILES = [
+    { key: 'train', cooling: 'dlc', rows: 2,
+      share: { nvl: 0.86, lpx: 0.00, cpu: 0.04, stx: 0.02, spx: 0.08 } },
+    { key: 'infer', cooling: 'hybrid', rows: 3,
+      share: { nvl: 0.45, lpx: 0.35, cpu: 0.10, stx: 0.02, spx: 0.08 } },
+    { key: 'cloud', cooling: 'hybrid', rows: 3,
+      share: { nvl: 0.55, lpx: 0.20, cpu: 0.13, stx: 0.04, spx: 0.08 } },
+    { key: 'edge', cooling: 'dlc', rows: 1,
+      share: { nvl: 0.70, lpx: 0.10, cpu: 0.08, stx: 0.02, spx: 0.10 } },
+  ];
+  const GEN_RACKS = {
+    nvl: { name: 'Vera Rubin NVL72', kw: 227, color: '#6F5FBF' },
+    lpx: { name: 'Groq 3 LPX', kw: 130, color: '#854F0B' },
+    cpu: { name: 'Vera CPU 랙', kw: 100, color: '#185FA5' },
+    stx: { name: 'BlueField-4 STX', kw: 40, color: '#993556' },
+    spx: { name: 'Spectrum-6 SPX', kw: 30, color: '#0F6E56' },
+  };
+  let genResults = [];
+
+  function genProfile() {
+    const sel = document.getElementById('genProfile');
+    const key = sel ? sel.value : 'train';
+    return GEN_PROFILES.find(p => p.key === key) || GEN_PROFILES[0];
+  }
+
+  // 비중 → 랙 수량. 가장 큰 항목으로 반올림 오차를 흡수해 목표에 붙인다.
+  function genCompose(targetKW, share) {
+    const list = [];
+    Object.keys(GEN_RACKS).forEach(k => {
+      const sh = share[k] || 0;
+      if (sh <= 0) return;
+      const spec = GEN_RACKS[k];
+      const qty = Math.max(1, Math.round(targetKW * sh / spec.kw));
+      list.push({ key: k, name: spec.name, kw: spec.kw, color: spec.color, qty });
+    });
+    if (!list.length) return list;
+    let total = list.reduce((n, r) => n + r.qty * r.kw, 0);
+    const big = list.reduce((a, b) => (a.qty * a.kw >= b.qty * b.kw ? a : b));
+    const adjust = Math.round((targetKW - total) / big.kw);
+    big.qty = Math.max(1, big.qty + adjust);
+    return list;
+  }
+
+  // 우선 기준에 맞는 열 수를 고른다
+  function genBestRows(racks, goal) {
+    let best = null;
+    [1, 2, 3, 4].forEach(r => {
+      const o = hallRowOptionFor(racks, r);
+      const score = goal === 'area' ? o.area : (goal === 'bus' ? o.busway : o.depth);
+      if (!best || score < best.score) best = { rows: r, score, o };
+    });
+    return best;
+  }
+
+  function genRun() {
+    const prof = genProfile();
+    const targetKW = Math.max(100, (parseFloat(document.getElementById('genTargetMW').value) || 6) * 1000);
+    const goal = document.getElementById('genGoal').value;
+
+    // 같은 목표를 세 가지 성격으로 — 프로파일 그대로 / 밀도 치우침 / 범용 치우침
+    const variants = [
+      { key: 'as_is', share: prof.share },
+      { key: 'dense', share: genShift(prof.share, 'nvl', 0.12) },
+      { key: 'broad', share: genShift(prof.share, 'lpx', 0.12) },
+    ];
+    genResults = variants.map(v => {
+      const racks = genCompose(targetKW, v.share);
+      const qty = racks.reduce((n, r) => n + r.qty, 0);
+      const kw = racks.reduce((n, r) => n + r.qty * r.kw, 0);
+      const best = genBestRows(racks, goal);
+      return { key: v.key, racks, qty, kw, rows: best.rows, geom: best.o, cooling: prof.cooling };
+    });
+    renderGenResults();
+  }
+
+  // 한 종류의 비중을 끌어올리고 나머지를 비례로 줄인다
+  function genShift(share, key, amount) {
+    const out = Object.assign({}, share);
+    const rest = Object.keys(out).filter(k => k !== key);
+    const restSum = rest.reduce((n, k) => n + out[k], 0);
+    const take = Math.min(amount, restSum * 0.6);
+    out[key] = (out[key] || 0) + take;
+    rest.forEach(k => { out[k] = out[k] - take * (out[k] / (restSum || 1)); });
+    return out;
+  }
+
+  function renderGenResults() {
+    const box = document.getElementById('genResults');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!genResults.length) return;
+    genResults.forEach(r => {
+      const card = document.createElement('div');
+      card.className = 'gen-card';
+      const mix = r.racks.map(x => x.name.replace(/\s*\(.*\)/, '') + ' ×' + x.qty).join(' · ');
+      card.innerHTML = `<div class="gen-head">${t('gen_var_' + r.key)}</div>`
+        + `<div class="gen-main">${fmtN(r.kw / 1000, 2)}MW · ${t('gen_racks', { n: r.qty })}</div>`
+        + `<div class="gen-sub">${mix}</div>`
+        + `<div class="gen-geo">${t('gen_geo', {
+              rows: r.rows, w: Math.round(r.geom.w), d: Math.round(r.geom.depth),
+              area: fmtN(Math.round(r.geom.area)), bus: fmtN(r.geom.busway / 1000, 1),
+            })}</div>`;
+      const btn = document.createElement('button');
+      btn.className = 'quick-btn';
+      btn.textContent = t('gen_apply');
+      btn.addEventListener('click', () => genApply(r));
+      card.appendChild(btn);
+      box.appendChild(card);
+    });
+  }
+
+  function genApply(r) {
+    hallRacks = r.racks.map(x => ({ name: x.name, qty: x.qty, kw: x.kw, color: x.color }));
+    saveHallRacks();
+    const cool = document.getElementById('hallCooling');
+    if (cool) cool.value = r.cooling;
+    const btn = document.querySelector('#hallRowsToggle .mode-btn[data-rows="' + r.rows + '"]');
+    if (btn) btn.click(); else { hallRowsOpt = r.rows; }
+    renderHallRackTable();
+    drawHall();
+    const note = document.getElementById('genProfileNote');
+    if (note) note.textContent = t('gen_applied', { kw: fmtN(Math.round(r.kw)), rows: r.rows });
+  }
+
+  function refreshGenProfiles() {
+    const sel = document.getElementById('genProfile');
+    if (!sel) return;
+    const keep = sel.value;
+    sel.innerHTML = '';
+    GEN_PROFILES.forEach(pr => {
+      const o = document.createElement('option');
+      o.value = pr.key;
+      o.textContent = t('gen_prof_' + pr.key);
+      sel.appendChild(o);
+    });
+    if (keep) sel.value = keep;
+    updateGenNote();
+  }
+  function updateGenNote() {
+    const note = document.getElementById('genProfileNote');
+    if (note) note.textContent = t('gen_prof_' + genProfile().key + '_d') + ' ' + t('gen_disclaimer');
+  }
+  const genProfileSel = document.getElementById('genProfile');
+  if (genProfileSel) genProfileSel.addEventListener('change', updateGenNote);
+  document.getElementById('genRunBtn').addEventListener('click', genRun);
+
   function renderHallRackTable() {
     const box = document.getElementById('hallRackTable');
     if (!box) return;
@@ -3745,8 +3943,10 @@
 
   // 1~4열을 같은 규칙으로 돌려 외곽 치수를 나란히 비교한다
   function hallRowOption(rows) {
-    const mix = hallRackTotals();
-    const racks = mix.qty || 1;
+    return hallRowOptionFor(hallRacks, rows);
+  }
+  function hallRowOptionFor(rackList, rows) {
+    const racks = Math.max(1, (rackList || []).reduce((n, r) => n + (parseInt(r.qty, 10) || 0), 0));
     const perRow = Math.ceil(racks / rows);
     const rackW = hallNum('hallRackW', 600), rackD = hallNum('hallRackD', 1200);
     const cold = hallNum('hallCold', 1200), hot = hallNum('hallHot', 1000);
@@ -3877,7 +4077,12 @@
   document.getElementById('hallZoomOut').addEventListener('click', () => hallZoom.zoomOut());
   document.getElementById('hallZoomReset').addEventListener('click', () => hallZoom.reset());
 
-  function refreshHallTexts() { refreshHallPodOptions(); renderHallRackTable(); drawHall(); }
+  function refreshHallTexts() {
+    refreshHallPodOptions();
+    if (typeof refreshGenProfiles === 'function') { try { refreshGenProfiles(); renderGenResults(); } catch (e) {} }
+    renderHallRackTable();
+    drawHall();
+  }
   refreshHallTexts();
 
   // ===== ⑦ SLD (단선결선도) 에디터 =====

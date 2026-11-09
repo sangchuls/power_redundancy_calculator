@@ -464,6 +464,34 @@
   table.rack-mix tr.total td { background: var(--surface); font-weight: 800; color: var(--primary); border-bottom: none; }
   .rack-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
   .rack-mix-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+
+  /* POD 제너레이티브 디자인 */
+  .gen-bar {
+    display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap;
+    padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 16px;
+    background: var(--surface); margin-bottom: 8px;
+  }
+  .gen-field { display: flex; flex-direction: column; gap: 4px; }
+  .gen-field label { font-size: 11px; font-weight: 700; color: var(--text-muted); }
+  .gen-field select, .gen-field input {
+    padding: 5px 10px; border-radius: 999px; border: 1.5px solid var(--border);
+    background: var(--bg-color); font-family: inherit; font-size: 12px; color: var(--text-main);
+    min-width: 130px;
+  }
+  .gen-field input { max-width: 110px; text-align: right; }
+  .gen-bar .quick-btn { padding: 6px 16px; font-size: 12px; }
+  .gen-note { font-size: 11px; line-height: 1.6; color: var(--text-muted); margin: 0 0 10px; }
+  .gen-results { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+  .gen-card {
+    flex: 1 1 240px; min-width: 230px;
+    padding: 11px 14px; border-radius: 16px;
+    border: 1.5px solid var(--border); background: var(--bg-color);
+  }
+  .gen-card .gen-head { font-family: "Jua", sans-serif; font-size: 12.5px; color: var(--primary); margin-bottom: 3px; }
+  .gen-card .gen-main { font-size: 14px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+  .gen-card .gen-sub { font-size: 11px; line-height: 1.55; color: var(--text-muted); margin-bottom: 4px; }
+  .gen-card .gen-geo { font-size: 11px; font-weight: 700; color: var(--primary-light); margin-bottom: 8px; }
+  .gen-card .quick-btn { padding: 4px 13px; font-size: 11px; }
   .rack-mix-bar .quick-btn { padding: 4px 13px; font-size: 12px; }
 
   .hall-compare { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0 10px; }
