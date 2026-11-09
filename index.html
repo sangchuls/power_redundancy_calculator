@@ -428,6 +428,21 @@
         <input type="number" id="hallPerim" value="1200" step="100" min="0">
       </div>
       <div class="field">
+        <label for="hallPattern" data-i18n="label_hallPattern">배치 패턴</label>
+        <select id="hallPattern">
+          <option value="even" data-i18n="pat_even">혼합 (열마다 균등)</option>
+          <option value="mirror" data-i18n="pat_mirror">대칭 (통로 기준 거울상)</option>
+          <option value="group" data-i18n="pat_group">종류별 집중</option>
+        </select>
+      </div>
+      <div class="field">
+        <label data-i18n="label_hallScale">보기 크기</label>
+        <div class="mode-toggle" id="hallScaleToggle" style="margin:0;">
+          <button class="mode-btn active normal" data-scale="fit" data-i18n="scale_fit">화면 맞춤</button>
+          <button class="mode-btn" data-scale="real" data-i18n="scale_real">원래 크기</button>
+        </div>
+      </div>
+      <div class="field">
         <label for="hallRackW" data-i18n="label_hallRackW">랙 폭 (mm)</label>
         <input type="number" id="hallRackW" value="600" step="50" min="300">
       </div>

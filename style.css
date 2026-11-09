@@ -492,6 +492,10 @@
   .gen-card .gen-sub { font-size: 11px; line-height: 1.55; color: var(--text-muted); margin-bottom: 4px; }
   .gen-card .gen-geo { font-size: 11px; font-weight: 700; color: var(--primary-light); margin-bottom: 8px; }
   .gen-card .quick-btn { padding: 4px 13px; font-size: 11px; }
+
+  /* 원래 크기 보기 — 축소하지 않고 래퍼를 스크롤한다 */
+  .diagram-wrap svg.hall-real { max-width: none; }
+  .diagram-wrap:has(svg.hall-real) { overflow: auto; }
   .rack-mix-bar .quick-btn { padding: 4px 13px; font-size: 12px; }
 
   .hall-compare { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; margin: 8px 0 10px; }

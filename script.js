@@ -15,6 +15,14 @@
       label_hallMix: "랙 구성 합계",
       label_hallRows: "배치 보기 (열 수)",
       label_hallPerim: "주변 여유 (mm)",
+      label_hallPattern: "배치 패턴",
+      label_hallScale: "보기 크기",
+      pat_even: "혼합 (열마다 균등)",
+      pat_mirror: "대칭 (통로 기준 거울상)",
+      pat_group: "종류별 집중",
+      scale_fit: "화면 맞춤",
+      scale_real: "원래 크기",
+      hall_row_label: "열 {letter}",
       h_rackmix: "랙 구성 편집 — 종류별 수량과 랙당 전력",
       h_gen: "POD 제너레이티브 디자인 — 타겟에 맞춰 랙 구성을 생성",
       label_genProfile: "타겟 성향",
@@ -455,6 +463,14 @@
       label_hallMix: "Rack mix total",
       label_hallRows: "Layout (rows)",
       label_hallPerim: "Perimeter clearance (mm)",
+      label_hallPattern: "Arrangement",
+      label_hallScale: "View size",
+      pat_even: "Mixed (even across rows)",
+      pat_mirror: "Mirrored about the aisle",
+      pat_group: "Grouped by type",
+      scale_fit: "Fit to width",
+      scale_real: "Actual size",
+      hall_row_label: "Row {letter}",
       h_rackmix: "Rack mix — quantity and power per rack",
       h_gen: "POD generative design — compose a rack mix for a target",
       label_genProfile: "Target profile",
@@ -3337,6 +3353,7 @@
   ];
   const hallZoom = makeZoomable('hallSvg');
   let hallView = 'plan';
+  let hallScale = 'fit';
 
   // ----- 랙 구성 (POD 스터디) -----
   // POD 1개를 어떤 랙으로 채울지 종류별 수량·전력으로 직접 짠다. 합계가 POD 부하가 되고,
@@ -3372,7 +3389,44 @@
     });
     return { qty, kw };
   }
-  // 랙을 열에 깔 순서 — 배치 패턴에 따라 종류를 섞거나 모아 둔다
+  // 이름에서 짧은 식별자를 뽑는다 (Vera Rubin NVL72 → NVL72)
+  function rackAbbr(name) {
+    const caps = String(name || '').match(/[A-Z][A-Z0-9-]{1,}/g);
+    if (caps && caps.length) return caps[caps.length - 1];
+    return String(name || '').trim().split(/\s+/)[0].slice(0, 6);
+  }
+
+  // 랙을 열에 까는 순서. 패턴에 따라 종류를 열마다 고르게 나누거나, 모아 두거나, 거울상으로.
+  //  · even   : 종류별 수량을 열 수로 나눠 각 열이 같은 구성을 갖게 한다
+  //  · mirror : even 과 같되 짝수 열을 뒤집어 통로를 기준으로 대칭이 되게 한다
+  //  · group  : 종류별로 모아 순서대로 채운다
+  function hallRowSequences(rows) {
+    const pattern = (document.getElementById('hallPattern') || {}).value || 'even';
+    const list = hallRacks.map(r => ({ ref: r, qty: Math.max(0, parseInt(r.qty, 10) || 0) }));
+    const out = Array.from({ length: rows }, () => []);
+
+    if (pattern === 'group') {
+      const flat = [];
+      list.forEach(x => { for (let i = 0; i < x.qty; i++) flat.push(x.ref); });
+      const perRow = Math.ceil(flat.length / rows);
+      for (let r = 0; r < rows; r++) out[r] = flat.slice(r * perRow, (r + 1) * perRow);
+      return out;
+    }
+
+    // 종류마다 몫을 나누고 나머지는 앞쪽 열에 하나씩
+    list.forEach(x => {
+      const base = Math.floor(x.qty / rows), rem = x.qty % rows;
+      for (let r = 0; r < rows; r++) {
+        const n = base + (r < rem ? 1 : 0);
+        for (let i = 0; i < n; i++) out[r].push(x.ref);
+      }
+    });
+    if (pattern === 'mirror') {
+      for (let r = 1; r < rows; r += 2) out[r].reverse();
+    }
+    return out;
+  }
+
   function hallRackSequence() {
     const seq = [];
     hallRacks.forEach(r => {
@@ -3770,22 +3824,56 @@
     elecSub.textContent = 'UPS / ' + t('plan_kind_batt');
     target.appendChild(elecSub);
 
-    // 랙 열
+    // 랙 열 — 패턴대로 나눈 순서를 열마다 깐다
     const rackX = bandX.racks;
+    const rowSeq = hallRowSequences(d.rows);
+    const wPx = S(d.rackW), hPx = S(d.rackD);
     let y = d.edge;
     const rowYs = [];
+    let num = 0;
     for (let r = 0; r < d.rows; r++) {
       rowYs.push(y);
-      for (let i = 0; i < d.perRow; i++) {
-        const n = r * d.perRow + i;
-        if (n >= d.racks) break;
-        const kind = d.seq[n];
+      const seq = rowSeq[r] || [];
+      for (let i = 0; i < seq.length && i < d.perRow; i++) {
+        const kind = seq[i];
         const col = (kind && kind.color) || navy;
+        const rx = X(rackX + i * d.rackW), ry = Y(y);
         target.appendChild(svgEl('rect', {
-          x: X(rackX + i * d.rackW), y: Y(y), width: S(d.rackW) - 0.6, height: S(d.rackD),
-          fill: hexToRgba(col, 0.2), stroke: col, 'stroke-width': 0.7,
+          x: rx, y: ry, width: wPx - 0.6, height: hPx,
+          fill: hexToRgba(col, 0.82), stroke: col, 'stroke-width': 0.8,
         }));
+        num += 1;
+        // 칸이 좁으면 번호만, 넓어지면 명칭과 kW까지
+        if (wPx >= 13) {
+          const id = svgEl('text', {
+            x: rx + wPx / 2, y: ry + Math.min(11, hPx * 0.3), 'text-anchor': 'middle',
+            'font-size': Math.min(7.5, wPx * 0.3), 'font-weight': 800, fill: '#FFFFFF', 'font-family': 'sans-serif',
+          });
+          id.textContent = 'R' + String(num).padStart(2, '0');
+          target.appendChild(id);
+        }
+        if (wPx >= 24 && hPx >= 26) {
+          const ab = svgEl('text', {
+            x: rx + wPx / 2, y: ry + hPx * 0.58, 'text-anchor': 'middle',
+            'font-size': Math.min(7, wPx * 0.26), 'font-weight': 700, fill: '#FFFFFF', 'font-family': 'sans-serif',
+          });
+          ab.textContent = rackAbbr(kind && kind.name);
+          target.appendChild(ab);
+          const kwEl = svgEl('text', {
+            x: rx + wPx / 2, y: ry + hPx * 0.84, 'text-anchor': 'middle',
+            'font-size': Math.min(6.2, wPx * 0.23), 'font-weight': 600, fill: 'rgba(255,255,255,0.85)', 'font-family': 'sans-serif',
+          });
+          kwEl.textContent = fmtN(kind && kind.kw) + 'kW';
+          target.appendChild(kwEl);
+        }
       }
+      // 열 이름
+      const rowLab = svgEl('text', {
+        x: X(rackX + d.rowLen / 2), y: Y(y) - 4, 'text-anchor': 'middle',
+        'font-size': 8.5, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+      });
+      rowLab.textContent = t('hall_row_label', { letter: 'ABCDEFGH'[r] || (r + 1) });
+      target.appendChild(rowLab);
       // 짝 안쪽은 핫 통로, 짝 사이는 콜드 통로
       y += d.rackD + ((r % 2 === 0) ? d.hot : d.cold);
     }
@@ -4059,12 +4147,15 @@
     const cl = hallCluster(d);
     const baseW = hallView === 'cluster' ? cl.hallW : d.totalW;
     const baseH = hallView === 'plan' ? d.depth : (hallView === 'cluster' ? cl.hallD : d.ceil);
-    const sc = Math.min(availW / baseW, (hallView === 'sect' ? 320 : 460) / baseH);
+    // 화면 맞춤이면 폭에 맞춰 줄이고, 원래 크기면 랙 글씨가 읽히는 고정 축척으로 둔 뒤 스크롤한다
+    const fit = Math.min(availW / baseW, (hallView === 'sect' ? 320 : 460) / baseH);
+    const sc = hallScale === 'real' ? Math.max(fit, 0.055) : fit;
     const w = baseW * sc + margin * 2;
     const hgt = baseH * sc + margin * 2;
     svg.setAttribute('width', Math.max(760, w));
     svg.setAttribute('height', Math.max(360, hgt));
     svg.setAttribute('viewBox', `0 0 ${Math.max(760, w)} ${Math.max(360, hgt)}`);
+    svg.classList.toggle('hall-real', hallScale === 'real');
     const ox = (Math.max(760, w) - baseW * sc) / 2;
     const oy = margin * 0.6;
 
@@ -4081,6 +4172,19 @@
     const box = document.getElementById('hallLegend');
     if (!box) return;
     box.innerHTML = '';
+    // 랙 종류를 먼저 — 평면에서 색으로 구분되는 대상이다
+    hallRacks.forEach(r => {
+      if (!(parseInt(r.qty, 10) > 0)) return;
+      const div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML = `<span class="swatch" style="background:${r.color}"></span>`
+        + `${rackAbbr(r.name)} · ${fmtN(r.kw)}kW ×${r.qty}`;
+      box.appendChild(div);
+    });
+    const br = document.createElement('div');
+    br.style.width = '100%';
+    br.style.height = '2px';
+    box.appendChild(br);
     HALL_PIPES.forEach(pp => {
       const div = document.createElement('div');
       div.className = 'item';
@@ -4265,6 +4369,19 @@
     drawHall();
   }
   document.getElementById('hallClusterBtn').addEventListener('click', () => setHallView('cluster'));
+  const patSel = document.getElementById('hallPattern');
+  if (patSel) patSel.addEventListener('change', drawHall);
+  Array.prototype.forEach.call(document.querySelectorAll('#hallScaleToggle .mode-btn'), btn => {
+    btn.addEventListener('click', () => {
+      hallScale = btn.dataset.scale;
+      Array.prototype.forEach.call(document.querySelectorAll('#hallScaleToggle .mode-btn'), b => {
+        const on = b === btn;
+        b.classList.toggle('active', on);
+        b.classList.toggle('normal', on);
+      });
+      drawHall();
+    });
+  });
   ['hallUnits', 'hallPodGap', 'hallService'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => { el.dataset.touched = '1'; drawHall(); });
@@ -5564,7 +5681,7 @@
     'hallCooling', 'hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD',
     'hallCold', 'hallHot', 'hallCduKW', 'hallElecW',
     'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil',
-    'hallUnits', 'hallGrid', 'hallElecMode', 'hallPodGap', 'hallService', 'hallPerim',
+    'hallUnits', 'hallGrid', 'hallElecMode', 'hallPodGap', 'hallService', 'hallPerim', 'hallPattern',
   ];
 
   function snapshotBundle() {
