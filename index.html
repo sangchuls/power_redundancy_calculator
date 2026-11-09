@@ -473,13 +473,45 @@
       </div>
     </div>
 
+    <div class="field-row" style="margin-top:12px;">
+      <div class="field">
+        <label for="hallUnits" data-i18n="label_hallUnits">홀 내 POD 유닛 수</label>
+        <input type="number" id="hallUnits" value="3" step="1" min="1" max="24">
+        <div class="hint" id="hallUnitsNote"></div>
+      </div>
+      <div class="field">
+        <label for="hallGrid" data-i18n="label_hallGrid">유닛 배열</label>
+        <select id="hallGrid">
+          <option value="auto" data-i18n="grid_auto">자동 (정방형에 가깝게)</option>
+          <option value="row" data-i18n="grid_row">가로 1줄</option>
+          <option value="col" data-i18n="grid_col">세로 1줄</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="hallElecMode" data-i18n="label_hallElecMode">전기실 배치</label>
+        <select id="hallElecMode">
+          <option value="per" data-i18n="elec_per">POD별 전용</option>
+          <option value="shared" data-i18n="elec_shared">홀 측면 공용</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="hallPodGap" data-i18n="label_hallPodGap">유닛 간 이격 (mm)</label>
+        <input type="number" id="hallPodGap" value="2400" step="100" min="0">
+      </div>
+      <div class="field">
+        <label for="hallService" data-i18n="label_hallService">서비스 통로 (mm)</label>
+        <input type="number" id="hallService" value="2000" step="100" min="0">
+      </div>
+    </div>
+
     <div class="hint" id="hallSummary" style="margin:12px 0 4px; font-weight:700; color:var(--primary);"></div>
     <div id="hallCompare" class="hall-compare"></div>
     <div id="hallReading" class="hall-reading"></div>
 
     <div class="mode-toggle">
-      <button class="mode-btn active normal" id="hallPlanBtn" data-i18n="hall_view_plan">평면</button>
+      <button class="mode-btn active normal" id="hallPlanBtn" data-i18n="hall_view_plan">POD 평면</button>
       <button class="mode-btn" id="hallSectBtn" data-i18n="hall_view_sect">단면</button>
+      <button class="mode-btn" id="hallClusterBtn" data-i18n="hall_view_cluster">데이터홀 배치</button>
     </div>
 
     <div class="diagram-wrap">
