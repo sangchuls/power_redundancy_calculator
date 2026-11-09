@@ -174,6 +174,13 @@
       preset_save: '저장',
       preset_delete: '삭제',
       preset_reset: '기본값',
+      preset_file_save: "파일로 저장",
+      preset_file_load: "파일 불러오기",
+      preset_file_default: "데이터센터_검토",
+      preset_file_saved: "✓ {name} 으로 내려받았습니다",
+      preset_file_loaded: "✓ {name} 을 불러왔습니다 — 입력값·평면·SLD까지 복원",
+      preset_file_badjson: "⚠ JSON 파일을 읽을 수 없습니다.",
+      preset_file_badfile: "⚠ 이 앱에서 저장한 설정 파일이 아닙니다.",
       preset_choose: '저장된 설정 불러오기 ▾',
       preset_saved: '✓ “{name}” 저장됨',
       preset_loaded: '✓ “{name}” 불러왔습니다',
@@ -544,6 +551,13 @@
       preset_save: 'Save',
       preset_delete: 'Delete',
       preset_reset: 'Defaults',
+      preset_file_save: "Save to file",
+      preset_file_load: "Load from file",
+      preset_file_default: "datacentre_study",
+      preset_file_saved: "✓ Downloaded as {name}",
+      preset_file_loaded: "✓ Loaded {name} — inputs, plans and SLD restored",
+      preset_file_badjson: "⚠ Could not read that JSON file.",
+      preset_file_badfile: "⚠ That is not a settings file saved by this app.",
       preset_choose: 'Load a saved preset ▾',
       preset_saved: '✓ Saved “{name}”',
       preset_loaded: '✓ Loaded “{name}”',
@@ -4838,6 +4852,97 @@
     renderSets();
     calculate();
   }
+  // ----- 파일로 저장 / 불러오기 -----
+  // localStorage 프리셋이 이 브라우저에만 남는 반면, 파일은 들고 다니거나 공유할 수 있다.
+  // ⓪~④ 입력값만이 아니라 ⑤ 평면 탭, ⑥ 데이터홀 치수, ⑦ SLD 수동 작도까지 함께 담는다.
+  const HALL_FIELDS = [
+    'hallCooling', 'hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD',
+    'hallCold', 'hallHot', 'hallCduKW', 'hallElecW',
+    'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil',
+  ];
+
+  function snapshotBundle() {
+    const hall = {};
+    HALL_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) hall[id] = el.value; });
+    return {
+      app: 'power_redundancy_calculator',
+      version: 1,
+      savedAt: new Date().toISOString(),
+      name: (presetNameInput.value || '').trim() || presetSelect.value || '',
+      settings: snapshotSettings(),
+      hall,
+      plans: { tabs: planTabs },
+      sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges },
+      ui: { lang: currentLang, view: document.body.classList.contains('view-dual') ? 'dual' : 'sequential' },
+    };
+  }
+
+  function restoreBundle(data) {
+    if (!data || data.app !== 'power_redundancy_calculator' || !data.settings) return false;
+    // 평면·SLD를 먼저 되돌리고, 마지막에 settings를 적용해 한 번만 다시 계산되게 한다
+    if (data.plans && Array.isArray(data.plans.tabs) && data.plans.tabs.length) {
+      planTabs = data.plans.tabs;
+      planActive = 0; planAllMode = false; planSelected = null;
+      planTabs.forEach(tab => (tab.blocks || []).forEach(b => {
+        const n = parseInt(String(b.id).replace(/\D/g, ''), 10);
+        if (isFinite(n) && n > planSeq) planSeq = n;
+      }));
+      savePlans();
+    }
+    if (data.sld && Array.isArray(data.sld.nodes)) {
+      sldManualGraph = { nodes: data.sld.nodes, edges: data.sld.edges || [], notes: [] };
+      sldSelectedId = null;
+      sldManualGraph.nodes.forEach(n => {
+        const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
+        if (isFinite(num) && num > sldSeq) sldSeq = num;
+      });
+      saveSldManualGraph();
+    }
+    if (data.hall) {
+      Object.keys(data.hall).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = data.hall[id];
+      });
+    }
+    if (data.ui && data.ui.lang && data.ui.lang !== currentLang) setLang(data.ui.lang);
+    restoreSettings(data.settings);
+    if (typeof refreshPlanTexts === 'function') { try { refreshPlanTexts(); } catch (e) {} }
+    if (typeof refreshHallTexts === 'function') { try { refreshHallTexts(); } catch (e) {} }
+    if (typeof renderSldPalette === 'function') { try { renderSldPalette(); drawSLD(); updateSldStatus(); } catch (e) {} }
+    return true;
+  }
+
+  document.getElementById('presetFileSave').addEventListener('click', () => {
+    const bundle = snapshotBundle();
+    const stamp = new Date();
+    const pad = n => String(n).padStart(2, '0');
+    const date = stamp.getFullYear() + pad(stamp.getMonth() + 1) + pad(stamp.getDate());
+    const base = (bundle.name || t('preset_file_default')).replace(/[\\/:*?"<>|]/g, '_');
+    downloadBlob(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }),
+      base + '_' + date + '.json');
+    setPresetStatus('preset_file_saved', { name: base + '_' + date + '.json' });
+  });
+
+  document.getElementById('presetFileLoad').addEventListener('click', () => {
+    document.getElementById('presetFileInput').click();
+  });
+  document.getElementById('presetFileInput').addEventListener('change', e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      let data = null;
+      try { data = JSON.parse(reader.result); } catch (err) { data = null; }
+      if (!data) { setPresetStatus('preset_file_badjson'); return; }
+      if (!restoreBundle(data)) { setPresetStatus('preset_file_badfile'); return; }
+      if (data.name) presetNameInput.value = data.name;
+      setPresetStatus('preset_file_loaded', { name: file.name });
+    };
+    reader.onerror = () => setPresetStatus('preset_file_badjson');
+    reader.readAsText(file);
+    e.target.value = '';   // 같은 파일을 다시 골라도 change가 걸리도록
+  });
+
   function refreshPresetOptions(selectName) {
     const store = loadPresetStore();
     const names = Object.keys(store).sort();
@@ -4854,7 +4959,11 @@
     if (selectName && store[selectName]) presetSelect.value = selectName;
   }
   function setPresetStatus(key, vars) {
-    if (presetStatus) presetStatus.textContent = key ? t(key, vars) : '';
+    if (!presetStatus) return;
+    presetStatus.textContent = key ? t(key, vars) : '';
+    const bad = key && key.indexOf('bad') >= 0;
+    presetStatus.style.color = bad ? 'var(--warn)' : '';
+    presetStatus.style.fontWeight = bad ? '700' : '';
   }
   presetSelect.addEventListener('change', () => {
     const name = presetSelect.value;
