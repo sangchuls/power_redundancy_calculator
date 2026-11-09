@@ -3413,14 +3413,38 @@
       return out;
     }
 
-    // 종류마다 몫을 나누고 나머지는 앞쪽 열에 하나씩
+    // 종류마다 몫을 나누고, 나머지는 열을 돌려가며 준다.
+    // 늘 앞쪽 열부터 주면 나머지가 한쪽에 쌓여 열 길이가 크게 어긋난다
+    // (40랙·4열이면 12/12/8/8). 시작 열을 옮겨가며 주면 10/10/10/10이 된다.
+    let offset = 0;
+    const count = new Array(rows).fill(0);
     list.forEach(x => {
       const base = Math.floor(x.qty / rows), rem = x.qty % rows;
       for (let r = 0; r < rows; r++) {
-        const n = base + (r < rem ? 1 : 0);
-        for (let i = 0; i < n; i++) out[r].push(x.ref);
+        for (let i = 0; i < base; i++) { out[r].push(x.ref); count[r]++; }
       }
+      for (let k = 0; k < rem; k++) {
+        const r = (offset + k) % rows;
+        out[r].push(x.ref); count[r]++;
+      }
+      offset = (offset + rem) % rows;
     });
+
+    // 그래도 2개 이상 차이가 나면 긴 열에서 짧은 열로 한 대씩 옮겨 맞춘다
+    for (let guard = 0; guard < rows * 4; guard++) {
+      let lo = 0, hi = 0;
+      for (let r = 1; r < rows; r++) {
+        if (count[r] < count[lo]) lo = r;
+        if (count[r] > count[hi]) hi = r;
+      }
+      if (count[hi] - count[lo] < 2) break;
+      out[lo].push(out[hi].pop());
+      count[hi]--; count[lo]++;
+    }
+    // 열 안에서는 종류 순서를 유지한다
+    const order = new Map();
+    list.forEach((x, i) => order.set(x.ref, i));
+    out.forEach(row => row.sort((a, b) => order.get(a) - order.get(b)));
     if (pattern === 'mirror') {
       for (let r = 1; r < rows; r += 2) out[r].reverse();
     }
