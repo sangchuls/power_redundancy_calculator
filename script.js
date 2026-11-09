@@ -92,14 +92,14 @@
       hall_view_cluster: "데이터홀 배치",
       label_hallUnits: "홀 내 POD 유닛 수",
       label_hallGrid: "유닛 배열",
-      label_hallElecMode: "전기실 배치",
+      label_hallInclude: "홀 외곽에 포함",
+      inc_cdu: "매니폴드 · CDU",
+      hint_hallInclude: "전기실은 홀 외곽에서 제외됩니다 — POD와 콜드/핫 아일만으로 잡은 순수 데이터홀 외곽입니다.",
       label_hallPodGap: "유닛 간 이격 (mm)",
       label_hallService: "서비스 통로 (mm)",
       grid_auto: "자동 (정방형에 가깝게)",
       grid_row: "가로 1줄",
       grid_col: "세로 1줄",
-      elec_per: "POD별 전용",
-      elec_shared: "홀 측면 공용",
       hall_units_note: "{cols}×{rows} 배열 → 홀 {w}×{d}mm · {area}㎡ · {perMW}㎡/MW",
       hall_unit_tag: "POD {n} · {kw}kW",
       hall_summary_cluster: "POD 유닛 {units}개 ({cols}×{rows}) · 합계 {kw}kW · 랙 {racks}개 → 데이터홀 {w}×{d}mm ≒ {area}㎡ ({perMW}㎡/MW)",
@@ -541,14 +541,14 @@
       hall_view_cluster: "Hall layout",
       label_hallUnits: "POD units in the hall",
       label_hallGrid: "Unit arrangement",
-      label_hallElecMode: "Electrical rooms",
+      label_hallInclude: "Include in the hall outline",
+      inc_cdu: "Manifold · CDU",
+      hint_hallInclude: "The electrical room is left out — this is the hall outline from the PODs and their cold/hot aisles alone.",
       label_hallPodGap: "Gap between units (mm)",
       label_hallService: "Service corridor (mm)",
       grid_auto: "Auto (close to square)",
       grid_row: "Single row",
       grid_col: "Single column",
-      elec_per: "One per POD",
-      elec_shared: "Shared along the hall",
       hall_units_note: "{cols}×{rows} → hall {w}×{d}mm · {area} m² · {perMW} m²/MW",
       hall_unit_tag: "POD {n} · {kw}kW",
       hall_summary_cluster: "{units} POD units ({cols}×{rows}) · {kw}kW · {racks} racks → data hall {w}×{d}mm ≈ {area} m² ({perMW} m²/MW)",
@@ -4050,34 +4050,47 @@
   // ----- 데이터홀 규모 산정 -----
   // POD 유닛을 평면에 깔아 홀 외곽을 낸다. 유닛 안의 콜드/핫 통로는 그대로 두고,
   // 유닛끼리는 이격(점검·배관 통로)으로 띄우며, 전기실은 유닛별 전용 또는 홀 측면 공용.
+  function hallIncludeCdu() {
+    const el = document.getElementById('hallIncCdu');
+    return el ? el.checked : false;
+  }
+
+  // POD 유닛을 깔아 데이터홀 외곽을 낸다.
+  // 외곽 기준은 POD(랙 열)와 그 사이 콜드/핫 아일뿐이다 — 전기실은 홀 밖의 지원실이므로
+  // 여기서 빼고, 매니폴드·CDU는 홀 안에 둘지 선택할 수 있게 한다.
+  function hallUnitSize(rowLen, rows, rackD, cold, hot, perim, withCdu, manifoldW, cduW) {
+    let gaps = 0;
+    for (let r = 0; r < rows - 1; r++) gaps += (r % 2 === 0) ? hot : cold;
+    const w = rowLen + (withCdu ? manifoldW + cduW + 1200 : 0);
+    const d = rows * rackD + gaps;
+    return { w, d, gaps, perim };
+  }
+
   function hallCluster(d) {
     const units = Math.max(1, Math.round(hallNum('hallUnits', 3)));
     const mode = (document.getElementById('hallGrid') || {}).value || 'auto';
-    const elecMode = (document.getElementById('hallElecMode') || {}).value || 'per';
     const gap = hallNum('hallPodGap', 2400);
     const service = hallNum('hallService', 2000);
+    const withCdu = hallIncludeCdu();
+
+    const u = hallUnitSize(d.rowLen, d.rows, d.rackD, d.cold, d.hot, d.perim, withCdu, d.manifoldW, d.cduW);
 
     let cols, rows;
     if (mode === 'row') { cols = units; rows = 1; }
     else if (mode === 'col') { cols = 1; rows = units; }
     else {
       // 홀이 지나치게 길어지지 않도록 가로·세로를 비슷하게 잡는다
-      cols = Math.max(1, Math.round(Math.sqrt(units * (d.depth / Math.max(1, d.totalW)))));
-      cols = Math.min(units, Math.max(1, cols));
+      cols = Math.min(units, Math.max(1, Math.round(Math.sqrt(units * (u.d / Math.max(1, u.w))))));
       rows = Math.ceil(units / cols);
     }
 
-    // 전기실을 공용으로 돌리면 유닛 폭에서 빠지고 홀 측면에 한 번만 붙는다
-    const unitW = elecMode === 'shared' ? d.totalW - d.elecW : d.totalW;
-    const unitD = d.depth;
-    const sharedW = elecMode === 'shared' ? d.elecW : 0;
-
-    const hallW = service * 2 + sharedW + cols * unitW + (cols - 1) * gap;
-    const hallD = service * 2 + rows * unitD + (rows - 1) * gap;
+    const hallW = service * 2 + cols * u.w + (cols - 1) * gap;
+    const hallD = service * 2 + rows * u.d + (rows - 1) * gap;
     const areaM2 = (hallW / 1000) * (hallD / 1000);
     const totalKW = d.podKW * units;
     return {
-      units, cols, rows, gap, service, elecMode, unitW, unitD, sharedW,
+      units, cols, rows, gap, service, withCdu,
+      unitW: u.w, unitD: u.d,
       hallW, hallD, areaM2, totalKW,
       perMW: totalKW > 0 ? areaM2 / (totalKW / 1000) : 0,
       racks: d.racks * units,
@@ -4093,58 +4106,45 @@
       fill: '#FFFFFF', stroke: '#5A5A5A', 'stroke-width': 2,
     }));
 
-    // 공용 전기실 밴드
-    if (c.sharedW > 0) {
-      target.appendChild(svgEl('rect', {
-        x: X(c.service), y: Y(c.service), width: S(c.sharedW), height: S(c.hallD - c.service * 2),
-        fill: hexToRgba('#6F5FBF', 0.12), stroke: '#6F5FBF', 'stroke-width': 1.4,
-      }));
-      const lb = svgEl('text', {
-        x: X(c.service + c.sharedW / 2), y: Y(c.hallD / 2), 'text-anchor': 'middle',
-        'font-size': 10, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif',
-      });
-      lb.textContent = t('hall_elec_room');
-      target.appendChild(lb);
-    }
-
-    const startX = c.service + c.sharedW;
     for (let i = 0; i < c.units; i++) {
       const cx = i % c.cols, cy = Math.floor(i / c.cols);
-      const ux = startX + cx * (c.unitW + c.gap);
+      const ux = c.service + cx * (c.unitW + c.gap);
       const uy = c.service + cy * (c.unitD + c.gap);
       target.appendChild(svgEl('rect', {
         x: X(ux), y: Y(uy), width: S(c.unitW), height: S(c.unitD),
-        fill: hexToRgba(navy, 0.05), stroke: navy, 'stroke-width': 1.3, 'stroke-dasharray': '6,3',
+        fill: hexToRgba(navy, 0.04), stroke: navy, 'stroke-width': 1.2, 'stroke-dasharray': '6,3',
       }));
 
-      // 유닛 안의 열과 통로를 간략히 — 콜드/핫 띠로 구분
-      const inner = c.elecMode === 'shared' ? ux : ux + d.elecW;
-      const rackX = inner + d.aisleEnd;
-      let ry = uy + d.edge;
+      // 랙 열과 그 사이 콜드/핫 아일 — 외곽을 결정하는 요소 그대로
+      let ry = uy;
       for (let r = 0; r < d.rows; r++) {
         target.appendChild(svgEl('rect', {
-          x: X(rackX), y: Y(ry), width: S(d.rowLen), height: S(d.rackD),
-          fill: hexToRgba(navy, 0.22), stroke: navy, 'stroke-width': 0.6,
+          x: X(ux), y: Y(ry), width: S(d.rowLen), height: S(d.rackD),
+          fill: hexToRgba(navy, 0.3), stroke: navy, 'stroke-width': 0.6,
         }));
         if (r < d.rows - 1) {
           const isHot = (r % 2 === 0);
           const gapH = isHot ? d.hot : d.cold;
           target.appendChild(svgEl('rect', {
-            x: X(rackX), y: Y(ry + d.rackD), width: S(d.rowLen), height: S(gapH),
-            fill: isHot ? hexToRgba('#D0021B', 0.1) : hexToRgba('#29A8E0', 0.12), stroke: 'none',
+            x: X(ux), y: Y(ry + d.rackD), width: S(d.rowLen), height: S(gapH),
+            fill: isHot ? hexToRgba('#D0021B', 0.12) : hexToRgba('#29A8E0', 0.14), stroke: 'none',
           }));
+          if (S(gapH) > 9 && i === 0) {
+            const lab = svgEl('text', {
+              x: X(ux + d.rowLen / 2), y: Y(ry + d.rackD + gapH / 2) + 3, 'text-anchor': 'middle',
+              'font-size': 7, 'font-weight': 700,
+              fill: isHot ? '#D0021B' : '#1F7FB5', 'font-family': 'sans-serif',
+            });
+            lab.textContent = t(isHot ? 'hall_hot_aisle' : 'hall_cold_aisle') + ' ' + Math.round(gapH);
+            target.appendChild(lab);
+          }
           ry += d.rackD + gapH;
         }
       }
-      // CDU 열
-      target.appendChild(svgEl('rect', {
-        x: X(ux + c.unitW - 2300), y: Y(uy + d.edge), width: S(1500), height: S(c.unitD - d.edge * 2),
-        fill: hexToRgba('#0F6E56', 0.12), stroke: '#0F6E56', 'stroke-width': 1,
-      }));
-      if (c.elecMode === 'per') {
+      if (c.withCdu) {
         target.appendChild(svgEl('rect', {
-          x: X(ux), y: Y(uy), width: S(d.elecW), height: S(c.unitD),
-          fill: hexToRgba('#6F5FBF', 0.1), stroke: '#6F5FBF', 'stroke-width': 1,
+          x: X(ux + c.unitW - d.cduW - 600), y: Y(uy), width: S(d.cduW), height: S(c.unitD),
+          fill: hexToRgba('#0F6E56', 0.14), stroke: '#0F6E56', 'stroke-width': 1,
         }));
       }
       const tag = svgEl('text', {
@@ -4236,28 +4236,32 @@
     return { rows, perRow, rowLen, w, depth, area: (w / 1000) * (depth / 1000), busway: rows * rowLen };
   }
 
-  // 비교표용 — 열 수 옵션 하나에 대해 홀 외곽만 빠르게 낸다
+  // 비교표용 — 열 수 옵션 하나에 대해 순수 데이터홀 외곽만 빠르게 낸다
   function hallClusterFor(o) {
     const units = Math.max(1, Math.round(hallNum('hallUnits', 3)));
     const mode = (document.getElementById('hallGrid') || {}).value || 'auto';
-    const elecMode = (document.getElementById('hallElecMode') || {}).value || 'per';
     const gap = hallNum('hallPodGap', 2400), service = hallNum('hallService', 2000);
-    const elecW = hallNum('hallElecW', 4600);
+    const rackD = hallNum('hallRackD', 1200);
+    const cold = hallNum('hallCold', 1200), hot = hallNum('hallHot', 1000);
+    const perim = hallNum('hallPerim', 1200);
+    const withCdu = hallIncludeCdu();
+    const cduW = hallNum('hallCduW', 1500) || 1500;
+    const u = hallUnitSize(o.rowLen, o.rows, rackD, cold, hot, perim, withCdu, 800, cduW);
+
     let cols, rows;
     if (mode === 'row') { cols = units; rows = 1; }
     else if (mode === 'col') { cols = 1; rows = units; }
     else {
-      cols = Math.min(units, Math.max(1, Math.round(Math.sqrt(units * (o.depth / Math.max(1, o.w))))));
+      cols = Math.min(units, Math.max(1, Math.round(Math.sqrt(units * (u.d / Math.max(1, u.w))))));
       rows = Math.ceil(units / cols);
     }
-    const unitW = elecMode === 'shared' ? o.w - elecW : o.w;
-    const sharedW = elecMode === 'shared' ? elecW : 0;
-    const hallW = service * 2 + sharedW + cols * unitW + (cols - 1) * gap;
-    const hallD = service * 2 + rows * o.depth + (rows - 1) * gap;
+    const hallW = service * 2 + cols * u.w + (cols - 1) * gap;
+    const hallD = service * 2 + rows * u.d + (rows - 1) * gap;
     const areaM2 = (hallW / 1000) * (hallD / 1000);
     const mix = hallRackTotals();
     const totalKW = mix.kw * units;
-    return { cols, rows, hallW, hallD, areaM2, perMW: totalKW ? areaM2 / (totalKW / 1000) : 0 };
+    return { cols, rows, unitW: u.w, unitD: u.d, hallW, hallD, areaM2,
+      perMW: totalKW ? areaM2 / (totalKW / 1000) : 0 };
   }
 
   function renderHallCompare() {
@@ -4274,7 +4278,7 @@
       div.className = 'cmp-item' + (r === hallRowsOpt ? ' on' : '');
       const hall = hallClusterFor(o);
       div.innerHTML = `<b>${t('hall_cmp_rows', { n: r })}</b>`
-        + `<span>${t('hall_cmp_unit', { w: Math.round(o.w), d: Math.round(o.depth) })}</span>`
+        + `<span>${t('hall_cmp_unit', { w: Math.round(hall.unitW), d: Math.round(hall.unitD) })}</span>`
         + `<span>${t('hall_cmp_hall', { w: Math.round(hall.hallW), d: Math.round(hall.hallD), area: fmtN(Math.round(hall.areaM2)) })}</span>`
         + `<span>${t('hall_cmp_permw', { v: fmtN(Math.round(hall.perMW)) })}</span>`;
       div.addEventListener('click', () => {
@@ -4410,7 +4414,7 @@
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', () => { el.dataset.touched = '1'; drawHall(); });
   });
-  ['hallGrid', 'hallElecMode'].forEach(id => {
+  ['hallGrid', 'hallIncCdu'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', drawHall);
   });
@@ -5705,7 +5709,7 @@
     'hallCooling', 'hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD',
     'hallCold', 'hallHot', 'hallCduKW', 'hallElecW',
     'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil',
-    'hallUnits', 'hallGrid', 'hallElecMode', 'hallPodGap', 'hallService', 'hallPerim', 'hallPattern',
+    'hallUnits', 'hallGrid', 'hallPodGap', 'hallService', 'hallPerim', 'hallPattern',
   ];
 
   function snapshotBundle() {

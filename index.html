@@ -503,11 +503,9 @@
         </select>
       </div>
       <div class="field">
-        <label for="hallElecMode" data-i18n="label_hallElecMode">전기실 배치</label>
-        <select id="hallElecMode">
-          <option value="per" data-i18n="elec_per">POD별 전용</option>
-          <option value="shared" data-i18n="elec_shared">홀 측면 공용</option>
-        </select>
+        <label data-i18n="label_hallInclude">홀 외곽에 포함</label>
+        <label class="plan-check" style="margin-top:6px;"><input type="checkbox" id="hallIncCdu"> <span data-i18n="inc_cdu">매니폴드 · CDU</span></label>
+        <div class="hint" data-i18n="hint_hallInclude">전기실은 홀 외곽에서 제외됩니다 — POD와 콜드/핫 아일만으로 잡은 순수 데이터홀 외곽입니다.</div>
       </div>
       <div class="field">
         <label for="hallPodGap" data-i18n="label_hallPodGap">유닛 간 이격 (mm)</label>
