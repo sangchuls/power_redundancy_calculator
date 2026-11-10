@@ -74,7 +74,7 @@
       hall_read_arch_h: "건축",
       hall_read_elec: "IT {mw}MW, PUE 1.2 가정 시 시설전력 약 {fac}MW. 열당 부하 {rowKW}kW × {rows}열 → 열 단위 busway·분전 용량 기준. 열 끝에 전력 랙(사이드카/In-Row) 자리 확보를 검토.",
       hall_read_mech: "액랭 분담 {lc}% → 수랭 열량 약 {kw}kW. {each}kW CDU 기준 가동 {cdu}대 + 예비 {spare}대 = {total}대. 공랭 분담 {ac}%는 FWU {fwu}대가 받는다 — 공급·환수 헤더와 급기 경로가 busway·광케이블과 겹치지 않게 계획.",
-      hall_read_arch: "외곽 약 {w}×{depth}m = {area}㎡ (전기실·매니폴드·CDU 포함, 치수 가정). {rows}열 × {perRow}대 구성 — 열이 적을수록 길어지고 끝단 간 거리가 커진다.",
+      hall_read_arch: "외곽 약 {w}×{depth}m = {area}㎡ (랙 열·통로·매니폴드, 치수 가정). {rows}열 × {perRow}대 구성 — 열이 적을수록 길어지고 끝단 간 거리가 커진다.",
       h_hall_desc: "POD 1개의 랙 배치와 기계·전기 평면/단면을 위 설정값에서 자동으로 작도합니다",
       label_hallPod: "검토할 POD",
       label_hallCooling: "냉각 방식",
@@ -643,7 +643,7 @@
       hall_read_arch_h: "Architectural",
       hall_read_elec: "{mw}MW IT, about {fac}MW facility at PUE 1.2. {rowKW}kW per row across {rows} row(s) sets the busway and distribution rating; allow for power racks at the row ends.",
       hall_read_mech: "{lc}% liquid → about {kw}kW to water. At {each}kW per CDU that is {cdu} running plus {spare} spare, {total} in all; the {ac}% air share is carried by {fwu} FWUs. Keep headers and supply-air routes clear of the busway and fibre.",
-      hall_read_arch: "Roughly {w}×{depth}m = {area} m² including the electrical room, manifold and CDUs. {rows} row(s) of {perRow} — fewer rows run longer and spread the ends further apart.",
+      hall_read_arch: "Roughly {w}×{depth}m = {area} m² for the rack rows, aisles and manifold. {rows} row(s) of {perRow} — fewer rows run longer and spread the ends further apart.",
       h_hall_desc: "Draws the rack layout and the mechanical/electrical plan and section for one POD from the settings above",
       label_hallPod: "POD to review",
       label_hallCooling: "Cooling",
@@ -6041,11 +6041,12 @@
     let depth = edge * 2 + rows * rackD;
     depth += (pairs - 1) * cold + Math.min(pairs, Math.floor(rows / 2)) * hot;
 
-    const areaM2 = (totalW / 1000) * (depth / 1000);
+    const planW = bands.filter(b => b.key !== 'cdu').reduce((n, b) => n + b.mm, 0);   // POD 평면에 그려진 폭
+    const areaM2 = (planW / 1000) * (depth / 1000);
     return {
       podIdx, podKW, rackKW, racks, rows, perRow, pairs, rackW, rackD, cold, hot,
       rowLen, cduQty, cduKW, cduW, manifoldW, aisleEnd, elecW: 0, edge,
-      bands, totalW, depth, areaM2, perim, seq: hallRackSequence(),
+      bands, totalW, planW, depth, areaM2, perim, seq: hallRackSequence(),
       buswayLen: rows * rowLen,
       raised: hallNum('hallRaised', 800), rackH: hallNum('hallRackH', 2200),
       busway: hallNum('hallBusway', 3202), ceil: hallNum('hallCeil', 6000),
@@ -6095,20 +6096,27 @@
     target.appendChild(el);
   }
 
+  // POD 평면의 가로 밴드 — CDU 자리는 이 도면에서 뺀다
+  function hallPlanBands(d) {
+    const bands = d.bands.filter(b => b.key !== 'cdu');
+    return { bands, width: bands.reduce((n, b) => n + b.mm, 0) };
+  }
+
   function drawHallPlan(target, d, sc, ox, oy) {
     const X = mm => ox + mm * sc, Y = mm => oy + mm * sc, S = mm => mm * sc;
     const navy = '#3A2E75';
+    const pb = hallPlanBands(d);
 
     // 외벽
     target.appendChild(svgEl('rect', {
-      x: X(0), y: Y(0), width: S(d.totalW), height: S(d.depth),
+      x: X(0), y: Y(0), width: S(pb.width), height: S(d.depth),
       fill: '#FFFFFF', stroke: '#5A5A5A', 'stroke-width': 2,
     }));
 
     // 가로 밴드 경계
     let cursor = 0;
     const bandX = {};
-    d.bands.forEach(b => { bandX[b.key] = cursor; cursor += b.mm; });
+    pb.bands.forEach(b => { bandX[b.key] = cursor; cursor += b.mm; });
 
     // 랙 열 — 패턴대로 나눈 순서를 열마다 깐다
     const rackX = bandX.racks;
@@ -6177,54 +6185,11 @@
       hallAisleLabel(target, X(rackX + d.rowLen / 2), Y((gapTop + gapBot) / 2), isHot, gapBot - gapTop);
     }
 
-    // FWU — 냉각 분담에서 나온 대수를 열 양쪽 갤러리(주변 여유)에 나눠 깐다
-    const coolP = coolPlan(d);
-    if (coolP.total > 0 && coolP.acKW > 0) {
-      const faceW = coolP.openW * 1000;
-      const shown = Math.max(0, Math.min(coolP.perSide, coolP.fitPerSide));
-      const overflow = coolP.galleryRows > 1;
-      // 같은 간격으로 열 길이 안에 늘어놓는다 — 개구부 폭은 줄이지 않는다
-      const step = shown > 0 ? d.rowLen / shown : 0;
-      [0, d.depth - d.edge].forEach(y0 => {
-        for (let i = 0; i < shown; i++) {
-          target.appendChild(svgEl('rect', {
-            x: X(rackX + i * step + (step - faceW) / 2), y: Y(y0 + 120),
-            width: S(faceW), height: S(Math.max(400, d.edge - 240)),
-            fill: hexToRgba('#29A8E0', 0.18), stroke: overflow ? '#C0392B' : '#1F7FB5', 'stroke-width': 0.9,
-          }));
-        }
-      });
-      const fl = svgEl('text', {
-        x: X(rackX + d.rowLen / 2), y: Y(d.depth - d.edge / 2) + 3, 'text-anchor': 'middle',
-        'font-size': 9, 'font-weight': 800, fill: overflow ? '#C0392B' : '#1F7FB5', 'font-family': 'sans-serif',
-        stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
-      });
-      fl.textContent = t(overflow ? 'hall_fwu_over' : 'hall_fwu_note', {
-        n: coolP.total, spots: coolP.spots, each: fmtN(Math.round(coolP.unitCmh)),
-        side: coolP.perSide, rows: coolP.galleryRows,
-      });
-      target.appendChild(fl);
-    }
-
-    // 매니폴드 + CDU
+    // 매니폴드 (열 끝 배관 헤더)
     target.appendChild(svgEl('rect', {
       x: X(bandX.manifold), y: Y(d.edge), width: S(d.manifoldW), height: S(d.depth - d.edge * 2),
       fill: hexToRgba('#9013FE', 0.12), stroke: '#9013FE', 'stroke-width': 1,
     }));
-    const cduGap = (d.depth - d.edge * 2) / d.cduQty;
-    for (let i = 0; i < d.cduQty; i++) {
-      const cy = d.edge + i * cduGap + cduGap * 0.1;
-      target.appendChild(svgEl('rect', {
-        x: X(bandX.cdu + 400), y: Y(cy), width: S(d.cduW), height: S(cduGap * 0.8),
-        fill: hexToRgba('#0F6E56', 0.12), stroke: '#0F6E56', 'stroke-width': 1.2,
-      }));
-      const cl = svgEl('text', {
-        x: X(bandX.cdu + 400 + d.cduW / 2), y: Y(cy + cduGap * 0.4) + 3, 'text-anchor': 'middle',
-        'font-size': 8, 'font-weight': 700, fill: '#0F6E56', 'font-family': 'sans-serif',
-      });
-      cl.textContent = 'CDU ' + (i + 1);
-      target.appendChild(cl);
-    }
 
     // 배관 — 매니폴드에서 각 열로, 색은 범례와 같다
     const pipeBase = bandX.manifold + d.manifoldW / 2;
@@ -6249,12 +6214,12 @@
 
     // 치수
     let bx = 0;
-    d.bands.forEach((b, i) => {
+    pb.bands.forEach((b, i) => {
       // 한 칸씩 위아래로 엇갈려 적어 이웃 치수와 겹치지 않게 한다
       hallDim(target, X(bx), Y(d.depth) + 30, X(bx + b.mm), Y(d.depth) + 30, Math.round(b.mm) + '', { stagger: i % 2 === 1 });
       bx += b.mm;
     });
-    hallDim(target, X(0), Y(d.depth) + 74, X(d.totalW), Y(d.depth) + 74, Math.round(d.totalW) + '');
+    hallDim(target, X(0), Y(d.depth) + 74, X(pb.width), Y(d.depth) + 74, Math.round(pb.width) + '');
     hallDim(target, X(0) - 34, Y(0), X(0) - 34, Y(d.depth), Math.round(d.depth) + '');
   }
 
@@ -6771,7 +6736,8 @@
     const cool = coolPlan(d);
     d.cduQty = cool.cduTotal > 0 ? cool.cduTotal : 1;
     const baseW = hallView === 'cluster' ? cl.hallW
-      : (hallView === 'cool' ? coolSpan(d, cool).W : d.totalW);
+      : (hallView === 'cool' ? coolSpan(d, cool).W
+        : (hallView === 'plan' ? hallPlanBands(d).width : d.totalW));
     const baseH = hallView === 'plan' ? d.depth : (hallView === 'cluster' ? cl.hallD : d.ceil);
     // 화면 맞춤이면 폭에 맞춰 줄이고, 원래 크기면 랙 글씨가 읽히는 고정 축척으로 둔 뒤 스크롤한다
     const tallView = (hallView === 'sect' || hallView === 'cool');
@@ -6837,7 +6803,7 @@
     const rowLen = perRow * rackW;
     let gaps = 0;
     for (let r = 0; r < rows - 1; r++) gaps += (r % 2 === 0) ? hot : cold;
-    const w = 2000 + rowLen + 800 + 2700;
+    const w = 2000 + rowLen + 800;
     const depth = perim * 2 + rows * rackD + gaps;
     return { rows, perRow, rowLen, w, depth, area: (w / 1000) * (depth / 1000), busway: rows * rowLen };
   }
@@ -6912,7 +6878,7 @@
         each: fmtN(d.cduKW),
       })],
       ['arch', t('hall_read_arch', {
-        w: fmtN(d.totalW / 1000, 1), depth: fmtN(d.depth / 1000, 1), area: fmtN(Math.round(d.areaM2)),
+        w: fmtN(d.planW / 1000, 1), depth: fmtN(d.depth / 1000, 1), area: fmtN(Math.round(d.areaM2)),
         rows: d.rows, perRow: d.perRow,
       })],
     ];
@@ -6945,7 +6911,7 @@
       el.textContent = t('hall_summary', {
         pod: d.podIdx + 1, kw: fmtN(Math.round(d.podKW)), racks: d.racks, rackKW: fmtN(d.rackKW),
         rows: d.rows, perRow: d.perRow, cdu: d.cduQty,
-        w: Math.round(d.totalW), depth: Math.round(d.depth), area: fmtN(Math.round(d.areaM2)),
+        w: Math.round(d.planW), depth: Math.round(d.depth), area: fmtN(Math.round(d.areaM2)),
       });
     }
     const note = document.getElementById('hallRackNote');
