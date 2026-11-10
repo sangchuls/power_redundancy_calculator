@@ -359,6 +359,26 @@
       sldb_pdu: '전력분배반', sldb_pod: '랙 그룹(POD)', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
+      h_fp_title: '기준층 평면 스터디',
+      h_fp_desc: '위 계통의 전기실·POD를 실제 축척의 블럭으로 깔고, 옮기고 돌려가며 기준층 평면을 잡습니다 — 급전 회선은 따라다닙니다',
+      label_fpRoomW: '전기실 크기 W (mm)',
+      label_fpRoomD: '전기실 크기 D (mm)',
+      label_fpRoomSide: '전기실 배치',
+      label_fpCorr: '홀과 전기실 사이 (mm)',
+      label_fpRoute: '회선 표현',
+      fp_side_bottom: '홀 아래 한 줄',
+      fp_side_split: '세트별 위·아래',
+      fp_side_left: '홀 왼쪽 한 줄',
+      fp_side_sides: '세트별 좌·우',
+      fp_route_ortho: '직각 (트레이 경로)',
+      fp_route_direct: '직선 (관계만)',
+      fp_auto: '자동 배치',
+      fp_show_hall: '데이터홀 외곽',
+      fp_hall: '데이터홀',
+      fp_group: '그룹',
+      fp_empty: '①~④를 먼저 계산하면 전기실과 POD가 여기에 깔립니다.',
+      fp_summary: '전기실 {rooms}실 · POD {pods}블럭 · 급전 회선 {feeds}개 ({topo}) — 데이터홀 {hall}mm ≒ {area}㎡ · 회선 총 연장 약 {len}m · 전체 외곽 {span}mm',
+      hint_fp: '블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 윗쪽 고리 드래그 또는 R키: 회전 · 클릭: 연결 회선 하이라이트 · 치수는 mm',
       hint_plan: '블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 윗쪽 고리 드래그 또는 R키: 회전(15°씩, Alt는 자유각) · 더블클릭: 이름 편집 · Delete: 삭제',
       plan_add: '＋ 블럭 추가',
       plan_del: '블럭 삭제',
@@ -873,6 +893,26 @@
       sldb_pdu: 'Power distribution unit', sldb_pod: 'Rack group (POD)', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
+      h_fp_title: 'Typical floor study',
+      h_fp_desc: 'Lays the electrical rooms and PODs of the scheme above as blocks at real scale — move and turn them to work out the floor, and the feeders follow',
+      label_fpRoomW: 'Electrical room W (mm)',
+      label_fpRoomD: 'Electrical room D (mm)',
+      label_fpRoomSide: 'Room placement',
+      label_fpCorr: 'Hall to rooms (mm)',
+      label_fpRoute: 'Feeder lines',
+      fp_side_bottom: 'One row below the hall',
+      fp_side_split: 'Above and below, by set',
+      fp_side_left: 'One row left of the hall',
+      fp_side_sides: 'Left and right, by set',
+      fp_route_ortho: 'Orthogonal (tray route)',
+      fp_route_direct: 'Straight (relation only)',
+      fp_auto: 'Auto-place',
+      fp_show_hall: 'Hall outline',
+      fp_hall: 'Data hall',
+      fp_group: '',
+      fp_empty: 'Run the calculation in ① to ④ and the rooms and PODs appear here.',
+      fp_summary: '{rooms} rooms · {pods} POD blocks · {feeds} feeders ({topo}) — hall {hall}mm, about {area} m² · feeders total about {len}m · overall {span}mm',
+      hint_fp: 'Drag a block to move it · select it and drag an edge to resize · drag the knob above it, or press R, to rotate · click to highlight its feeders · dimensions in mm',
       hint_plan: 'Drag a block to move it · select it and drag an edge to resize · drag the knob above it, or press R, to rotate (15° steps; hold Alt for any angle) · double-click to rename · Delete to remove',
       plan_add: '+ Add block',
       plan_del: 'Delete block',
@@ -1880,7 +1920,7 @@
     if (zoom) zoom.reset();
   }
   // planZoom은 아래쪽 ⑤ 섹션에서 선언되므로 클릭 시점에 찾는다 (여기서 바로 읽으면 TDZ)
-  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom], ['hallExpandBtn', 'hallSvg', () => hallZoom], ['sldExpandBtn', 'sldSvg', () => sldZoom]]
+  [['diagramExpandBtn', 'diagramSvg', () => diagramZoom], ['planExpandBtn', 'planSvg', () => planZoom], ['hallExpandBtn', 'hallSvg', () => hallZoom], ['sldExpandBtn', 'sldSvg', () => sldZoom], ['fpExpandBtn', 'fpSvg', () => fpZoom]]
     .forEach(([btnId, svgId, getZoom]) => {
       const btn = document.getElementById(btnId);
       if (!btn) return;
@@ -2106,6 +2146,23 @@
         sets: roomPlan.sets, perSet: roomPlan.perSet, rooms: rooms.length,
         rating, txPerRoom: rooms.length ? rooms[0].txCount : 1 });
     }
+    // ④-2 기준층 평면 스터디 — 전기실·POD와 급전 관계를 그대로 넘긴다
+    try {
+      setFeedPlan({
+        rooms: rooms.map((r, i) => ({
+          i: i, setIndex: r.setIndex, moduleIndex: r.moduleIndex, state: r.state,
+          txCount: r.txCount, capacityKW: r.capacityKW, loadKW: r.loadKW,
+        })),
+        pods: Array.from({ length: podCount }, (_, p) => ({
+          p: p, unit: Math.floor(p / Math.max(1, podPlan.split)), branch: p % Math.max(1, podPlan.split),
+          kW: podLoadKW, set: podSet[p],
+        })),
+        feeds: podFeeds.map(f => f.slice()),
+        split: Math.max(1, podPlan.split), units: podPlan.pods,
+        sets: roomPlan.sets, perSet: roomPlan.perSet, topo: topoShortName,
+      });
+    } catch (e) {}
+
     // ⑥ 데이터홀 평면은 이 구성에서 랙 수를 뽑으므로 함께 갱신한다
     if (typeof refreshHallPodOptions === 'function') {
       try { refreshHallPodOptions(); drawHall(); } catch (e) {}
@@ -3501,6 +3558,7 @@
     // R: 90도씩 돌리기 (Shift면 반대 방향)
     if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !e.altKey) {
       if (planSelected && !planAllMode) { e.preventDefault(); planRotateSelected(e.shiftKey ? -90 : 90); }
+      else if (typeof fpSel !== 'undefined' && fpSel) { e.preventDefault(); fpRotateSel(e.shiftKey ? -90 : 90); }
     }
   });
 
@@ -3566,6 +3624,558 @@
     drawPlan();
   }
   refreshPlanTexts();
+
+  // ===== 4-2 기준층 평면 스터디 =====
+  // ④가 뽑아낸 전기실·POD와 그 급전 관계를 그대로 들고 와, 실제 축척(mm)의 블럭으로
+  // 바닥에 깐다. 블럭을 옮기고 돌리고 늘려도 회선은 두 블럭을 계속 따라다닌다.
+  const FP_KEY = 'prc_feedplan';
+  const FP_SNAP = 500;       // 격자 500mm
+  const FP_MAGNET = 900;     // 이 거리 안에 들면 이웃 면에 붙는다
+  const FP_LANE = 700;       // 나란히 가는 회선끼리 벌리는 간격
+  const fpZoom = makeZoomable('fpSvg');
+  let fpTopo = null;                 // ④가 넘겨준 구성
+  let fpBlocks = fpLoad();           // id -> { x, y, w, h, rot }
+  let fpSel = null, fpDrag = null, fpGuides = [], fpLit = null;
+
+  function fpLoad() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(FP_KEY) || 'null');
+      if (raw && typeof raw === 'object') return raw;
+    } catch (e) {}
+    return {};
+  }
+  function fpSave() { try { localStorage.setItem(FP_KEY, JSON.stringify(fpBlocks)); } catch (e) {} }
+
+  function fpNum(id, dflt) {
+    const el = document.getElementById(id);
+    const v = parseFloat(el && el.value);
+    return isFinite(v) ? v : dflt;
+  }
+  function fpOn(id) { const el = document.getElementById(id); return el ? el.checked : true; }
+  function fpSnapV(v) { return fpOn('fpSnap') ? Math.round(v / FP_SNAP) * FP_SNAP : Math.round(v); }
+  function fpRotOf(b) { const r = parseFloat(b && b.rot) || 0; return ((r % 360) + 360) % 360; }
+  // 돌린 블럭이 바닥에서 실제로 차지하는 사각형 (90도 단위에서만 뜻이 있다)
+  function fpAabb(b, box) {
+    const r = fpRotOf(b), q = box || b;
+    const swap = r % 180 === 90;
+    const cx = q.x + q.w / 2, cy = q.y + q.h / 2;
+    const w = swap ? q.h : q.w, h = swap ? q.w : q.h;
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+  }
+
+  // ④가 계산을 끝낼 때마다 불린다
+  function setFeedPlan(data) {
+    fpTopo = data;
+    if (fpLit && ((fpLit.kind === 'room' && fpLit.i >= data.rooms.length)
+      || (fpLit.kind === 'pod' && fpLit.i >= data.pods.length))) fpLit = null;
+    fpEnsure();
+    fpSave();
+    drawFeedPlan();
+  }
+
+  // 블럭이 아직 없는 전기실·POD만 기본 자리에 깐다 (옮겨 둔 블럭은 건드리지 않는다)
+  function fpEnsure() { fpLayout(false); }
+
+  function fpLayout(force) {
+    if (!fpTopo) return;
+    let cl = null, d = null;
+    try { d = hallPlanData(); cl = hallCluster(d); } catch (e) {}
+    const unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
+    const cols = cl ? cl.cols : Math.min(3, fpTopo.units);
+    const service = cl ? cl.service : 2000, gap = cl ? cl.gap : 2400;
+    const rowsN = Math.ceil(fpTopo.units / Math.max(1, cols));
+    const hallW = service * 2 + cols * unitW + (cols - 1) * gap;
+    const hallD = service * 2 + rowsN * unitD + (rowsN - 1) * gap;
+    const put = (id, box) => { if (force || !fpBlocks[id]) fpBlocks[id] = Object.assign({ rot: 0 }, box); };
+
+    put('hall', { x: 0, y: 0, w: hallW, h: hallD });
+    if (force) fpBlocks.hall = { x: 0, y: 0, w: hallW, h: hallD, rot: 0 };
+
+    const split = Math.max(1, fpTopo.split);
+    const branchGap = 600;
+    const branchH = (unitD - (split - 1) * branchGap) / split;
+    fpTopo.pods.forEach(pod => {
+      const col = pod.unit % cols, row = Math.floor(pod.unit / cols);
+      const ux = service + col * (unitW + gap);
+      const uy = service + row * (unitD + gap) + pod.branch * (branchH + branchGap);
+      put('pod-' + pod.p, { x: ux, y: uy, w: unitW, h: branchH });
+    });
+
+    // 전기실 — 세트를 섞지 않고 줄로 세운다
+    const rw = fpNum('fpRoomW', 12000), rd = fpNum('fpRoomD', 9000);
+    const corr = fpNum('fpCorr', 6000), rgap = 1500;
+    const side = (document.getElementById('fpRoomSide') || {}).value || 'bottom';
+    const sets = Math.max(1, fpTopo.sets);
+    const bySet = [];
+    for (let si = 0; si < sets; si++) bySet.push(fpTopo.rooms.filter(r => r.setIndex === si));
+    const vertical = side === 'left' || side === 'sides';
+    const perLine = (side === 'split' || side === 'sides') ? 1 : 0;   // 0 = 한 줄에 전부
+
+    const lines = perLine ? bySet : [fpTopo.rooms];
+    lines.forEach((list, li) => {
+      if (!list.length) return;
+      // 홀을 넘어가면 다음 줄로 접고, 줄은 홀에서 멀어지는 쪽으로 쌓는다
+      const per = vertical
+        ? Math.max(1, Math.floor((hallD + rgap) / (rd + rgap)))
+        : Math.max(1, Math.floor((hallW + rgap) / (rw + rgap)));
+      const near = !perLine || li % 2 === 0;   // 아래(또는 왼쪽) 줄
+      list.forEach((r, k) => {
+        const line = Math.floor(k / per), seat = k % per;
+        const inLine = Math.min(per, list.length - line * per);
+        let box;
+        if (!vertical) {
+          const runW = inLine * rw + (inLine - 1) * rgap;
+          box = {
+            x: (hallW - runW) / 2 + seat * (rw + rgap),
+            y: near ? hallD + corr + line * (rd + rgap) : -corr - (line + 1) * rd - line * rgap,
+            w: rw, h: rd,
+          };
+        } else {
+          const runD = inLine * rd + (inLine - 1) * rgap;
+          box = {
+            x: near ? -corr - (line + 1) * rw - line * rgap : hallW + corr + line * (rw + rgap),
+            y: (hallD - runD) / 2 + seat * (rd + rgap),
+            w: rw, h: rd,
+          };
+        }
+        put('room-' + r.i, box);
+        if (force) fpBlocks['room-' + r.i] = Object.assign({ rot: 0 }, box);
+      });
+    });
+  }
+
+  // 화면에 올릴 블럭 목록 — ④ 구성에서 바로 만든다
+  function fpItems() {
+    if (!fpTopo) return [];
+    const out = [];
+    if (fpOn('fpShowHall') && fpBlocks.hall) {
+      out.push({ id: 'hall', kind: 'hall', b: fpBlocks.hall, color: '#8A8072', label: t('fp_hall') });
+    }
+    fpTopo.pods.forEach(pod => {
+      const b = fpBlocks['pod-' + pod.p];
+      if (!b) return;
+      const tag = fpTopo.split > 1 ? (pod.unit + 1) + '-' + (ROOM_LETTERS[pod.branch] || pod.branch + 1) : String(pod.unit + 1);
+      out.push({
+        id: 'pod-' + pod.p, kind: 'pod', i: pod.p, b: b, color: '#3A2E75',
+        label: 'POD ' + tag, sub: fmtN(Math.round(pod.kW)) + 'kW',
+      });
+    });
+    fpTopo.rooms.forEach(r => {
+      const b = fpBlocks['room-' + r.i];
+      if (!b) return;
+      const ratio = r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0;
+      out.push({
+        id: 'room-' + r.i, kind: 'room', i: r.i, b: b,
+        color: r.state === 'offline' ? '#DB8478' : roomColor(r.i),
+        label: t('module_label_room', { n: r.i + 1 }),
+        sub: 'S' + (r.setIndex + 1) + ' \u00B7 ' + (r.moduleIndex + 1) + t('fp_group'),
+        sub2: 'TR ' + r.txCount + t('unit_dae_short') + ' \u00B7 ' + fmtN(Math.round(ratio * 10) / 10, 1) + '%',
+        dim: r.state === 'offline',
+      });
+    });
+    return out;
+  }
+
+  function fpItemById(id) { return fpItems().find(it => it.id === id); }
+  function fpCenter(b) { return { cx: b.x + b.w / 2, cy: b.y + b.h / 2 }; }
+
+  // 두 블럭을 잇는 경로. 직각이면 가운데에서 한 번 꺾고, 회선마다 차선을 벌려 겹침을 피한다.
+  function fpRoute(a, b, lane, ortho) {
+    const A = fpCenter(a), B = fpCenter(b);
+    if (!ortho) return 'M' + A.cx + ',' + A.cy + ' L' + B.cx + ',' + B.cy;
+    if (Math.abs(B.cy - A.cy) >= Math.abs(B.cx - A.cx)) {
+      const my = (A.cy + B.cy) / 2 + lane;
+      return 'M' + A.cx + ',' + A.cy + ' L' + A.cx + ',' + my + ' L' + B.cx + ',' + my + ' L' + B.cx + ',' + B.cy;
+    }
+    const mx = (A.cx + B.cx) / 2 + lane;
+    return 'M' + A.cx + ',' + A.cy + ' L' + mx + ',' + A.cy + ' L' + mx + ',' + B.cy + ' L' + B.cx + ',' + B.cy;
+  }
+  function fpRouteLen(a, b, lane, ortho) {
+    const A = fpCenter(a), B = fpCenter(b);
+    if (!ortho) return Math.hypot(B.cx - A.cx, B.cy - A.cy);
+    return Math.abs(B.cx - A.cx) + Math.abs(B.cy - A.cy) + Math.abs(lane) * 2;
+  }
+
+  function fpSnapBox(box, selfId) {
+    fpGuides = [];
+    if (!fpOn('fpMagnet')) return box;
+    const others = fpItems().filter(it => it.id !== selfId && it.id !== 'hall').map(it => fpAabb(it.b));
+    if (fpBlocks.hall && selfId !== 'hall' && fpOn('fpShowHall')) others.push(fpAabb(fpBlocks.hall));
+    if (!others.length) return box;
+    const pick = cands => {
+      let best = null;
+      cands.forEach(c => { if (c.d <= FP_MAGNET && (!best || c.d < best.d)) best = c; });
+      return best;
+    };
+    const out = { x: box.x, y: box.y, w: box.w, h: box.h };
+    const xc = [];
+    others.forEach(o => {
+      [o.x + o.w, o.x, o.x + o.w / 2 - box.w / 2].forEach(v => xc.push({ at: v, o: o, line: v }));
+      [o.x, o.x + o.w].forEach(v => xc.push({ at: v - box.w, o: o, line: v }));
+    });
+    xc.forEach(c => { c.d = Math.abs(c.at - box.x); });
+    const hx = pick(xc);
+    if (hx) {
+      out.x = hx.at;
+      fpGuides.push({ x1: hx.line, x2: hx.line, y1: Math.min(out.y, hx.o.y), y2: Math.max(out.y + out.h, hx.o.y + hx.o.h) });
+    }
+    const yc = [];
+    others.forEach(o => {
+      [o.y + o.h, o.y, o.y + o.h / 2 - box.h / 2].forEach(v => yc.push({ at: v, o: o, line: v }));
+      [o.y, o.y + o.h].forEach(v => yc.push({ at: v - box.h, o: o, line: v }));
+    });
+    yc.forEach(c => { c.d = Math.abs(c.at - box.y); });
+    const hy = pick(yc);
+    if (hy) {
+      out.y = hy.at;
+      fpGuides.push({ y1: hy.line, y2: hy.line, x1: Math.min(out.x, hy.o.x), x2: Math.max(out.x + out.w, hy.o.x + hy.o.w) });
+    }
+    return out;
+  }
+
+  function fpPoint(evt) {
+    const svg = document.getElementById('fpSvg');
+    const m = fpZoom.group.getScreenCTM();
+    if (!svg || !m) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(m.inverse());
+  }
+
+  function drawFeedPlan() {
+    const svg = document.getElementById('fpSvg');
+    if (!svg) return;
+    fpZoom.clear();
+    const target = fpZoom.group;
+    const items = fpItems();
+    if (!items.length) {
+      svg.setAttribute('width', 760); svg.setAttribute('height', 200);
+      svg.setAttribute('viewBox', '0 0 760 200');
+      const h = svgEl('text', { x: 380, y: 100, 'text-anchor': 'middle', 'font-size': 13, fill: '#8A8072', 'font-family': 'sans-serif' });
+      h.textContent = t('fp_empty');
+      target.appendChild(h);
+      return;
+    }
+
+    // 전체가 들어가도록 축척을 잡는다 (mm -> px)
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    items.forEach(it => {
+      const a = fpAabb(it.b);
+      x0 = Math.min(x0, a.x); y0 = Math.min(y0, a.y);
+      x1 = Math.max(x1, a.x + a.w); y1 = Math.max(y1, a.y + a.h);
+    });
+    const pad = 3000;
+    x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
+    const spanW = Math.max(1, x1 - x0), spanD = Math.max(1, y1 - y0);
+    const margin = 46;
+    const sc = Math.min(880 / spanW, 540 / spanD);
+    const w = spanW * sc + margin * 2, hgt = spanD * sc + margin * 2;
+    svg.setAttribute('width', Math.max(760, w));
+    svg.setAttribute('height', Math.max(360, hgt));
+    svg.setAttribute('viewBox', '0 0 ' + Math.max(760, w) + ' ' + Math.max(360, hgt));
+    const ox = (Math.max(760, w) - spanW * sc) / 2 - x0 * sc;
+    const oy = margin - y0 * sc;
+    const X = mm => ox + mm * sc, Y = mm => oy + mm * sc, S = mm => mm * sc;
+
+    // 격자 (5m)
+    const grid = svgEl('g', {});
+    target.appendChild(grid);
+    const step = 5000;
+    for (let gx = Math.ceil(x0 / step) * step; gx <= x1; gx += step) {
+      grid.appendChild(svgEl('path', { d: 'M' + X(gx) + ',' + Y(y0) + ' L' + X(gx) + ',' + Y(y1), stroke: '#EFE8D8', 'stroke-width': 1 }));
+    }
+    for (let gy = Math.ceil(y0 / step) * step; gy <= y1; gy += step) {
+      grid.appendChild(svgEl('path', { d: 'M' + X(x0) + ',' + Y(gy) + ' L' + X(x1) + ',' + Y(gy), stroke: '#EFE8D8', 'stroke-width': 1 }));
+    }
+
+    // 회선 — 블럭보다 먼저 깔아 블럭 밑으로 지나가게 한다
+    const ortho = ((document.getElementById('fpRoute') || {}).value || 'ortho') === 'ortho';
+    const roomsN = fpTopo.rooms.length;
+    let totalLen = 0, drawn = 0;
+    fpTopo.feeds.forEach((list, pi) => {
+      const pb = fpBlocks['pod-' + pi];
+      if (!pb) return;
+      list.forEach(k => {
+        const rb = fpBlocks['room-' + k];
+        if (!rb) return;
+        const room = fpTopo.rooms[k];
+        const lane = (k - (roomsN - 1) / 2) * FP_LANE;
+        const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === k) || (fpLit.kind === 'pod' && fpLit.i === pi);
+        const off = room && room.state === 'offline';
+        const path = fpRoute(rb, pb, lane, ortho);
+        const scaled = path.replace(/([-\d.]+),([-\d.]+)/g, (m0, a, b) => X(parseFloat(a)) + ',' + Y(parseFloat(b)));
+        target.appendChild(svgEl('path', {
+          d: scaled, fill: 'none',
+          stroke: off ? '#DB8478' : roomColor(k),
+          'stroke-width': lit ? (fpLit ? 2.6 : 1.8) : 1.2,
+          'stroke-dasharray': off ? '7 5' : '',
+          opacity: lit ? 1 : 0.13,
+        }));
+        totalLen += fpRouteLen(rb, pb, lane, ortho);
+        drawn++;
+      });
+    });
+
+    // 스냅 안내선
+    fpGuides.forEach(g => {
+      target.appendChild(svgEl('path', {
+        d: 'M' + X(g.x1) + ',' + Y(g.y1) + ' L' + X(g.x2) + ',' + Y(g.y2),
+        stroke: '#E0B341', 'stroke-width': 1.4, 'stroke-dasharray': '6 4',
+      }));
+    });
+
+    items.forEach(it => fpDrawBlock(target, it, X, Y, S, sc));
+
+    // 외곽 치수
+    const hall = fpBlocks.hall;
+    if (hall && fpOn('fpShowHall')) {
+      const a = fpAabb(hall);
+      hallDim(target, X(a.x), Y(a.y + a.h) + 30, X(a.x + a.w), Y(a.y + a.h) + 30, Math.round(a.w) + '');
+      hallDim(target, X(a.x) - 30, Y(a.y), X(a.x) - 30, Y(a.y + a.h), Math.round(a.h) + '');
+    }
+
+    fpZoom.reset();
+    fpRenderSummary(spanW, spanD, totalLen, drawn);
+    fpRenderLegend();
+    fpSyncFields();
+  }
+
+  function fpDrawBlock(target, it, X, Y, S, sc) {
+    const b = it.b;
+    const x = X(b.x), y = Y(b.y), w = S(b.w), h = S(b.h);
+    const rot = fpRotOf(b);
+    const spin = rot ? 'rotate(' + rot + ' ' + (x + w / 2) + ' ' + (y + h / 2) + ')' : '';
+    const selected = it.id === fpSel;
+    const lit = !fpLit || (fpLit.kind === it.kind && fpLit.i === it.i) || it.kind === 'hall'
+      || (fpLit.kind === 'room' && it.kind === 'pod' && (fpTopo.feeds[it.i] || []).indexOf(fpLit.i) >= 0)
+      || (fpLit.kind === 'pod' && it.kind === 'room' && (fpTopo.feeds[fpLit.i] || []).indexOf(it.i) >= 0);
+    const grp = svgEl('g', { cursor: 'move', opacity: lit ? 1 : 0.3 });
+    if (spin) grp.setAttribute('transform', spin);
+    target.appendChild(grp);
+
+    grp.appendChild(svgEl('rect', {
+      x: x, y: y, width: w, height: h, rx: it.kind === 'hall' ? 2 : 4,
+      fill: it.kind === 'hall' ? 'none' : hexToRgba(it.color, it.dim ? 0.1 : 0.16),
+      stroke: it.color, 'stroke-width': selected ? 2.8 : (it.kind === 'hall' ? 1.6 : 1.8),
+      'stroke-dasharray': it.kind === 'hall' ? '10 6' : '',
+    }));
+
+    const cx = x + w / 2;
+    const lines = [it.label, it.sub, it.sub2].filter(Boolean);
+    if (it.kind === 'hall') {
+      const lab = svgEl('text', {
+        x: x + 8, y: y + 18, 'text-anchor': 'start',
+        'font-size': 13, 'font-weight': 800, fill: it.color, 'font-family': 'sans-serif',
+      });
+      lab.textContent = it.label;
+      grp.appendChild(lab);
+    } else {
+      // 납작한 블럭(1열 POD 같은)에서는 줄 수를 줄여 이름만이라도 읽히게 한다
+      const room = h >= 46 ? 3 : (h >= 30 ? 2 : 1);
+      const shown = lines.slice(0, room);
+      const fs = Math.max(8, Math.min(14, h / (shown.length * 1.35)));
+      const top = y + h / 2 - (shown.length - 1) * fs * 0.62;
+      shown.forEach((text, li) => {
+        const el = svgEl('text', {
+          x: cx, y: top + li * fs * 1.24 + fs * 0.34, 'text-anchor': 'middle',
+          'font-size': li === 0 ? fs : fs * 0.78,
+          'font-weight': li === 0 ? 800 : 700,
+          fill: it.color, opacity: li === 0 ? 1 : 0.82, 'font-family': 'sans-serif',
+          stroke: '#FFFFFF', 'stroke-width': 2.6, 'paint-order': 'stroke',
+        });
+        el.textContent = text;
+        grp.appendChild(el);
+        planFitText(el, text, w - 8, li === 0 ? fs : fs * 0.78);
+      });
+    }
+
+    grp.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const pt = fpPoint(e);
+      fpSel = it.id;
+      if (it.kind !== 'hall') {
+        const same = fpLit && fpLit.kind === it.kind && fpLit.i === it.i;
+        fpLit = same ? null : { kind: it.kind, i: it.i };
+      }
+      fpDrag = { mode: 'move', id: it.id, dx: pt.x - b.x, dy: pt.y - b.y };
+      drawFeedPlan();
+    });
+
+    if (!selected) return;
+    const hgrp = svgEl('g', spin ? { transform: spin } : {});
+    target.appendChild(hgrp);
+    const hs = [
+      ['nw', x, y], ['n', cx, y], ['ne', x + w, y],
+      ['w', x, y + h / 2], ['e', x + w, y + h / 2],
+      ['sw', x, y + h], ['s', cx, y + h], ['se', x + w, y + h],
+    ];
+    const cursors = { nw: 'nwse-resize', se: 'nwse-resize', ne: 'nesw-resize', sw: 'nesw-resize', n: 'ns-resize', s: 'ns-resize', e: 'ew-resize', w: 'ew-resize' };
+    hs.forEach(([k, hx, hy]) => {
+      const dot = svgEl('rect', {
+        x: hx - 4, y: hy - 4, width: 8, height: 8, rx: 2,
+        fill: '#FFFFFF', stroke: it.color, 'stroke-width': 1.6, cursor: cursors[k],
+      });
+      dot.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        fpDrag = { mode: 'resize', id: it.id, handle: k, start: { x: b.x, y: b.y, w: b.w, h: b.h }, from: fpPoint(e) };
+      });
+      hgrp.appendChild(dot);
+    });
+    const arm = 20;
+    hgrp.appendChild(svgEl('path', {
+      d: 'M' + cx + ',' + y + ' L' + cx + ',' + (y - arm),
+      stroke: it.color, 'stroke-width': 1.4, 'stroke-dasharray': '3 2', fill: 'none',
+    }));
+    const knob = svgEl('circle', {
+      cx: cx, cy: y - arm, r: 5.5, fill: '#FFFFFF', stroke: it.color, 'stroke-width': 1.8, cursor: 'grab',
+    });
+    knob.addEventListener('pointerdown', e => {
+      e.stopPropagation();
+      const pt = fpPoint(e);
+      const c = fpCenter(b);
+      fpDrag = {
+        mode: 'rotate', id: it.id, cx: c.cx, cy: c.cy, start: rot,
+        grab: Math.atan2(pt.y - c.cy, pt.x - c.cx) * 180 / Math.PI,
+      };
+    });
+    hgrp.appendChild(knob);
+    if (rot) {
+      const deg = svgEl('text', {
+        x: cx + 12, y: y - arm + 4, 'text-anchor': 'start',
+        'font-size': 10, 'font-weight': 800, fill: it.color, 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+      });
+      deg.textContent = Math.round(rot) + '\u00B0';
+      hgrp.appendChild(deg);
+    }
+  }
+
+  function fpRenderSummary(spanW, spanD, totalLen, feeds) {
+    const el = document.getElementById('fpSummary');
+    if (!el || !fpTopo) return;
+    const hall = fpBlocks.hall ? fpAabb(fpBlocks.hall) : null;
+    el.textContent = t('fp_summary', {
+      rooms: fpTopo.rooms.length, pods: fpTopo.pods.length, feeds: feeds,
+      topo: fpTopo.topo,
+      hall: hall ? (Math.round(hall.w) + '\u00D7' + Math.round(hall.h)) : '-',
+      area: hall ? fmtN(Math.round(hall.w / 1000 * (hall.h / 1000))) : '-',
+      len: fmtN(Math.round(totalLen / 1000)),
+      span: Math.round(spanW) + '\u00D7' + Math.round(spanD),
+    });
+  }
+
+  function fpRenderLegend() {
+    const box = document.getElementById('fpLegend');
+    if (!box || !fpTopo) return;
+    box.innerHTML = '';
+    fpTopo.rooms.forEach(r => {
+      const item = document.createElement('span');
+      item.className = 'legend-item';
+      const dot = document.createElement('i');
+      dot.style.background = r.state === 'offline' ? '#DB8478' : roomColor(r.i);
+      item.appendChild(dot);
+      const ratio = r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0;
+      item.appendChild(document.createTextNode(
+        t('module_label_room', { n: r.i + 1 }) + ' \u00B7 ' + fmtN(Math.round(ratio * 10) / 10, 1) + '%'));
+      box.appendChild(item);
+    });
+  }
+
+  function fpSyncFields() {
+    const wIn = document.getElementById('fpW'), dIn = document.getElementById('fpD');
+    const b = fpSel ? fpBlocks[fpSel] : null;
+    if (wIn) { wIn.value = b ? Math.round(b.w) : ''; wIn.disabled = !b; }
+    if (dIn) { dIn.value = b ? Math.round(b.h) : ''; dIn.disabled = !b; }
+  }
+
+  function fpRotateSel(step) {
+    if (!fpSel || !fpBlocks[fpSel]) return;
+    fpBlocks[fpSel].rot = (fpRotOf(fpBlocks[fpSel]) + step + 360) % 360;
+    fpSave(); drawFeedPlan();
+  }
+
+  // ----- 드래그 -----
+  window.addEventListener('pointermove', e => {
+    if (!fpDrag) return;
+    const b = fpBlocks[fpDrag.id];
+    if (!b) { fpDrag = null; return; }
+    const p = fpPoint(e);
+    const rot = fpRotOf(b);
+    if (fpDrag.mode === 'rotate') {
+      fpGuides = [];
+      let next = fpDrag.start + (Math.atan2(p.y - fpDrag.cy, p.x - fpDrag.cx) * 180 / Math.PI - fpDrag.grab);
+      if (!e.altKey) next = Math.round(next / 15) * 15;
+      b.rot = ((next % 360) + 360) % 360;
+    } else if (fpDrag.mode === 'move') {
+      const raw = { x: p.x - fpDrag.dx, y: p.y - fpDrag.dy, w: b.w, h: b.h };
+      if (rot % 90 !== 0) {
+        fpGuides = [];
+        b.x = fpSnapV(raw.x); b.y = fpSnapV(raw.y);
+      } else {
+        const box = fpAabb(b, raw);
+        const snapped = fpSnapBox(box, fpDrag.id);
+        const nx = snapped.x !== box.x ? snapped.x : fpSnapV(box.x);
+        const ny = snapped.y !== box.y ? snapped.y : fpSnapV(box.y);
+        b.x = nx + box.w / 2 - raw.w / 2;
+        b.y = ny + box.h / 2 - raw.h / 2;
+      }
+    } else {
+      fpGuides = [];
+      const st = fpDrag.start, k = fpDrag.handle;
+      const th = rot * Math.PI / 180, cos = Math.cos(th), sin = Math.sin(th);
+      const wdx = p.x - fpDrag.from.x, wdy = p.y - fpDrag.from.y;
+      const dx = rot ? wdx * cos + wdy * sin : wdx;
+      const dy = rot ? -wdx * sin + wdy * cos : wdy;
+      let x = st.x, y = st.y, w = st.w, h = st.h;
+      if (k.indexOf('e') >= 0) w = fpSnapV(st.x + st.w + dx) - st.x;
+      if (k.indexOf('s') >= 0) h = fpSnapV(st.y + st.h + dy) - st.y;
+      if (k.indexOf('w') >= 0) { const left = fpSnapV(st.x + dx); w = st.x + st.w - left; x = left; }
+      if (k.indexOf('n') >= 0) { const top = fpSnapV(st.y + dy); h = st.y + st.h - top; y = top; }
+      if (w < 1000) { if (k.indexOf('w') >= 0) x = st.x + st.w - 1000; w = 1000; }
+      if (h < 1000) { if (k.indexOf('n') >= 0) y = st.y + st.h - 1000; h = 1000; }
+      if (rot) {
+        const ldx = (x + w / 2) - (st.x + st.w / 2), ldy = (y + h / 2) - (st.y + st.h / 2);
+        x = st.x + st.w / 2 + (ldx * cos - ldy * sin) - w / 2;
+        y = st.y + st.h / 2 + (ldx * sin + ldy * cos) - h / 2;
+      }
+      b.x = Math.round(x); b.y = Math.round(y); b.w = Math.round(w); b.h = Math.round(h);
+    }
+    drawFeedPlan();
+  });
+  window.addEventListener('pointerup', () => {
+    if (!fpDrag) return;
+    fpDrag = null; fpGuides = [];
+    fpSave(); drawFeedPlan();
+  });
+
+  document.getElementById('fpSvg').addEventListener('pointerdown', e => {
+    if (e.target !== e.currentTarget) return;
+    if (fpSel || fpLit) { fpSel = null; fpLit = null; drawFeedPlan(); }
+  });
+
+  document.getElementById('fpZoomIn').addEventListener('click', () => fpZoom.zoomIn());
+  document.getElementById('fpZoomOut').addEventListener('click', () => fpZoom.zoomOut());
+  document.getElementById('fpZoomReset').addEventListener('click', () => fpZoom.reset());
+  document.getElementById('fpAuto').addEventListener('click', () => {
+    fpLayout(true); fpSave(); drawFeedPlan();
+  });
+  document.getElementById('fpRotL').addEventListener('click', () => fpRotateSel(-90));
+  document.getElementById('fpRotR').addEventListener('click', () => fpRotateSel(90));
+  ['fpW', 'fpD'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      const b = fpSel ? fpBlocks[fpSel] : null;
+      if (!b) return;
+      const v = Math.max(1000, fpNum(id, 1000));
+      if (id === 'fpW') b.w = v; else b.h = v;
+      fpSave(); drawFeedPlan();
+    });
+  });
+  ['fpSnap', 'fpMagnet', 'fpShowHall', 'fpRoute'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => drawFeedPlan());
+  });
+  ['fpRoomW', 'fpRoomD', 'fpCorr', 'fpRoomSide'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => { fpLayout(true); fpSave(); drawFeedPlan(); });
+  });
 
   // ===== ⑥ 데이터홀 평면 검토 =====
   // POD 1개를 실제 랙 배치로 펼쳐 본다. 랙 수는 POD 부하 ÷ 랙당 전력에서 나오고,
@@ -6527,6 +7137,7 @@
       settings: snapshotSettings(),
       hall,
       plans: { tabs: planTabs },
+      feedPlan: fpBlocks,
       sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges },
       racks: { list: hallRacks, rows: hallRowsOpt },
       ui: { lang: currentLang, view: document.body.classList.contains('view-dual') ? 'dual' : 'sequential' },
@@ -6544,6 +7155,11 @@
         if (isFinite(n) && n > planSeq) planSeq = n;
       }));
       savePlans();
+    }
+    if (data.feedPlan && typeof data.feedPlan === 'object') {
+      fpBlocks = data.feedPlan;
+      fpSel = null; fpLit = null;
+      fpSave();
     }
     if (data.sld && Array.isArray(data.sld.nodes)) {
       sldManualGraph = { nodes: data.sld.nodes, edges: data.sld.edges || [], notes: [] };
