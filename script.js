@@ -230,6 +230,7 @@
       label_txFanout: '변압기 1대당 분기 수 (POD)',
       txfan_hint_off: "'변압기별'로 바꾸면 적용됩니다 — 변압기 한 대마다 회선이 따로 나옵니다.",
       txfan_hint_1: '변압기 1대 → POD 1개 (1회선씩). POD당 {lines}회선.',
+      txfan_hint_auto: '※ 전기실당 변압기 {T}대로는 POD {P}개 모두에 닿으려면 변압기 1대가 {f}개 POD로 분기해야 해서 {f}개로 올렸습니다 (안 그러면 일부 POD가 어떤 전기실과 끊깁니다).',
       txfan_hint_n: '변압기 1대의 선이 POD {fan}개로 분기. POD당 {lines}회선.',
       txfan_hint_all: '변압기 1대의 선이 세트 안 POD {fan}개 전부로 분기. POD당 {lines}회선.',
       pod_feed_caption_tx: '각 POD {feeds}회선 급전 ({topo}) — 변압기마다 선이 나와 POD로 닿는다 (변압기당 POD {fan}개)',
@@ -798,6 +799,7 @@
       label_txFanout: 'PODs branched from each transformer',
       txfan_hint_off: "Switch to 'Per transformer' to apply — every transformer gets its own feeder.",
       txfan_hint_1: 'One transformer feeds one POD (one feeder each). {lines} feeders per POD.',
+      txfan_hint_auto: '* With {T} transformer(s) per room, reaching all {P} PODs needs each transformer to branch to {f} PODs, so it was raised to {f} (otherwise some PODs would lose contact with some rooms).',
       txfan_hint_n: "Each transformer's feeder branches to {fan} PODs. {lines} feeders per POD.",
       txfan_hint_all: "Each transformer's feeder branches to all {fan} PODs in the set. {lines} feeders per POD.",
       pod_feed_caption_tx: '{feeds} feeders per POD ({topo}) — one feeder leaves each transformer ({fan} POD per transformer)',
@@ -1548,12 +1550,13 @@
     calculate();
   }
   // 분기 수 안내 — 지금 고른 값으로 POD당 몇 회선이 되는지
-  function updateTxHint(fan, maxP, linesPerPod) {
+  function updateTxHint(fan, maxP, linesPerPod, auto) {
     const el = document.getElementById('txFanoutHint');
     if (!el) return;
     if (feedUnit !== 'tx') { el.textContent = t('txfan_hint_off'); return; }
     const key = fan <= 1 ? 'txfan_hint_1' : (fan >= maxP ? 'txfan_hint_all' : 'txfan_hint_n');
-    el.textContent = t(key, { fan, lines: linesPerPod, max: maxP });
+    el.textContent = t(key, { fan, lines: linesPerPod, max: maxP })
+      + (auto ? ' ' + t('txfan_hint_auto', { f: auto.f, T: auto.T, P: auto.P }) : '');
   }
 
   // ===== 전기실(물리적 방) 구성 =====
@@ -2220,6 +2223,7 @@
     const srcFeeds = {};                                         // 'k:t' -> 그 변압기가 급전하는 POD 목록
     const podSrc = Array.from({ length: podCount }, () => []);   // POD -> 급전하는 변압기 목록
     let txFanEff = 1;
+    let txAuto = null;     // 분기 수를 자동으로 올려야 했다면 { f, T, P }
     for (let p = 0; p < podCount; p++) {
       const si = podSet[p];
       if (combPossible) { podFeeds.push(roomPairFor(si)); continue; }
@@ -2234,16 +2238,27 @@
       // POD를 fan개씩 물려 주면, POD마다 전기실별로 같은 수(±1)의 변압기를 받는다.
       // 대기 이중화의 캐쳐는 Duty 상실 때 어느 POD든 받아야 하므로 변압기마다 세트 전체 POD에 물린다.
       const maxP = Math.max(1, ...roomPlan.setPods.map(l => l.length));
-      txFanEff = Math.max(1, Math.min(maxP, Math.round(parseFloat((document.getElementById('txFanout') || {}).value) || 1)));
+      const fanReq = Math.max(1, Math.min(maxP, Math.round(parseFloat((document.getElementById('txFanout') || {}).value) || 1)));
+      txFanEff = 1;
       roomPlan.setPods.forEach((pods, si) => {
         const P = pods.length;
         if (!P) return;
+        // 이중화 방식이 요구하는 건 '모든 POD가 세트의 전기실 전부에서 급전받는 것'이다.
+        // 방마다 변압기가 T대뿐이면 변압기 1대가 최소 ⌈P/T⌉개 POD로 나뉘어야 방 하나가 POD 전부에 닿는다.
+        // 요청한 분기 수가 그보다 작으면 올린다 — 안 그러면 어떤 POD는 일부 방과 아예 끊겨 N-of-M이 깨진다.
+        let fSet = Math.min(fanReq, P);
+        const dutyTx = rooms.filter(r => r.setIndex === si && !(currentTopo === 'standby')).map(r => r.txCount);
+        if (dutyTx.length) {
+          const need = Math.min(P, Math.ceil(P / Math.max(1, Math.min(...dutyTx))));
+          if (need > fSet) { fSet = need; txAuto = { f: need, T: Math.min(...dutyTx), P: P }; }
+        }
+        txFanEff = Math.max(txFanEff, fSet);
         let cursor = 0;
         rooms.forEach((r, k) => {
           if (r.setIndex !== si) return;
           const catcher = currentTopo === 'standby' && r.role === 'catcher';
           for (let ti = 0; ti < r.txCount; ti++) {
-            const f = catcher ? P : Math.min(txFanEff, P);
+            const f = catcher ? P : fSet;
             const list = [];
             for (let j = 0; j < f; j++) list.push(pods[(cursor + j) % P]);
             srcFeeds[k + ':' + ti] = list;
@@ -2334,7 +2349,7 @@
     }, 0);
     const unfedPods = podCarriers.filter(c => !c.length).length;
     updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C, podPlan);
-    updateTxHint(txFanEff, Math.max(1, ...roomPlan.setPods.map(l => l.length)), feedsPerPod);
+    updateTxHint(txFanEff, Math.max(1, ...roomPlan.setPods.map(l => l.length)), feedsPerPod, txAuto);
     // 전기실 1곳을 잃을 때 한 POD가 잃는 회선의 최대 비율 — 균등이면 1/(세트 안 전기실 수)
     let txWorstLoss = 0, txIdealLoss = 0;
     if (txMode && currentTopo !== 'standby') {
