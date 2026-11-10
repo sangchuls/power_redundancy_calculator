@@ -360,6 +360,10 @@
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       h_fp_title: '기준층 평면 스터디',
+      fp_arrange: '최적 배열 ↻',
+      fp_arrange_note: '최적 배열 {rank}/{total}안 — POD {dir} · 전기실 {side} · 회선 {len}m · 교차 {cross}곳 (버튼을 다시 누르면 다음 안)',
+      fp_pod_col_short: '세로',
+      fp_pod_row_short: '가로',
       label_fpUnitRows: 'POD 유닛 타입',
       fp_unit_follow: '⑥에서 고른 열 수',
       fp_show_racks: '유닛 내부(랙 열·통로)',
@@ -902,6 +906,10 @@
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       h_fp_title: 'Typical floor study',
+      fp_arrange: 'Best fit \u21bb',
+      fp_arrange_note: 'Arrangement {rank} of {total} — PODs {dir} · rooms {side} · feeders {len}m · {cross} crossings (press again for the next one)',
+      fp_pod_col_short: 'upright',
+      fp_pod_row_short: 'across',
       label_fpUnitRows: 'POD unit type',
       fp_unit_follow: 'Follow the row count in \u2465',
       fp_show_racks: 'Unit interior (rows and aisles)',
@@ -3686,6 +3694,7 @@
     if (fpLit && ((fpLit.kind === 'room' && fpLit.i >= data.rooms.length)
       || (fpLit.kind === 'pod' && fpLit.i >= data.pods.length))) fpLit = null;
     fpEnsure();
+    fpPlans = null;
     fpSave();
     drawFeedPlan();
   }
@@ -3693,88 +3702,6 @@
   // 블럭이 아직 없는 전기실·POD만 기본 자리에 깐다 (옮겨 둔 블럭은 건드리지 않는다)
   function fpEnsure() { fpLayout(false); }
 
-  function fpLayout(force) {
-    if (!fpTopo) return;
-    const g0 = fpPodGeom();
-    const unitW = g0.unitW, unitD = g0.unitD;
-    const service = g0.service, gap = g0.gap;
-    // POD를 세로로 세우면 유닛 배열도 그대로 뒤집는다 — 홀이 가로로 길어진다
-    const podCol = ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
-    const baseCols = g0.cols;
-    const baseRows = Math.max(1, Math.ceil(fpTopo.units / Math.max(1, baseCols)));
-    const cols = podCol ? baseRows : baseCols;
-    const rowsN = podCol ? baseCols : baseRows;
-    // 유닛 한 칸이 바닥에서 차지하는 크기
-    const footW = podCol ? unitD : unitW;
-    const footH = podCol ? unitW : unitD;
-    const hallW = service * 2 + cols * footW + (cols - 1) * gap;
-    const hallD = service * 2 + rowsN * footH + (rowsN - 1) * gap;
-    const put = (id, box) => { if (force || !fpBlocks[id]) fpBlocks[id] = Object.assign({ rot: 0 }, box); };
-
-    put('hall', { x: 0, y: 0, w: hallW, h: hallD });
-    if (force) fpBlocks.hall = { x: 0, y: 0, w: hallW, h: hallD, rot: 0 };
-
-    // 급전 분할은 열을 길이 방향으로 정확히 등분한다 — 2분할이면 반 토막 둘이 이어 선다
-    const split = Math.max(1, fpTopo.split);
-    const segW = unitW / split;
-    fpTopo.pods.forEach(pod => {
-      const col = pod.unit % cols, row = Math.floor(pod.unit / cols);
-      const ux = service + col * (footW + gap);
-      const uy = service + row * (footH + gap);
-      const off = pod.branch * segW;
-      const rot = podCol ? 90 : 0;
-      // 바닥에서 차지하는 칸
-      const fx = podCol ? ux : ux + off;
-      const fy = podCol ? uy + off : uy;
-      const fw = podCol ? unitD : segW;
-      const fh = podCol ? segW : unitD;
-      const cx = fx + fw / 2, cy = fy + fh / 2;
-      const box = { x: cx - segW / 2, y: cy - unitD / 2, w: segW, h: unitD };
-      if (force || !fpBlocks['pod-' + pod.p]) fpBlocks['pod-' + pod.p] = Object.assign({ rot: rot }, box);
-    });
-
-    // 전기실 — 세트를 섞지 않고 줄로 세운다
-    const rw = fpNum('fpRoomW', 12000), rd = fpNum('fpRoomD', 9000);
-    const corr = fpNum('fpCorr', 6000), rgap = 1500;
-    const side = (document.getElementById('fpRoomSide') || {}).value || 'bottom';
-    const sets = Math.max(1, fpTopo.sets);
-    const bySet = [];
-    for (let si = 0; si < sets; si++) bySet.push(fpTopo.rooms.filter(r => r.setIndex === si));
-    const vertical = side === 'left' || side === 'sides';
-    const perLine = (side === 'split' || side === 'sides') ? 1 : 0;   // 0 = 한 줄에 전부
-
-    const lines = perLine ? bySet : [fpTopo.rooms];
-    lines.forEach((list, li) => {
-      if (!list.length) return;
-      // 홀을 넘어가면 다음 줄로 접고, 줄은 홀에서 멀어지는 쪽으로 쌓는다
-      const per = vertical
-        ? Math.max(1, Math.floor((hallD + rgap) / (rd + rgap)))
-        : Math.max(1, Math.floor((hallW + rgap) / (rw + rgap)));
-      const near = !perLine || li % 2 === 0;   // 아래(또는 왼쪽) 줄
-      list.forEach((r, k) => {
-        const line = Math.floor(k / per), seat = k % per;
-        const inLine = Math.min(per, list.length - line * per);
-        let box;
-        if (!vertical) {
-          const runW = inLine * rw + (inLine - 1) * rgap;
-          box = {
-            x: (hallW - runW) / 2 + seat * (rw + rgap),
-            y: near ? hallD + corr + line * (rd + rgap) : -corr - (line + 1) * rd - line * rgap,
-            w: rw, h: rd,
-          };
-        } else {
-          const runD = inLine * rd + (inLine - 1) * rgap;
-          box = {
-            x: near ? -corr - (line + 1) * rw - line * rgap : hallW + corr + line * (rw + rgap),
-            y: (hallD - runD) / 2 + seat * (rd + rgap),
-            w: rw, h: rd,
-          };
-        }
-        put('room-' + r.i, box);
-        if (force) fpBlocks['room-' + r.i] = Object.assign({ rot: 0 }, box);
-      });
-    });
-  }
 
   // ⑥ 랙 구성·열 수에서 POD 한 유닛의 치수를 가져온다.
   // 급전 분할은 그 열을 길이 방향으로 정확히 split등분한 것이다 — 2분할이면 반 토막 둘.
@@ -3891,6 +3818,304 @@
       }
     }
     if (touched) { fpSave(); drawFeedPlan(); }
+  }
+
+  // 한 가지 배열안을 만들어 돌려준다 (fpBlocks를 건드리지 않는다).
+  // opts: { podCol, side, cols, flip, bySet }
+  function fpBuildLayout(opts) {
+    const o = opts || {};
+    const map = {};
+    if (!fpTopo) return map;
+    const g0 = fpPodGeom();
+    const unitW = g0.unitW, unitD = g0.unitD;
+    const service = g0.service, gap = g0.gap;
+    const podCol = o.podCol !== undefined ? o.podCol
+      : ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
+    const baseCols = Math.max(1, Math.min(fpTopo.units, o.cols || g0.cols));
+    const baseRows = Math.max(1, Math.ceil(fpTopo.units / baseCols));
+    const cols = podCol ? baseRows : baseCols;
+    const rowsN = podCol ? baseCols : baseRows;
+    // 유닛 한 칸이 바닥에서 차지하는 크기
+    const footW = podCol ? unitD : unitW;
+    const footH = podCol ? unitW : unitD;
+    const hallW = service * 2 + cols * footW + (cols - 1) * gap;
+    const hallD = service * 2 + rowsN * footH + (rowsN - 1) * gap;
+    map.hall = { x: 0, y: 0, w: hallW, h: hallD, rot: 0 };
+
+    // 유닛을 어떤 칸에 넣을지 — 세트끼리 모아 두면 회선이 덜 꼬인다
+    const unitIds = [];
+    for (let u = 0; u < fpTopo.units; u++) unitIds.push(u);
+    if (o.bySet) {
+      const setOf = {};
+      fpTopo.pods.forEach(pod => { if (setOf[pod.unit] === undefined) setOf[pod.unit] = pod.set; });
+      unitIds.sort((a, b) => (setOf[a] - setOf[b]) || (a - b));
+    }
+    const cellOf = {};
+    unitIds.forEach((u, idx) => { cellOf[u] = idx; });
+
+    // 급전 분할은 열을 길이 방향으로 정확히 등분한다 — 2분할이면 반 토막 둘이 이어 선다
+    const split = Math.max(1, fpTopo.split);
+    const segW = unitW / split;
+    fpTopo.pods.forEach(pod => {
+      const cell = cellOf[pod.unit] || 0;
+      const col = cell % cols, row = Math.floor(cell / cols);
+      const ux = service + col * (footW + gap);
+      const uy = service + row * (footH + gap);
+      const off = pod.branch * segW;
+      const fx = podCol ? ux : ux + off;
+      const fy = podCol ? uy + off : uy;
+      const fw = podCol ? unitD : segW;
+      const fh = podCol ? segW : unitD;
+      const cx = fx + fw / 2, cy = fy + fh / 2;
+      map['pod-' + pod.p] = { x: cx - segW / 2, y: cy - unitD / 2, w: segW, h: unitD, rot: podCol ? 90 : 0 };
+    });
+
+    // 전기실 — 세트를 섞지 않고 줄로 세운다
+    const rw = fpNum('fpRoomW', 12000), rd = fpNum('fpRoomD', 9000);
+    const corr = fpNum('fpCorr', 6000), rgap = 1500;
+    const side = o.side || (document.getElementById('fpRoomSide') || {}).value || 'bottom';
+    const sets = Math.max(1, fpTopo.sets);
+    const bySetList = [];
+    for (let si = 0; si < sets; si++) bySetList.push(fpTopo.rooms.filter(r => r.setIndex === si));
+    const vertical = side === 'left' || side === 'sides';
+    const perLine = (side === 'split' || side === 'sides') ? 1 : 0;   // 0 = 한 줄에 전부
+
+    const lines = perLine ? bySetList : [fpTopo.rooms];
+    lines.forEach((list, li) => {
+      if (!list.length) return;
+      // 홀을 넘어가면 다음 줄로 접고, 줄은 홀에서 멀어지는 쪽으로 쌓는다
+      const per = vertical
+        ? Math.max(1, Math.floor((hallD + rgap) / (rd + rgap)))
+        : Math.max(1, Math.floor((hallW + rgap) / (rw + rgap)));
+      const near = !perLine || ((li % 2 === 0) !== !!o.flip);
+      list.forEach((r, k) => {
+        const line = Math.floor(k / per), seat = k % per;
+        const inLine = Math.min(per, list.length - line * per);
+        let box;
+        if (!vertical) {
+          const runW = inLine * rw + (inLine - 1) * rgap;
+          box = {
+            x: (hallW - runW) / 2 + seat * (rw + rgap),
+            y: near ? hallD + corr + line * (rd + rgap) : -corr - (line + 1) * rd - line * rgap,
+            w: rw, h: rd, rot: 0,
+          };
+        } else {
+          const runD = inLine * rd + (inLine - 1) * rgap;
+          box = {
+            x: near ? -corr - (line + 1) * rw - line * rgap : hallW + corr + line * (rw + rgap),
+            y: (hallD - runD) / 2 + seat * (rd + rgap),
+            w: rw, h: rd, rot: 0,
+          };
+        }
+        map['room-' + r.i] = box;
+      });
+    });
+    return map;
+  }
+
+  function fpLayout(force) {
+    if (!fpTopo) return;
+    const map = fpBuildLayout({});
+    Object.keys(map).forEach(id => {
+      if (force || !fpBlocks[id]) fpBlocks[id] = map[id];
+    });
+  }
+
+  // ----- 최적 배열 -----
+  // 후보 배열을 여러 개 만들어 '회선 길이 + 교차 수 + 남의 실을 뚫고 가는 수 + 외곽
+  // 종횡비'로 점수를 매기고, 좋은 순으로 줄 세운다. 버튼을 누를 때마다 다음 안을 보여준다.
+  let fpPlans = null, fpPlanIdx = 0, fpPlanKey = '';
+
+  function fpFeedLines(map, ortho) {
+    const out = [];
+    if (!fpTopo) return out;
+    const useOrtho = ortho === undefined ? true : ortho;
+    const box = id => (map[id] ? fpAabb(map[id]) : null);
+    const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
+
+    const roomFeeds = {};
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => { (roomFeeds[k] = roomFeeds[k] || []).push(pi); }));
+
+    // 전기실에서 나가는 자리 순서 — 목적지가 놓인 순서대로 면을 따라 세운다.
+    // 번호 순으로 내보내면 멀쩡한 배치에서도 코앞에서 선이 엇갈린다.
+    const roomOrder = {};
+    Object.keys(roomFeeds).forEach(key => {
+      const k = Number(key);
+      const ra = box('room-' + k);
+      if (!ra) { roomOrder[k] = roomFeeds[k].slice(); return; }
+      const rc = mid(ra);
+      let vert = 0;
+      roomFeeds[k].forEach(pi => {
+        const pb = box('pod-' + pi);
+        if (!pb) return;
+        const pc = mid(pb);
+        if (Math.abs(pc.y - rc.y) >= Math.abs(pc.x - rc.x)) vert++;
+      });
+      const byX = vert * 2 >= roomFeeds[k].length;   // 위아래로 나가면 좌우 순
+      roomOrder[k] = roomFeeds[k].slice().sort((a, b) => {
+        const A = box('pod-' + a), B = box('pod-' + b);
+        if (!A || !B) return 0;
+        const ac = mid(A), bc = mid(B);
+        return byX ? (ac.x - bc.x) || (ac.y - bc.y) : (ac.y - bc.y) || (ac.x - bc.x);
+      });
+    });
+
+    fpTopo.feeds.forEach((list, pi) => {
+      const pb = map['pod-' + pi];
+      const pa = box('pod-' + pi);
+      if (!pb || !pa) return;
+      const pc = mid(pa);
+      const items = [];
+      list.forEach(k => {
+        const rb = map['room-' + k];
+        const ra = box('room-' + k);
+        if (!rb || !ra) return;
+        const rc = mid(ra);
+        const dx = pc.x - rc.x, dy = pc.y - rc.y;
+        const vertical = Math.abs(dy) >= Math.abs(dx);
+        items.push({ k: k, rb: rb, rc: rc, dx: dx, dy: dy, vertical: vertical,
+          travel: vertical ? Math.abs(dx) : Math.abs(dy) });
+      });
+      // 들어오는 자리는 출발지가 늘어선 순서대로
+      const seats = items.slice().sort((a, b) => a.vertical
+        ? (a.rc.x - b.rc.x) || (a.rc.y - b.rc.y)
+        : (a.rc.y - b.rc.y) || (a.rc.x - b.rc.x));
+      const seatOf = {};
+      seats.forEach((it, idx) => { seatOf[it.k] = idx; });
+      // 차선은 '멀리서 오는 선'부터 바깥쪽으로 — 부챗살처럼 펴져 서로 넘지 않는다
+      items.sort((a, b) => b.travel - a.travel);
+      items.forEach((it, rank) => {
+        const sign = it.vertical ? (it.dy > 0 ? -1 : 1) : (it.dx > 0 ? -1 : 1);
+        const mine = roomOrder[it.k] || [];
+        const link = fpLink(it.rb, pb,
+          (Math.max(0, mine.indexOf(pi)) + 1) / (mine.length + 1),
+          (seatOf[it.k] + 1) / (items.length + 1),
+          sign * rank * FP_LANE, useOrtho);
+        out.push({ pts: link.pts, len: link.len, room: it.k, pod: pi });
+      });
+    });
+    return out;
+  }
+
+  // 두 선분이 '가로지르는지' — 끝이 닿기만 한 경우는 세지 않는다
+  function fpCrosses(a, b, c, d) {
+    const sg = (p, q, r) => Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
+    const o1 = sg(a, b, c), o2 = sg(a, b, d), o3 = sg(c, d, a), o4 = sg(c, d, b);
+    return o1 !== o2 && o3 !== o4 && o1 !== 0 && o2 !== 0 && o3 !== 0 && o4 !== 0;
+  }
+  // 선분이 사각형 속을 지나는지 (끝점이 그 블럭인 경우는 호출하지 않는다)
+  function fpSegInBox(a, b, box) {
+    const lo = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) };
+    const hi = { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y) };
+    return lo.x < box.x + box.w && hi.x > box.x && lo.y < box.y + box.h && hi.y > box.y;
+  }
+
+  function fpScoreLayout(map) {
+    const lines = fpFeedLines(map);
+    let len = 0;
+    const segs = [];
+    lines.forEach(ln => {
+      len += ln.len;
+      for (let i = 1; i < ln.pts.length; i++) segs.push({ a: ln.pts[i - 1], b: ln.pts[i], room: ln.room, pod: ln.pod });
+    });
+    let cross = 0;
+    for (let i = 0; i < segs.length; i++) {
+      for (let j = i + 1; j < segs.length; j++) {
+        if (segs[i].room === segs[j].room && segs[i].pod === segs[j].pod) continue;
+        if (fpCrosses(segs[i].a, segs[i].b, segs[j].a, segs[j].b)) cross++;
+      }
+    }
+    // 남의 블럭을 뚫고 지나가는 구간
+    const boxes = Object.keys(map).filter(id => id !== 'hall')
+      .map(id => ({ id: id, box: fpAabb(map[id]) }));
+    let through = 0;
+    segs.forEach(sg => {
+      boxes.forEach(bx => {
+        if (bx.id === 'room-' + sg.room || bx.id === 'pod-' + sg.pod) return;
+        if (fpSegInBox(sg.a, sg.b, bx.box)) through++;
+      });
+    });
+    // 외곽 종횡비 — 가로로 길쭉한 쪽이 화면에 들어온다
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    Object.keys(map).forEach(id => {
+      const a = fpAabb(map[id]);
+      x0 = Math.min(x0, a.x); y0 = Math.min(y0, a.y);
+      x1 = Math.max(x1, a.x + a.w); y1 = Math.max(y1, a.y + a.h);
+    });
+    const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
+    const aspect = Math.abs(Math.log((w / h) / 1.6));
+    return {
+      score: len / 1000 + cross * 45 + through * 30 + aspect * 70,
+      len: len, cross: cross, through: through, w: w, h: h,
+    };
+  }
+
+  function fpMakePlans() {
+    const plans = [];
+    if (!fpTopo) return plans;
+    const units = Math.max(1, fpTopo.units);
+    const grids = [];
+    for (let c = 1; c <= units; c++) {
+      const r = Math.ceil(units / c);
+      const key = c + 'x' + r;
+      if (!grids.some(g => g.key === key)) grids.push({ cols: c, key: key });
+    }
+    [true, false].forEach(podCol => {
+      grids.forEach(g => {
+        ['sides', 'split', 'left', 'bottom'].forEach(side => {
+          [false, true].forEach(flip => {
+            [true, false].forEach(bySet => {
+              const opts = { podCol: podCol, side: side, cols: g.cols, flip: flip, bySet: bySet };
+              const map = fpBuildLayout(opts);
+              const sc = fpScoreLayout(map);
+              plans.push({ opts: opts, map: map, m: sc });
+            });
+          });
+        });
+      });
+    });
+    plans.sort((a, b) => a.m.score - b.m.score);
+    // 같은 그림이 여러 번 나오지 않게 추린다
+    const seen = new Set(), out = [];
+    plans.forEach(pl => {
+      const key = Object.keys(pl.map).sort().map(id => {
+        const b = pl.map[id];
+        return id + ':' + Math.round(b.x) + ',' + Math.round(b.y) + ',' + Math.round(b.rot || 0);
+      }).join('|');
+      if (seen.has(key)) return;
+      seen.add(key); out.push(pl);
+    });
+    return out;
+  }
+
+  function fpArrange() {
+    if (!fpTopo) return;
+    const key = [fpTopo.units, fpTopo.split, fpTopo.sets, fpTopo.rooms.length,
+      fpNum('fpRoomW', 0), fpNum('fpRoomD', 0), fpNum('fpCorr', 0), fpNum('fpUnitRows', 0)].join('/');
+    if (!fpPlans || fpPlanKey !== key) { fpPlans = fpMakePlans(); fpPlanIdx = 0; fpPlanKey = key; }
+    else { fpPlanIdx = (fpPlanIdx + 1) % Math.max(1, fpPlans.length); }
+    const pl = fpPlans[fpPlanIdx];
+    if (!pl) return;
+    fpBlocks = {};
+    Object.keys(pl.map).forEach(id => { fpBlocks[id] = Object.assign({}, pl.map[id]); });
+    // 고른 안에 맞춰 선택값도 돌려 놓는다 (다시 그리기는 아래에서 한 번만)
+    const dirSel = document.getElementById('fpPodDir');
+    if (dirSel) dirSel.value = pl.opts.podCol ? 'col' : 'row';
+    const sideSel = document.getElementById('fpRoomSide');
+    if (sideSel) sideSel.value = pl.opts.side;
+    fpSel = null;
+    fpSave();
+    drawFeedPlan();
+    const note = document.getElementById('fpArrangeNote');
+    if (note) {
+      note.textContent = t('fp_arrange_note', {
+        rank: fpPlanIdx + 1, total: fpPlans.length,
+        dir: t(pl.opts.podCol ? 'fp_pod_col_short' : 'fp_pod_row_short'),
+        side: t('fp_side_' + pl.opts.side),
+        len: fmtN(Math.round(pl.m.len / 1000)),
+        cross: pl.m.cross,
+      });
+    }
   }
 
   // 화면에 올릴 블럭 목록 — ④ 구성에서 바로 만든다
@@ -4071,43 +4296,29 @@
 
     // 회선 — 블럭보다 먼저 깔아 블럭 밑으로 지나가게 한다
     const ortho = ((document.getElementById('fpRoute') || {}).value || 'ortho') === 'ortho';
-    const roomsN = fpTopo.rooms.length;
-    // 전기실마다 자기가 먹이는 POD 목록 — 나가는 자리를 면을 따라 나눠 쓰기 위해서다
-    const roomFeeds = {};
-    fpTopo.feeds.forEach((list, pi) => list.forEach(k => { (roomFeeds[k] = roomFeeds[k] || []).push(pi); }));
     let totalLen = 0, drawn = 0;
-    fpTopo.feeds.forEach((list, pi) => {
-      const pb = fpBlocks['pod-' + pi];
-      if (!pb) return;
-      list.forEach((k, ki) => {
-        const rb = fpBlocks['room-' + k];
-        if (!rb) return;
-        const room = fpTopo.rooms[k];
-        const mine = roomFeeds[k] || [];
-        const tSrc = (Math.max(0, mine.indexOf(pi)) + 1) / (mine.length + 1);
-        const tDst = (ki + 1) / (list.length + 1);
-        const lane = (k - (roomsN - 1) / 2) * FP_LANE;
-        const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === k) || (fpLit.kind === 'pod' && fpLit.i === pi);
-        const off = room && room.state === 'offline';
-        const link = fpLink(rb, pb, tSrc, tDst, lane, ortho);
-        const color = off ? '#DB8478' : roomColor(k);
-        target.appendChild(svgEl('path', {
-          d: link.pts.map((q, qi) => (qi ? 'L' : 'M') + X(q.x) + ',' + Y(q.y)).join(' '),
-          fill: 'none', stroke: color,
-          'stroke-width': lit ? (fpLit ? 2.6 : 1.8) : 1.2,
-          'stroke-dasharray': off ? '7 5' : '',
-          opacity: lit ? 1 : 0.13,
+    fpFeedLines(fpBlocks, ortho).forEach(ln => {
+      const room = fpTopo.rooms[ln.room];
+      const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === ln.room)
+        || (fpLit.kind === 'pod' && fpLit.i === ln.pod);
+      const off = room && room.state === 'offline';
+      const color = off ? '#DB8478' : roomColor(ln.room);
+      target.appendChild(svgEl('path', {
+        d: ln.pts.map((q, qi) => (qi ? 'L' : 'M') + X(q.x) + ',' + Y(q.y)).join(' '),
+        fill: 'none', stroke: color,
+        'stroke-width': lit ? (fpLit ? 2.6 : 1.8) : 1.2,
+        'stroke-dasharray': off ? '7 5' : '',
+        opacity: lit ? 1 : 0.13,
+      }));
+      // 어느 면에서 떠나 어느 면으로 들어가는지 점으로 찍어 둔다
+      [ln.pts[0], ln.pts[ln.pts.length - 1]].forEach(q => {
+        target.appendChild(svgEl('circle', {
+          cx: X(q.x), cy: Y(q.y), r: lit ? 2.6 : 1.8,
+          fill: color, opacity: lit ? 1 : 0.13,
         }));
-        // 어느 면에서 떠나 어느 면으로 들어가는지 점으로 찍어 둔다
-        [link.pts[0], link.pts[link.pts.length - 1]].forEach(q => {
-          target.appendChild(svgEl('circle', {
-            cx: X(q.x), cy: Y(q.y), r: lit ? 2.6 : 1.8,
-            fill: color, opacity: lit ? 1 : 0.13,
-          }));
-        });
-        totalLen += link.len;
-        drawn++;
       });
+      totalLen += ln.len;
+      drawn++;
     });
 
     // 스냅 안내선
@@ -4417,6 +4628,7 @@
   document.getElementById('fpAuto').addEventListener('click', () => {
     fpLayout(true); fpSave(); drawFeedPlan();
   });
+  document.getElementById('fpArrange').addEventListener('click', () => fpArrange());
   document.getElementById('fpRotL').addEventListener('click', () => fpRotateSel(-90));
   document.getElementById('fpRotR').addEventListener('click', () => fpRotateSel(90));
   document.getElementById('fpRotAllL').addEventListener('click', () => fpRotateAll(-90));
