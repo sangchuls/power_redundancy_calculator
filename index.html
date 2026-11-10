@@ -327,17 +327,17 @@
     <div class="field-row">
       <div class="field">
         <label for="fpRoomW" data-i18n="label_fpRoomW">전기실 크기 W (mm)</label>
-        <input type="number" id="fpRoomW" value="6000" step="500" min="1000">
+        <input type="number" id="fpRoomW" value="9000" step="500" min="1000">
       </div>
       <div class="field">
         <label for="fpRoomD" data-i18n="label_fpRoomD">전기실 크기 D (mm)</label>
-        <input type="number" id="fpRoomD" value="4500" step="500" min="1000">
+        <input type="number" id="fpRoomD" value="6750" step="250" min="1000">
       </div>
       <div class="field">
         <label for="fpPodDir" data-i18n="label_fpPodDir">POD 방향</label>
         <select id="fpPodDir">
-          <option value="col" data-i18n="fp_pod_col" selected>세로 (열이 위아래로)</option>
-          <option value="row" data-i18n="fp_pod_row">가로 (열이 좌우로)</option>
+          <option value="col" data-i18n="fp_pod_col">세로 (열이 위아래로)</option>
+          <option value="row" data-i18n="fp_pod_row" selected>가로 (열이 좌우로)</option>
         </select>
       </div>
       <div class="field">
@@ -367,7 +367,8 @@
       <div class="field">
         <label for="fpRoute" data-i18n="label_fpRoute">회선 표현</label>
         <select id="fpRoute">
-          <option value="ortho" data-i18n="fp_route_ortho">직각 (트레이 경로)</option>
+          <option value="bus" data-i18n="fp_route_bus" selected>버스 정렬 (줄기·가지)</option>
+          <option value="ortho" data-i18n="fp_route_ortho">자동 경로 (장애물 회피)</option>
           <option value="direct" data-i18n="fp_route_direct">직선 (관계만)</option>
         </select>
       </div>

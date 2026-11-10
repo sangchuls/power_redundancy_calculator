@@ -385,7 +385,8 @@
       fp_side_split: '세트별 위·아래',
       fp_side_left: '홀 왼쪽 한 줄',
       fp_side_sides: '세트별 좌·우',
-      fp_route_ortho: '직각 (트레이 경로)',
+      fp_route_bus: '버스 정렬 (줄기·가지)',
+      fp_route_ortho: '자동 경로 (장애물 회피)',
       fp_route_direct: '직선 (관계만)',
       fp_auto: '자동 배치',
       fp_show_hall: '데이터홀 외곽',
@@ -934,7 +935,8 @@
       fp_side_split: 'Above and below, by set',
       fp_side_left: 'One row left of the hall',
       fp_side_sides: 'Left and right, by set',
-      fp_route_ortho: 'Orthogonal (tray route)',
+      fp_route_bus: 'Bus (trunk and taps)',
+      fp_route_ortho: 'Auto route (obstacle-aware)',
       fp_route_direct: 'Straight (relation only)',
       fp_auto: 'Auto-place',
       fp_show_hall: 'Hall outline',
@@ -3862,12 +3864,28 @@
     // 급전 분할은 열을 길이 방향으로 정확히 등분한다 — 2분할이면 반 토막 둘이 이어 선다
     const split = Math.max(1, fpTopo.split);
     const segW = unitW / split;
+    // 분할한 가지는 자기 세트의 전기실이 있는 쪽 끝에 놓는다 — 줄기에서 곧장 닿는다
+    const sideSel0 = o.side || (document.getElementById('fpRoomSide') || {}).value || 'bottom';
+    const perLine0 = (sideSel0 === 'split' || sideSel0 === 'sides') ? 1 : 0;
+    const endOf = si => {
+      const nearSide = !perLine0 || ((si % 2 === 0) !== !!o.flip);
+      if (!podCol && (sideSel0 === 'sides' || sideSel0 === 'left')) return nearSide ? 0 : 1;   // 가로 열: 왼쪽 ↔ 오른쪽 끝
+      if (podCol && (sideSel0 === 'split' || sideSel0 === 'bottom')) return nearSide ? 1 : 0;  // 세로 열: 아래 ↔ 위 끝
+      return 0;
+    };
+    const posOf = {};
+    const podsOfUnit = {};
+    fpTopo.pods.forEach(pod => { (podsOfUnit[pod.unit] = podsOfUnit[pod.unit] || []).push(pod); });
+    Object.keys(podsOfUnit).forEach(u => {
+      podsOfUnit[u].slice().sort((a, b) => (endOf(a.set) - endOf(b.set)) || (a.branch - b.branch))
+        .forEach((pod, idx) => { posOf[pod.p] = idx; });
+    });
     fpTopo.pods.forEach(pod => {
       const cell = cellOf[pod.unit] || 0;
       const col = cell % cols, row = Math.floor(cell / cols);
       const ux = service + col * (footW + gap);
       const uy = service + row * (footH + gap);
-      const off = pod.branch * segW;
+      const off = (posOf[pod.p] || 0) * segW;
       const fx = podCol ? ux : ux + off;
       const fy = podCol ? uy + off : uy;
       const fw = podCol ? unitD : segW;
@@ -3877,8 +3895,8 @@
     });
 
     // 전기실 — 세트를 섞지 않고 줄로 세운다
-    const rw = fpNum('fpRoomW', 12000), rd = fpNum('fpRoomD', 9000);
-    const corr = fpNum('fpCorr', 6000), rgap = 1500;
+    const rw = fpNum('fpRoomW', 9000), rd = fpNum('fpRoomD', 6750);
+    const corr = fpNum('fpCorr', 6000), rgap = 1200;
     const side = o.side || (document.getElementById('fpRoomSide') || {}).value || 'bottom';
     const sets = Math.max(1, fpTopo.sets);
     const bySetList = [];
@@ -3889,10 +3907,8 @@
     const lines = perLine ? bySetList : [fpTopo.rooms];
     lines.forEach((list, li) => {
       if (!list.length) return;
-      // 홀을 넘어가면 다음 줄로 접고, 줄은 홀에서 멀어지는 쪽으로 쌓는다
-      const per = vertical
-        ? Math.max(1, Math.floor((hallD + rgap) / (rd + rgap)))
-        : Math.max(1, Math.floor((hallW + rgap) / (rw + rgap)));
+      // 한 줄로 가지런히 — 접으면 안쪽 줄에 가려 줄기가 바깥 줄 앞을 못 지난다
+      const per = Math.max(1, list.length);
       const near = !perLine || ((li % 2 === 0) !== !!o.flip);
       list.forEach((r, k) => {
         const line = Math.floor(k / per), seat = k % per;
@@ -4365,28 +4381,201 @@
     return out;
   }
 
+  // ===== 버스 정렬 배선 =====
+  // 전기실마다 '줄기'(버스) 한 줄을 홀 바깥 복도에 세우고, 줄기에서 POD마다 '가지'를 직각으로 낸다.
+  //  · 줄기는 방마다 따로, 홀 가장자리에 나란히 — 가운데서 먼 방이 홀 쪽 차선을 쓴다
+  //  · 가지는 POD의 열 끝면에 자리를 나눠 꽂힌다
+  //  · 줄기·가지끼리 가로지르는 것은 있어도 같은 줄 위를 겹쳐 달리지는 않는다
+  const FP_BUS = { gap0: 1200, step: 900, clear: 800 };
+
+  function fpMergePts(raw) {
+    const pts = [];
+    raw.forEach(q => {
+      const L = pts.length;
+      if (L && Math.abs(pts[L - 1].x - q.x) < 0.5 && Math.abs(pts[L - 1].y - q.y) < 0.5) return;
+      if (L >= 2) {
+        const a = pts[L - 2], b = pts[L - 1];
+        if ((Math.abs(a.x - b.x) < 0.5 && Math.abs(b.x - q.x) < 0.5)
+          || (Math.abs(a.y - b.y) < 0.5 && Math.abs(b.y - q.y) < 0.5)) { pts[L - 1] = q; return; }
+      }
+      pts.push(q);
+    });
+    return pts;
+  }
+
+  function fpBusLines(map) {
+    const res = { lines: [], failed: [], buses: [] };
+    if (!fpTopo) return res;
+    const rb = {}, pb = {};
+    fpTopo.rooms.forEach(r => { const b = map['room-' + r.i]; if (b) rb[r.i] = fpBBox(b); });
+    fpTopo.pods.forEach(pd => { const b = map['pod-' + pd.p]; if (b) pb[pd.p] = fpBBox(b); });
+    const podIds = Object.keys(pb);
+    if (!podIds.length) return res;
+    let zx0 = Infinity, zy0 = Infinity, zx1 = -Infinity, zy1 = -Infinity;
+    podIds.forEach(id => {
+      const b = pb[id];
+      zx0 = Math.min(zx0, b.x); zy0 = Math.min(zy0, b.y);
+      zx1 = Math.max(zx1, b.x + b.w); zy1 = Math.max(zy1, b.y + b.h);
+    });
+    // 줄기는 홀 외곽선 바깥에 세운다 — 외곽선이 있으면 POD가 아니라 외곽선이 기준이다
+    if (map.hall) {
+      const hb = fpBBox(map.hall);
+      zx0 = Math.min(zx0, hb.x); zy0 = Math.min(zy0, hb.y);
+      zx1 = Math.max(zx1, hb.x + hb.w); zy1 = Math.max(zy1, hb.y + hb.h);
+    }
+    const zcx = (zx0 + zx1) / 2, zcy = (zy0 + zy1) / 2;
+
+    // 방이 홀의 어느 쪽에 있는가 (L 왼쪽 · R 오른쪽 · T 위 · B 아래)
+    const sideOf = {};
+    Object.keys(rb).forEach(k => {
+      const b = rb[k], cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+      const dxo = cx < zx0 ? zx0 - cx : (cx > zx1 ? cx - zx1 : 0);
+      const dyo = cy < zy0 ? zy0 - cy : (cy > zy1 ? cy - zy1 : 0);
+      sideOf[k] = dxo >= dyo ? (cx < zcx ? 'L' : 'R') : (cy < zcy ? 'T' : 'B');
+    });
+    // L/R: 줄기가 세로로 서고 u=x, v=y.  T/B: 줄기가 가로로 눕고 u=y, v=x.
+    const vert = sd => (sd === 'L' || sd === 'R');
+    const outDir = sd => (sd === 'L' || sd === 'T') ? -1 : 1;
+    const toXY = (sd, u, v) => vert(sd) ? { x: u, y: v } : { x: v, y: u };
+    const roomFace = (sd, b) => sd === 'L' ? b.x + b.w : (sd === 'R' ? b.x : (sd === 'T' ? b.y + b.h : b.y));
+    const podFace = (sd, b) => sd === 'L' ? b.x : (sd === 'R' ? b.x + b.w : (sd === 'T' ? b.y : b.y + b.h));
+    const vRange = (sd, b) => vert(sd) ? [b.y, b.y + b.h] : [b.x, b.x + b.w];
+    const zoneEdge = sd => sd === 'L' ? zx0 : (sd === 'R' ? zx1 : (sd === 'T' ? zy0 : zy1));
+    const zoneMid = sd => vert(sd) ? zcy : zcx;
+
+    // 차선 — 가운데서 먼 방일수록 홀 쪽 차선: 그래야 줄기와 가지가 덜 엇갈린다
+    const bySide = { L: [], R: [], T: [], B: [] };
+    Object.keys(rb).forEach(k => bySide[sideOf[k]].push(Number(k)));
+    const lane = {};
+    const failRooms = new Set();
+    ['L', 'R', 'T', 'B'].forEach(sd => {
+      const ks = bySide[sd];
+      if (!ks.length) return;
+      const dist = k => { const r = vRange(sd, rb[k]); return Math.abs((r[0] + r[1]) / 2 - zoneMid(sd)); };
+      ks.sort((a, b) => dist(b) - dist(a) || a - b);
+      const faces = ks.map(k => roomFace(sd, rb[k]));
+      const nearest = outDir(sd) < 0 ? Math.max.apply(null, faces) : Math.min.apply(null, faces);
+      const avail = outDir(sd) < 0 ? zoneEdge(sd) - nearest : nearest - zoneEdge(sd);
+      const g0 = Math.min(FP_BUS.gap0, avail * 0.3);
+      const usable = avail - g0 - FP_BUS.clear;
+      const n = ks.length;
+      const step = n > 1 ? Math.min(FP_BUS.step, usable / (n - 1)) : 0;
+      if (avail <= 0 || usable < 0 || (n > 1 && step < 250)) { ks.forEach(k => failRooms.add(k)); return; }
+      ks.forEach((k, idx) => { lane[k] = zoneEdge(sd) + outDir(sd) * (g0 + idx * step); });
+    });
+
+    // 가지 — POD의 면마다 들어오는 회선을 차선 순으로 세워 자리를 나눈다
+    const tapsOf = {};
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => {
+      if (!rb[k] || !pb[pi]) return;
+      const key = pi + ':' + sideOf[k];
+      (tapsOf[key] = tapsOf[key] || []).push(k);
+    }));
+    const tapV = {};
+    const usedV = { L: [], R: [], T: [], B: [] };
+    Object.keys(tapsOf).forEach(key => {
+      const parts = key.split(':'), pi = parts[0], sd = parts[1];
+      const list = tapsOf[key].filter(k => lane[k] !== undefined);
+      list.sort((a, b) => Math.abs(lane[a] - zoneEdge(sd)) - Math.abs(lane[b] - zoneEdge(sd)) || a - b);
+      const r = vRange(sd, pb[pi]);
+      list.forEach((k, idx) => {
+        const v = r[0] + (r[1] - r[0]) * (idx + 1) / (list.length + 1);
+        tapV[pi + ':' + k] = v;
+        usedV[sd].push(v);
+      });
+    });
+    // 방에서 줄기로 나가는 자리 — 가지 높이와 겹치지 않게 비켜 선다
+    const stubV = {};
+    ['L', 'R', 'T', 'B'].forEach(sd => {
+      bySide[sd].forEach(k => {
+        if (lane[k] === undefined) return;
+        const r = vRange(sd, rb[k]);
+        const c = (r[0] + r[1]) / 2, half = Math.max(0, (r[1] - r[0]) / 2 - 300);
+        let pick = c;
+        for (let jx = 0; jx < 40; jx++) {
+          const sh = (jx % 2 ? 1 : -1) * Math.ceil(jx / 2) * 150;
+          if (Math.abs(sh) > half) continue;
+          if (usedV[sd].every(v => Math.abs(v - (c + sh)) > 110)) { pick = c + sh; break; }
+        }
+        stubV[k] = pick;
+        usedV[sd].push(pick);
+      });
+    });
+
+    const aggr = {};
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => {
+      if (!rb[k] || !pb[pi]) return;
+      if (failRooms.has(k) || lane[k] === undefined) { res.failed.push({ room: k, pod: pi }); return; }
+      const sd = sideOf[k];
+      const u = lane[k], sv = stubV[k], tv = tapV[pi + ':' + k];
+      const raw = [
+        toXY(sd, roomFace(sd, rb[k]), sv), toXY(sd, u, sv),
+        toXY(sd, u, tv), toXY(sd, podFace(sd, pb[pi]), tv),
+      ];
+      const pts = fpMergePts(raw);
+      // 다른 전기실·POD를 뚫는 길이면 줄기로는 못 닿는 것 — 자동 경로에 맡긴다
+      const blockers = [];
+      Object.keys(rb).forEach(kk => { if (Number(kk) !== k) blockers.push({ box: rb[kk], w: 1 }); });
+      Object.keys(pb).forEach(pp => { if (Number(pp) !== pi) blockers.push({ box: pb[pp], w: 10 }); });
+      if (fpPolyBlocked(pts, blockers) > 0) { res.failed.push({ room: k, pod: pi }); return; }
+      const tapLen = Math.abs(raw[3].x - raw[2].x) + Math.abs(raw[3].y - raw[2].y);
+      const line = {
+        pts: pts, len: tapLen, room: k, pod: pi, route: 'bus',
+        dots: [pts[0], pts[pts.length - 1], toXY(sd, u, tv)],
+      };
+      res.lines.push(line);
+      const a = aggr[k] = aggr[k] || { first: line, v0: sv, v1: sv, sd: sd, u: u,
+        stub: Math.abs(u - roomFace(sd, rb[k])) };
+      a.v0 = Math.min(a.v0, tv); a.v1 = Math.max(a.v1, tv);
+    }));
+    // 줄기와 방에서 나가는 짧은 선은 방마다 한 번만 센다
+    Object.keys(aggr).forEach(key => {
+      const a = aggr[key];
+      a.first.len += a.stub + (a.v1 - a.v0);
+      res.buses.push({ k: Number(key), horiz: vert(a.sd), u: a.u, v0: a.v0, v1: a.v1 });
+    });
+    return res;
+  }
+
   let fpRouteMemo = { key: '', lines: null };
-  function fpFeedLines(map, ortho, quality) {
+  // mode: 'bus' 줄기·가지 정렬 · 'ortho' 자동 경로(장애물 회피) · 'direct' 직선
+  function fpFeedLines(map, mode0, quality) {
     if (!fpTopo) return [];
-    if (ortho === false) return fpFeedLinesHeuristic(map, false);
+    const mode = (mode0 === false || mode0 === 'direct') ? 'direct' : (mode0 === 'bus' ? 'bus' : 'ortho');
+    if (mode === 'direct') return fpFeedLinesHeuristic(map, false);
     const q = quality || 'full';
-    const key = q + '|' + fpTopo.feeds.map(l => l.join(',')).join(';') + '|'
+    const key = mode + '|' + q + '|' + fpTopo.feeds.map(l => l.join(',')).join(';') + '|'
       + Object.keys(map).sort().map(id => {
         const b = map[id];
         return id + ':' + Math.round(b.x) + ',' + Math.round(b.y) + ',' + Math.round(b.w) + ',' + Math.round(b.h) + ',' + Math.round(fpRotOf(b));
       }).join('|');
     if (fpRouteMemo.key === key && fpRouteMemo.lines) return fpRouteMemo.lines;
-    let res;
-    try { res = fpRouteGrid(map, q); } catch (e) { res = { lines: [], failed: [] }; }
-    let lines = res.lines;
-    // 길을 못 찾은 회선(장애물에 갇힌 경우)은 예전 방식으로라도 이어 둔다
-    const need = fpTopo.feeds.reduce((n, l) => n + l.length, 0);
-    if (lines.length < need) {
-      const have = new Set(lines.map(l => l.room + ':' + l.pod));
-      fpFeedLinesHeuristic(map, true).forEach(l => {
-        if (!have.has(l.room + ':' + l.pod)) { l.route = 'fallback'; lines.push(l); }
+
+    const need = new Set();
+    fpTopo.feeds.forEach((l, pi) => l.forEach(k => need.add(k + ':' + pi)));
+    let lines = [], buses = [];
+    if (mode === 'bus') {
+      const bus = fpBusLines(map);
+      lines = bus.lines.slice(); buses = bus.buses;
+      bus.lines.forEach(l => need.delete(l.room + ':' + l.pod));
+    }
+    // 줄기로 못 닿은 회선(또는 자동 경로 모드의 전부)은 격자 라우터로
+    if (need.size) {
+      let g;
+      try { g = fpRouteGrid(map, q); } catch (e) { g = { lines: [] }; }
+      g.lines.forEach(l => {
+        const kk = l.room + ':' + l.pod;
+        if (need.has(kk)) { lines.push(l); need.delete(kk); }
       });
     }
+    // 그래도 못 찾은 회선(장애물에 갇힌 경우)은 예전 방식으로라도 이어 둔다
+    if (need.size) {
+      fpFeedLinesHeuristic(map, true).forEach(l => {
+        const kk = l.room + ':' + l.pod;
+        if (need.has(kk)) { l.route = 'fallback'; lines.push(l); need.delete(kk); }
+      });
+    }
+    lines.buses = buses;
     fpRouteMemo = { key: key, lines: lines };
     return lines;
   }
@@ -4404,7 +4593,13 @@
     return lo.x < box.x + box.w && hi.x > box.x && lo.y < box.y + box.h && hi.y > box.y;
   }
 
-  function fpScoreLayout(map) { return fpScoreLines(map, fpFeedLinesHeuristic(map, true)); }
+  function fpScoreLayout(map) {
+    const res = fpBusLines(map);
+    const m = fpScoreLines(map, res.lines);
+    m.failed = res.failed.length;
+    m.score += res.failed.length * 400;     // 줄기로 못 닿는 배치는 크게 깎는다
+    return m;
+  }
 
   // 같은 줄 위를 겹쳐 달리는 구간 수
   function fpOverlaps(segs) {
@@ -4412,7 +4607,7 @@
     for (let i = 0; i < segs.length; i++) {
       for (let j = i + 1; j < segs.length; j++) {
         const A = segs[i], B = segs[j];
-        if (A.room === B.room && A.pod === B.pod) continue;
+        if (A.room === B.room) continue;
         const ah = Math.abs(A.a.y - A.b.y) < 0.5, bh = Math.abs(B.a.y - B.b.y) < 0.5;
         if (ah && bh && Math.abs(A.a.y - B.a.y) < 0.5) {
           const lo = Math.max(Math.min(A.a.x, A.b.x), Math.min(B.a.x, B.b.x));
@@ -4433,14 +4628,23 @@
   function fpScoreLines(map, lines) {
     let len = 0;
     const segs = [];
+    const seen = new Set();
+    const rd0 = v => Math.round(v);
     lines.forEach(ln => {
       len += ln.len;
-      for (let i = 1; i < ln.pts.length; i++) segs.push({ a: ln.pts[i - 1], b: ln.pts[i], room: ln.room, pod: ln.pod });
+      for (let i = 1; i < ln.pts.length; i++) {
+        const a = ln.pts[i - 1], b = ln.pts[i];
+        const k1 = ln.room + ':' + [rd0(a.x), rd0(a.y), rd0(b.x), rd0(b.y)].join(',');
+        const k2 = ln.room + ':' + [rd0(b.x), rd0(b.y), rd0(a.x), rd0(a.y)].join(',');
+        if (seen.has(k1) || seen.has(k2)) continue;   // 한 방의 줄기는 한 번만
+        seen.add(k1);
+        segs.push({ a: a, b: b, room: ln.room, pod: ln.pod });
+      }
     });
     let cross = 0;
     for (let i = 0; i < segs.length; i++) {
       for (let j = i + 1; j < segs.length; j++) {
-        if (segs[i].room === segs[j].room && segs[i].pod === segs[j].pod) continue;
+        if (segs[i].room === segs[j].room) continue;
         if (fpCrosses(segs[i].a, segs[i].b, segs[j].a, segs[j].b)) cross++;
       }
     }
@@ -4464,9 +4668,12 @@
     const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
     const aspect = Math.abs(Math.log((w / h) / 1.6));
     const over = fpOverlaps(segs);
+    // 줄기로 못 닿아 자동 경로로 돌린 회선은 정렬이 깨지니 크게 깎는다.
+    // 줄기·가지는 서로 가로지르는 게 구조상 당연하므로 교차 점수는 가볍게 둔다.
+    const nonBus = lines.filter(l => l.route && l.route !== 'bus').length;
     return {
-      score: len / 1000 + cross * 45 + through * 400 + over * 120 + aspect * 70,
-      len: len, cross: cross, through: through, over: over, w: w, h: h,
+      score: len / 1000 + cross * 12 + through * 400 + over * 120 + nonBus * 60 + aspect * 70,
+      len: len, cross: cross, through: through, over: over, nonBus: nonBus, w: w, h: h,
     };
   }
 
@@ -4507,7 +4714,7 @@
     });
     // 위쪽 안은 실제 라우터로 다시 길을 깔아 보고 순위를 고친다
     const head = out.slice(0, 12), tail = out.slice(12);
-    head.forEach(pl => { pl.m = fpScoreLines(pl.map, fpFeedLines(pl.map, true, 'fast')); });
+    head.forEach(pl => { pl.m = fpScoreLines(pl.map, fpFeedLines(pl.map, 'bus', 'fast')); });
     head.sort((a, b) => a.m.score - b.m.score);
     return head.concat(tail);
   }
@@ -4720,9 +4927,9 @@
     }
 
     // 회선 — 블럭보다 먼저 깔아 블럭 밑으로 지나가게 한다
-    const ortho = ((document.getElementById('fpRoute') || {}).value || 'ortho') === 'ortho';
+    const routeMode = (document.getElementById('fpRoute') || {}).value || 'bus';
     let totalLen = 0, drawn = 0;
-    const feedLines = fpFeedLines(fpBlocks, ortho, fpDrag ? 'fast' : 'full');
+    const feedLines = fpFeedLines(fpBlocks, routeMode, fpDrag ? 'fast' : 'full');
     try { fpLastMetrics = fpScoreLines(fpBlocks, feedLines); } catch (e) { fpLastMetrics = null; }
     feedLines.forEach(ln => {
       const room = fpTopo.rooms[ln.room];
@@ -4738,7 +4945,7 @@
         opacity: lit ? 1 : 0.13,
       }));
       // 어느 면에서 떠나 어느 면으로 들어가는지 점으로 찍어 둔다
-      [ln.pts[0], ln.pts[ln.pts.length - 1]].forEach(q => {
+      (ln.dots || [ln.pts[0], ln.pts[ln.pts.length - 1]]).forEach(q => {
         target.appendChild(svgEl('circle', {
           cx: X(q.x), cy: Y(q.y), r: lit ? 2.6 : 1.8,
           fill: color, opacity: lit ? 1 : 0.13,
@@ -4746,6 +4953,18 @@
       });
       totalLen += ln.len;
       drawn++;
+    });
+    // 줄기 이름표 — ④의 급전모선과 같은 A~H
+    (feedLines.buses || []).forEach(bs => {
+      const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === bs.k) || fpLit.kind === 'pod';
+      const q = bs.horiz ? { x: bs.u, y: bs.v0 - 600 } : { x: bs.v0 - 500, y: bs.u };
+      const tx = svgEl('text', {
+        x: X(q.x), y: Y(q.y) + (bs.horiz ? 0 : 3), 'text-anchor': bs.horiz ? 'middle' : 'end',
+        'font-size': 9, 'font-weight': 800, fill: roomColor(bs.k), 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke', opacity: lit ? 1 : 0.2,
+      });
+      tx.textContent = ROOM_LETTERS[bs.k] || String(bs.k + 1);
+      target.appendChild(tx);
     });
 
     // 스냅 안내선
@@ -5079,10 +5298,10 @@
     document.getElementById(id).addEventListener('change', () => { fpLayout(true); fpSave(); drawFeedPlan(); });
   });
   document.getElementById('fpPodDir').addEventListener('change', e => {
-    // POD를 세로로 세우면 홀이 가로로 길어지니, 전기실도 긴 변인 좌·우로 옮겨 준다
     const toCol = e.target.value === 'col';
     const sideSel = document.getElementById('fpRoomSide');
-    const map = toCol ? { bottom: 'left', split: 'sides' } : { left: 'bottom', sides: 'split' };
+    // 열의 끝에서 급전해야 줄기가 곧장 닿는다: 가로 열은 좌·우, 세로 열은 위·아래
+    const map = toCol ? { left: 'bottom', sides: 'split' } : { bottom: 'left', split: 'sides' };
     if (map[sideSel.value]) sideSel.value = map[sideSel.value];
     fpLayout(true); fpSave(); drawFeedPlan();
   });
