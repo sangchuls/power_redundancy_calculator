@@ -360,6 +360,10 @@
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       h_fp_title: '기준층 평면 스터디',
+      label_fpPodDir: 'POD 방향',
+      fp_pod_row: '가로 (열이 좌우로)',
+      fp_pod_col: '세로 (열이 위아래로)',
+      fp_rot_all: '전체 회전',
       h_fp_desc: '위 계통의 전기실·POD를 실제 축척의 블럭으로 깔고, 옮기고 돌려가며 기준층 평면을 잡습니다 — 급전 회선은 따라다닙니다',
       label_fpRoomW: '전기실 크기 W (mm)',
       label_fpRoomD: '전기실 크기 D (mm)',
@@ -894,6 +898,10 @@
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       h_fp_title: 'Typical floor study',
+      label_fpPodDir: 'POD direction',
+      fp_pod_row: 'Across (rows run left to right)',
+      fp_pod_col: 'Upright (rows run top to bottom)',
+      fp_rot_all: 'Rotate all',
       h_fp_desc: 'Lays the electrical rooms and PODs of the scheme above as blocks at real scale — move and turn them to work out the floor, and the feeders follow',
       label_fpRoomW: 'Electrical room W (mm)',
       label_fpRoomD: 'Electrical room D (mm)',
@@ -3682,11 +3690,18 @@
     let cl = null, d = null;
     try { d = hallPlanData(); cl = hallCluster(d); } catch (e) {}
     const unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
-    const cols = cl ? cl.cols : Math.min(3, fpTopo.units);
     const service = cl ? cl.service : 2000, gap = cl ? cl.gap : 2400;
-    const rowsN = Math.ceil(fpTopo.units / Math.max(1, cols));
-    const hallW = service * 2 + cols * unitW + (cols - 1) * gap;
-    const hallD = service * 2 + rowsN * unitD + (rowsN - 1) * gap;
+    // POD를 세로로 세우면 유닛 배열도 그대로 뒤집는다 — 홀이 가로로 길어진다
+    const podCol = ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
+    const baseCols = cl ? cl.cols : Math.min(3, fpTopo.units);
+    const baseRows = Math.ceil(fpTopo.units / Math.max(1, baseCols));
+    const cols = podCol ? baseRows : baseCols;
+    const rowsN = podCol ? baseCols : baseRows;
+    // 유닛 한 칸이 바닥에서 차지하는 크기
+    const footW = podCol ? unitD : unitW;
+    const footH = podCol ? unitW : unitD;
+    const hallW = service * 2 + cols * footW + (cols - 1) * gap;
+    const hallD = service * 2 + rowsN * footH + (rowsN - 1) * gap;
     const put = (id, box) => { if (force || !fpBlocks[id]) fpBlocks[id] = Object.assign({ rot: 0 }, box); };
 
     put('hall', { x: 0, y: 0, w: hallW, h: hallD });
@@ -3694,12 +3709,23 @@
 
     const split = Math.max(1, fpTopo.split);
     const branchGap = 600;
-    const branchH = (unitD - (split - 1) * branchGap) / split;
+    const branchH = (unitD - (split - 1) * branchGap) / split;   // 분할 가지 하나의 두께
     fpTopo.pods.forEach(pod => {
       const col = pod.unit % cols, row = Math.floor(pod.unit / cols);
-      const ux = service + col * (unitW + gap);
-      const uy = service + row * (unitD + gap) + pod.branch * (branchH + branchGap);
-      put('pod-' + pod.p, { x: ux, y: uy, w: unitW, h: branchH });
+      const ux = service + col * (footW + gap);
+      const uy = service + row * (footH + gap);
+      const off = pod.branch * (branchH + branchGap);
+      let box, rot;
+      if (podCol) {
+        // 세로: 열 길이가 위아래로, 가지는 좌우로 선다. 글씨도 같이 눕도록 90도를 준다.
+        const cx = ux + off + branchH / 2, cy = uy + unitW / 2;
+        box = { x: cx - unitW / 2, y: cy - branchH / 2, w: unitW, h: branchH };
+        rot = 90;
+      } else {
+        box = { x: ux, y: uy + off, w: unitW, h: branchH };
+        rot = 0;
+      }
+      if (force || !fpBlocks['pod-' + pod.p]) fpBlocks['pod-' + pod.p] = Object.assign({ rot: rot }, box);
     });
 
     // 전기실 — 세트를 섞지 않고 줄로 세운다
@@ -4136,6 +4162,29 @@
     if (dIn) { dIn.value = b ? Math.round(b.h) : ''; dIn.disabled = !b; }
   }
 
+  // 깔아 놓은 전체를 한꺼번에 돌린다 — 외곽 중심을 축으로 블럭 자리와 각도를 같이 돌린다
+  function fpRotateAll(step) {
+    const ids = Object.keys(fpBlocks).filter(id => fpBlocks[id]);
+    if (!ids.length) return;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    ids.forEach(id => {
+      const a = fpAabb(fpBlocks[id]);
+      x0 = Math.min(x0, a.x); y0 = Math.min(y0, a.y);
+      x1 = Math.max(x1, a.x + a.w); y1 = Math.max(y1, a.y + a.h);
+    });
+    const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const th = step * Math.PI / 180, cos = Math.cos(th), sin = Math.sin(th);
+    ids.forEach(id => {
+      const b = fpBlocks[id];
+      const bx = b.x + b.w / 2 - cx, by = b.y + b.h / 2 - cy;
+      const nx = cx + bx * cos - by * sin, ny = cy + bx * sin + by * cos;
+      b.rot = (fpRotOf(b) + step + 360) % 360;
+      b.x = Math.round(nx - b.w / 2);
+      b.y = Math.round(ny - b.h / 2);
+    });
+    fpSave(); drawFeedPlan();
+  }
+
   function fpRotateSel(step) {
     if (!fpSel || !fpBlocks[fpSel]) return;
     fpBlocks[fpSel].rot = (fpRotOf(fpBlocks[fpSel]) + step + 360) % 360;
@@ -4209,6 +4258,8 @@
   });
   document.getElementById('fpRotL').addEventListener('click', () => fpRotateSel(-90));
   document.getElementById('fpRotR').addEventListener('click', () => fpRotateSel(90));
+  document.getElementById('fpRotAllL').addEventListener('click', () => fpRotateAll(-90));
+  document.getElementById('fpRotAllR').addEventListener('click', () => fpRotateAll(90));
   ['fpW', 'fpD'].forEach(id => {
     document.getElementById(id).addEventListener('input', () => {
       const b = fpSel ? fpBlocks[fpSel] : null;
@@ -4223,6 +4274,14 @@
   });
   ['fpRoomW', 'fpRoomD', 'fpCorr', 'fpRoomSide'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => { fpLayout(true); fpSave(); drawFeedPlan(); });
+  });
+  document.getElementById('fpPodDir').addEventListener('change', e => {
+    // POD를 세로로 세우면 홀이 가로로 길어지니, 전기실도 긴 변인 좌·우로 옮겨 준다
+    const toCol = e.target.value === 'col';
+    const sideSel = document.getElementById('fpRoomSide');
+    const map = toCol ? { bottom: 'left', split: 'sides' } : { left: 'bottom', sides: 'split' };
+    if (map[sideSel.value]) sideSel.value = map[sideSel.value];
+    fpLayout(true); fpSave(); drawFeedPlan();
   });
 
   // ===== ⑥ 데이터홀 평면 검토 =====

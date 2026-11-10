@@ -334,12 +334,19 @@
         <input type="number" id="fpRoomD" value="9000" step="500" min="2000">
       </div>
       <div class="field">
+        <label for="fpPodDir" data-i18n="label_fpPodDir">POD 방향</label>
+        <select id="fpPodDir">
+          <option value="col" data-i18n="fp_pod_col" selected>세로 (열이 위아래로)</option>
+          <option value="row" data-i18n="fp_pod_row">가로 (열이 좌우로)</option>
+        </select>
+      </div>
+      <div class="field">
         <label for="fpRoomSide" data-i18n="label_fpRoomSide">전기실 배치</label>
         <select id="fpRoomSide">
           <option value="bottom" data-i18n="fp_side_bottom">홀 아래 한 줄</option>
-          <option value="split" data-i18n="fp_side_split" selected>세트별 위·아래</option>
+          <option value="split" data-i18n="fp_side_split">세트별 위·아래</option>
           <option value="left" data-i18n="fp_side_left">홀 왼쪽 한 줄</option>
-          <option value="sides" data-i18n="fp_side_sides">세트별 좌·우</option>
+          <option value="sides" data-i18n="fp_side_sides" selected>세트별 좌·우</option>
         </select>
       </div>
       <div class="field">
@@ -360,6 +367,8 @@
       <input type="number" id="fpD" min="1000" step="500" title="D">
       <button class="quick-btn" id="fpRotL" title="-90°">⟲ 90°</button>
       <button class="quick-btn" id="fpRotR" title="+90°">⟳ 90°</button>
+      <button class="quick-btn" id="fpRotAllL" title="-90°"><span data-i18n="fp_rot_all">전체 회전</span> ⟲</button>
+      <button class="quick-btn" id="fpRotAllR" title="+90°">⟳</button>
       <label class="plan-check"><input type="checkbox" id="fpSnap" checked> <span data-i18n="plan_snap">격자 맞춤</span></label>
       <label class="plan-check"><input type="checkbox" id="fpMagnet" checked> <span data-i18n="plan_magnet">블럭 붙이기</span></label>
       <label class="plan-check"><input type="checkbox" id="fpShowHall" checked> <span data-i18n="fp_show_hall">데이터홀 외곽</span></label>
