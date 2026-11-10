@@ -341,6 +341,17 @@
         </select>
       </div>
       <div class="field">
+        <label for="fpUnitRows" data-i18n="label_fpUnitRows">POD 유닛 타입</label>
+        <select id="fpUnitRows">
+          <option value="0" data-i18n="fp_unit_follow" selected>⑥에서 고른 열 수</option>
+          <option value="1">1열</option>
+          <option value="2">2열</option>
+          <option value="3">3열</option>
+          <option value="4">4열</option>
+        </select>
+        <div class="hint" id="fpUnitNote"></div>
+      </div>
+      <div class="field">
         <label for="fpRoomSide" data-i18n="label_fpRoomSide">전기실 배치</label>
         <select id="fpRoomSide">
           <option value="bottom" data-i18n="fp_side_bottom">홀 아래 한 줄</option>
@@ -372,6 +383,7 @@
       <label class="plan-check"><input type="checkbox" id="fpSnap" checked> <span data-i18n="plan_snap">격자 맞춤</span></label>
       <label class="plan-check"><input type="checkbox" id="fpMagnet" checked> <span data-i18n="plan_magnet">블럭 붙이기</span></label>
       <label class="plan-check"><input type="checkbox" id="fpShowHall" checked> <span data-i18n="fp_show_hall">데이터홀 외곽</span></label>
+      <label class="plan-check"><input type="checkbox" id="fpShowRacks" checked> <span data-i18n="fp_show_racks">유닛 내부(랙 열·통로)</span></label>
     </div>
     <div class="diagram-wrap">
       <div class="zoom-controls">

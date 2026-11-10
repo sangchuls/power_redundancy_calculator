@@ -360,6 +360,10 @@
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       h_fp_title: '기준층 평면 스터디',
+      label_fpUnitRows: 'POD 유닛 타입',
+      fp_unit_follow: '⑥에서 고른 열 수',
+      fp_show_racks: '유닛 내부(랙 열·통로)',
+      fp_unit_note: '{rows}열 × {perRow}대 · 유닛 {w}×{d}mm · 블럭 {seg}mm({split}분할)',
       label_fpPodDir: 'POD 방향',
       fp_pod_row: '가로 (열이 좌우로)',
       fp_pod_col: '세로 (열이 위아래로)',
@@ -898,6 +902,10 @@
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       h_fp_title: 'Typical floor study',
+      label_fpUnitRows: 'POD unit type',
+      fp_unit_follow: 'Follow the row count in \u2465',
+      fp_show_racks: 'Unit interior (rows and aisles)',
+      fp_unit_note: '{rows} rows x {perRow} · unit {w}x{d}mm · block {seg}mm (split {split})',
       label_fpPodDir: 'POD direction',
       fp_pod_row: 'Across (rows run left to right)',
       fp_pod_col: 'Upright (rows run top to bottom)',
@@ -3687,14 +3695,13 @@
 
   function fpLayout(force) {
     if (!fpTopo) return;
-    let cl = null, d = null;
-    try { d = hallPlanData(); cl = hallCluster(d); } catch (e) {}
-    const unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
-    const service = cl ? cl.service : 2000, gap = cl ? cl.gap : 2400;
+    const g0 = fpPodGeom();
+    const unitW = g0.unitW, unitD = g0.unitD;
+    const service = g0.service, gap = g0.gap;
     // POD를 세로로 세우면 유닛 배열도 그대로 뒤집는다 — 홀이 가로로 길어진다
     const podCol = ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
-    const baseCols = cl ? cl.cols : Math.min(3, fpTopo.units);
-    const baseRows = Math.ceil(fpTopo.units / Math.max(1, baseCols));
+    const baseCols = g0.cols;
+    const baseRows = Math.max(1, Math.ceil(fpTopo.units / Math.max(1, baseCols)));
     const cols = podCol ? baseRows : baseCols;
     const rowsN = podCol ? baseCols : baseRows;
     // 유닛 한 칸이 바닥에서 차지하는 크기
@@ -3774,15 +3781,56 @@
   function fpPodGeom() {
     let cl = null, d = null;
     try { d = hallPlanData(); cl = hallCluster(d); } catch (e) {}
-    const unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
     const split = Math.max(1, fpTopo ? fpTopo.split : 1);
+    const units = fpTopo ? fpTopo.units : 1;
+    // ⑥의 '열 수 비교'에서 고른 타입으로 유닛을 잡는다 (0이면 ⑥의 현재 선택을 그대로 따른다)
+    const pick = Math.round(fpNum('fpUnitRows', 0));
+    let unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
+    let rowsIn = d ? d.rows : 1, perRow = d ? d.perRow : 1, rowLen = d ? d.rowLen : unitW;
+    if (pick >= 1 && d) {
+      try {
+        const opt = hallRowOptionFor(hallRacks, pick);
+        const u = hallUnitSize(opt.rowLen, pick, d.rackD, d.cold, d.hot, d.perim,
+          hallIncludeCdu(), d.manifoldW, d.cduW);
+        unitW = u.w; unitD = u.d;
+        rowsIn = pick; perRow = opt.perRow; rowLen = opt.rowLen;
+      } catch (e) {}
+    }
+    // 유닛 모양이 바뀌면 홀의 가로·세로 칸 수도 다시 잡는다 (⑥의 auto 규칙과 같다)
+    let cols = cl ? cl.cols : 1, rows = cl ? cl.rows : 1;
+    if (pick >= 1) {
+      const mode = (document.getElementById('hallGrid') || {}).value || 'auto';
+      if (mode === 'row') { cols = units; rows = 1; }
+      else if (mode === 'col') { cols = 1; rows = units; }
+      else {
+        cols = Math.min(units, Math.max(1, Math.round(Math.sqrt(units * (unitD / Math.max(1, unitW))))));
+        rows = Math.ceil(units / Math.max(1, cols));
+      }
+    }
     return {
       cl: cl, d: d, unitW: unitW, unitD: unitD, split: split,
       segW: unitW / split,            // 가지 하나가 맡는 열 길이
       segD: unitD,
-      cols: cl ? cl.cols : 1, rows: cl ? cl.rows : 1,
+      rowsIn: rowsIn, perRow: perRow, rowLen: rowLen,
+      rackD: d ? d.rackD : 1200, rackW: d ? d.rackW : 600,
+      cold: d ? d.cold : 1200, hot: d ? d.hot : 1000,
+      cduW: d ? d.cduW : 1500, manifoldW: d ? d.manifoldW : 800,
+      withCdu: hallIncludeCdu(),
+      cols: cols, rows: rows,
       service: cl ? cl.service : 2000, gap: cl ? cl.gap : 2400,
     };
+  }
+
+  // 유닛 타입 안내 — 지금 쓰는 유닛이 어떤 구성인지 한 줄로
+  function fpUnitNote() {
+    const el = document.getElementById('fpUnitNote');
+    if (!el || !fpTopo) return;
+    const g = fpPodGeom();
+    el.textContent = t('fp_unit_note', {
+      rows: g.rowsIn, perRow: g.perRow,
+      w: Math.round(g.unitW), d: Math.round(g.unitD),
+      seg: Math.round(g.segW), split: g.split,
+    });
   }
 
   // 랙 스터디가 바뀌면 POD 블럭의 치수도 따라간다.
@@ -3828,6 +3876,7 @@
       const podCol = ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
       const cols = podCol ? g.rows : g.cols;
       const rowsN = podCol ? g.cols : g.rows;
+      void 0;
       const footW = podCol ? g.unitD : g.unitW;
       const footH = podCol ? g.unitW : g.unitD;
       const hw = g.service * 2 + cols * footW + (cols - 1) * g.gap;
@@ -4080,6 +4129,7 @@
     }
 
     fpZoom.reset();
+    fpUnitNote();
     fpRenderSummary(spanW, spanD, totalLen, drawn);
     fpRenderLegend();
     fpSyncFields();
@@ -4104,6 +4154,9 @@
       stroke: it.color, 'stroke-width': selected ? 2.8 : (it.kind === 'hall' ? 1.6 : 1.8),
       'stroke-dasharray': it.kind === 'hall' ? '10 6' : '',
     }));
+
+    // POD 블럭 안에 랙 열과 통로를 깔아, 블럭이 '유닛'으로 읽히게 한다
+    if (it.kind === 'pod' && fpOn('fpShowRacks')) fpDrawUnit(grp, it, X, Y, S);
 
     const cx = x + w / 2;
     const lines = [it.label, it.sub, it.sub2].filter(Boolean);
@@ -4196,6 +4249,39 @@
       });
       deg.textContent = Math.round(rot) + '\u00B0';
       hgrp.appendChild(deg);
+    }
+  }
+
+  // 블럭 안쪽에 랙 열과 콜드/핫 통로를 깐다. 블럭 제 좌표(mm)로 그리므로 회전도 같이 따라간다.
+  function fpDrawUnit(grp, it, X, Y, S) {
+    const b = it.b;
+    const g = fpPodGeom();
+    if (!g.rowsIn || S(g.rackD) < 1.2) return;
+    const navy = '#3A2E75';
+    // 열 끝의 매니폴드·CDU는 유닛 폭에 포함돼 있으므로 랙이 차지하는 길이만 따로 센다
+    const tail = g.withCdu ? (g.manifoldW + g.cduW + 1200) : 0;
+    const rackLen = Math.max(0, b.w - (g.split === 1 ? tail : 0));
+    let yy = 0;
+    for (let r = 0; r < g.rowsIn; r++) {
+      grp.appendChild(svgEl('rect', {
+        x: X(b.x), y: Y(b.y + yy), width: S(rackLen), height: S(g.rackD),
+        fill: hexToRgba(navy, 0.3), stroke: hexToRgba(navy, 0.55), 'stroke-width': 0.6,
+      }));
+      if (r < g.rowsIn - 1) {
+        const isHot = r % 2 === 0;
+        const gapMM = isHot ? g.hot : g.cold;
+        grp.appendChild(svgEl('rect', {
+          x: X(b.x), y: Y(b.y + yy + g.rackD), width: S(rackLen), height: S(gapMM),
+          fill: hexToRgba(isHot ? '#C0392B' : '#1F7FB5', 0.12), stroke: 'none',
+        }));
+        yy += g.rackD + gapMM;
+      }
+    }
+    if (tail && g.split === 1 && S(tail) > 2) {
+      grp.appendChild(svgEl('rect', {
+        x: X(b.x + b.w - g.cduW), y: Y(b.y), width: S(g.cduW), height: S(b.h),
+        fill: hexToRgba('#0F6E56', 0.22), stroke: hexToRgba('#0F6E56', 0.5), 'stroke-width': 0.6,
+      }));
     }
   }
 
@@ -4344,8 +4430,11 @@
       fpSave(); drawFeedPlan();
     });
   });
-  ['fpSnap', 'fpMagnet', 'fpShowHall', 'fpRoute'].forEach(id => {
+  ['fpSnap', 'fpMagnet', 'fpShowHall', 'fpShowRacks', 'fpRoute'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => drawFeedPlan());
+  });
+  document.getElementById('fpUnitRows').addEventListener('change', () => {
+    fpLayout(true); fpSave(); drawFeedPlan();
   });
   ['fpRoomW', 'fpRoomD', 'fpCorr', 'fpRoomSide'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => { fpLayout(true); fpSave(); drawFeedPlan(); });
