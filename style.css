@@ -527,6 +527,18 @@
   .hall-reading .read-row b { flex: 0 0 72px; font-size: 12px; color: var(--primary); }
   .hall-reading .read-row span { flex: 1 1 auto; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
 
+  /* 냉각 분담 결과 */
+  .cool-result { margin: 12px 0 4px; display: flex; flex-direction: column; gap: 5px; }
+  .cool-row {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 8px 13px; border-left: 2.5px solid var(--primary-light);
+    background: var(--surface); border-radius: 0 10px 10px 0;
+  }
+  .cool-row b { flex: 0 0 86px; font-size: 12px; color: var(--primary); }
+  .cool-row span { flex: 1 1 auto; font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+  .cool-row.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+  .cool-row.warn b, .cool-row.warn span { color: var(--warn); }
+
   /* 설계개요표 (실 일람표) */
   .plan-sched-title {
     font-family: "Jua", sans-serif; font-size: 14px; color: var(--primary);

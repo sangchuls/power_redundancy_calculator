@@ -518,6 +518,70 @@
       </div>
     </div>
 
+    <div class="rack-mix-title" data-i18n="h_cooling">냉각 분담 (AC / LC) — 공랭 FWU와 액랭 CDU 산정</div>
+    <div class="field-row">
+      <div class="field">
+        <label for="coolAc" data-i18n="label_coolAc">AC(공랭) 담당 비율 (%)</label>
+        <input type="number" id="coolAc" value="100" step="5" min="0" max="100" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="coolAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_coolAuto">랙 밀도로 자동 산정</span>
+          </label>
+          <span id="coolAcNote"></span>
+        </div>
+      </div>
+      <div class="field">
+        <label data-i18n="label_coolLc">LC(액랭) 담당 비율 (%)</label>
+        <input type="text" id="coolLc" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+      </div>
+      <div class="field">
+        <label for="coolCfm" data-i18n="label_coolCfm">CFM / kW</label>
+        <input type="number" id="coolCfm" value="170" step="5" min="20">
+      </div>
+      <div class="field">
+        <label for="coolMargin" data-i18n="label_coolMargin">여유율 (×)</label>
+        <input type="number" id="coolMargin" value="1.1" step="0.05" min="1">
+      </div>
+      <div class="field">
+        <label for="coolCduSpare" data-i18n="label_coolCduSpare">CDU 예비 (대)</label>
+        <input type="number" id="coolCduSpare" value="1" step="1" min="0">
+      </div>
+    </div>
+
+    <div class="field-row" style="margin-top:12px;">
+      <div class="field">
+        <label for="coolFwuN" data-i18n="label_coolFwuN">FWU 유효 대수 (N)</label>
+        <input type="number" id="coolFwuN" value="16" step="1" min="1" disabled style="background:var(--primary-bg);">
+        <div class="hint">
+          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
+            <input type="checkbox" id="coolFwuAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_coolFwuAuto">열 길이에 맞춰 자동</span>
+          </label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="coolFwuSpare" data-i18n="label_coolFwuSpare">FWU 예비 (대)</label>
+        <input type="number" id="coolFwuSpare" value="2" step="1" min="0">
+      </div>
+      <div class="field">
+        <label for="coolOpenW" data-i18n="label_coolOpenW">FWU 개구부 폭 (m)</label>
+        <input type="number" id="coolOpenW" value="2.4" step="0.1" min="0.3">
+      </div>
+      <div class="field">
+        <label for="coolOpenRatio" data-i18n="label_coolOpenRatio">유효 개구율</label>
+        <input type="number" id="coolOpenRatio" value="0.75" step="0.05" min="0.1" max="1">
+      </div>
+      <div class="field">
+        <label for="coolSa" data-i18n="label_coolSa">SA 풍속 (m/s)</label>
+        <input type="number" id="coolSa" value="2.5" step="0.1" min="0.5">
+      </div>
+      <div class="field">
+        <label for="coolTiers" data-i18n="label_coolTiers">FWU 적층 (단)</label>
+        <input type="number" id="coolTiers" value="2" step="1" min="1" max="3">
+      </div>
+    </div>
+
+    <div id="coolResult" class="cool-result"></div>
+
     <div class="hint" id="hallSummary" style="margin:12px 0 4px; font-weight:700; color:var(--primary);"></div>
     <div id="hallCompare" class="hall-compare"></div>
     <div id="hallReading" class="hall-reading"></div>
@@ -526,6 +590,7 @@
       <button class="mode-btn active normal" id="hallPlanBtn" data-i18n="hall_view_plan">POD 평면</button>
       <button class="mode-btn" id="hallSectBtn" data-i18n="hall_view_sect">단면</button>
       <button class="mode-btn" id="hallClusterBtn" data-i18n="hall_view_cluster">데이터홀 배치</button>
+      <button class="mode-btn" id="hallCoolBtn" data-i18n="hall_view_cool">냉각 단면</button>
     </div>
 
     <div class="diagram-wrap">

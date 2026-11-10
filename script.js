@@ -67,7 +67,7 @@
       hall_read_mech_h: "설비 (기계)",
       hall_read_arch_h: "건축",
       hall_read_elec: "IT {mw}MW, PUE 1.2 가정 시 시설전력 약 {fac}MW. 열당 부하 {rowKW}kW × {rows}열 → 열 단위 busway·분전 용량 기준. 열 끝에 전력 랙(사이드카/In-Row) 자리 확보를 검토.",
-      hall_read_mech: "수랭 열량 약 {kw}kW (IT의 90% 가정). {each}kW CDU 기준 가동 {cdu}대 + 예비 1대 = {total}대. 공급·환수 헤더가 열마다 필요 — 천장·바닥 배관 경로가 busway·광케이블과 겹치지 않게 계획.",
+      hall_read_mech: "액랭 분담 {lc}% → 수랭 열량 약 {kw}kW. {each}kW CDU 기준 가동 {cdu}대 + 예비 {spare}대 = {total}대. 공랭 분담 {ac}%는 FWU {fwu}대가 받는다 — 공급·환수 헤더와 급기 경로가 busway·광케이블과 겹치지 않게 계획.",
       hall_read_arch: "외곽 약 {w}×{depth}m = {area}㎡ (전기실·매니폴드·CDU 포함, 치수 가정). {rows}열 × {perRow}대 구성 — 열이 적을수록 길어지고 끝단 간 거리가 커진다.",
       h_hall_desc: "POD 1개의 랙 배치와 기계·전기 평면/단면을 위 설정값에서 자동으로 작도합니다",
       label_hallPod: "검토할 POD",
@@ -90,6 +90,37 @@
       hall_cool_hybrid: "DLC로 주열 제거 + 공조기로 잔열 처리 — 80kW/랙 내외",
       hall_view_plan: "POD 평면",
       hall_view_cluster: "데이터홀 배치",
+      h_cooling: "냉각 분담 (AC / LC) — 공랭 FWU와 액랭 CDU 산정",
+      hall_view_cool: "냉각 단면",
+      label_coolAc: "AC(공랭) 담당 비율 (%)",
+      label_coolAuto: "랙 밀도로 자동 산정",
+      label_coolLc: "LC(액랭) 담당 비율 (%)",
+      label_coolCfm: "CFM / kW",
+      label_coolMargin: "여유율 (×)",
+      label_coolFwuN: "FWU 유효 대수 (N)",
+      label_coolFwuAuto: "열 길이에 맞춰 자동",
+      label_coolFwuSpare: "FWU 예비 (대)",
+      label_coolOpenW: "FWU 개구부 폭 (m)",
+      label_coolOpenRatio: "유효 개구율",
+      label_coolSa: "SA 풍속 (m/s)",
+      label_coolTiers: "FWU 적층 (단)",
+      label_coolCduSpare: "CDU 예비 (대)",
+      cool_ac_auto: "— 랙 {density}kW 기준 자동 산정. 직접 정하려면 체크 해제.",
+      cool_ac_manual: "— 직접 입력 (랙 {density}kW)",
+      cool_h_split: "분담",
+      cool_h_air: "공랭 (AC)",
+      cool_h_height: "FWU 높이",
+      cool_h_liquid: "액랭 (LC)",
+      cool_r_split: "랙 {density}kW/대 → AC {ac}% · LC {lc}% = {acKW}kW · {lcKW}kW",
+      cool_r_air: "{kw}kW × {cfm}CFM/kW × 1.699 × {margin} = {cmh} CMH. FWU {n}대 + 예비 {spare}대 = {total}대, {tiers}단 적층 → 단당 {per} CMH",
+      cool_r_air_none: "공랭 분담 0% — FWU 없이 전량 액랭으로 처리합니다.",
+      cool_r_height: "1단 {h}m × {tiers}단 = FWU {total}m. 순층고 {clear}m − (랙 {rack}m + FWU {total}m) = RA 공간 {ra}m",
+      cool_r_liquid: "{kw}kW × {margin} ÷ {each}kW = 가동 {need}대 + 예비 {spare}대 = CDU {total}대",
+      cool_r_liquid_none: "액랭 분담 0% — CDU 없이 전량 공랭으로 처리합니다.",
+      cool_fwu_tier: "FWU {n}단 · H {h}m · SA {sa}m/s",
+      cool_fwu_short: "{n}단 H {h}m",
+      cool_ra_space: "RA 공간 {m}m",
+      cool_ra_over: "⚠ 높이 {m}m 초과 — 층고를 올리거나 적층·풍속을 조정하세요",
       label_hallUnits: "홀 내 POD 유닛 수",
       label_hallGrid: "유닛 배열",
       label_hallInclude: "홀 외곽에 포함",
@@ -549,7 +580,7 @@
       hall_read_mech_h: "Mechanical",
       hall_read_arch_h: "Architectural",
       hall_read_elec: "{mw}MW IT, about {fac}MW facility at PUE 1.2. {rowKW}kW per row across {rows} row(s) sets the busway and distribution rating; allow for power racks at the row ends.",
-      hall_read_mech: "About {kw}kW to liquid (90% of IT). At {each}kW per CDU that is {cdu} running plus 1 spare, {total} in all. Supply and return headers run per row — keep them clear of the busway and fibre routes.",
+      hall_read_mech: "{lc}% liquid → about {kw}kW to water. At {each}kW per CDU that is {cdu} running plus {spare} spare, {total} in all; the {ac}% air share is carried by {fwu} FWUs. Keep headers and supply-air routes clear of the busway and fibre.",
       hall_read_arch: "Roughly {w}×{depth}m = {area} m² including the electrical room, manifold and CDUs. {rows} row(s) of {perRow} — fewer rows run longer and spread the ends further apart.",
       h_hall_desc: "Draws the rack layout and the mechanical/electrical plan and section for one POD from the settings above",
       label_hallPod: "POD to review",
@@ -573,6 +604,37 @@
       hall_cool_hybrid: "DLC takes the bulk, air trims the rest — around 80kW per rack",
       hall_view_plan: "POD plan",
       hall_view_cluster: "Hall layout",
+      h_cooling: "Cooling split (AC / LC) — sizing the FWUs and CDUs",
+      hall_view_cool: "Cooling section",
+      label_coolAc: "Air cooling share (%)",
+      label_coolAuto: "From rack density",
+      label_coolLc: "Liquid cooling share (%)",
+      label_coolCfm: "CFM / kW",
+      label_coolMargin: "Margin (×)",
+      label_coolFwuN: "FWUs in duty (N)",
+      label_coolFwuAuto: "Fit to the row length",
+      label_coolFwuSpare: "FWU spares",
+      label_coolOpenW: "FWU face width (m)",
+      label_coolOpenRatio: "Free area ratio",
+      label_coolSa: "Supply velocity (m/s)",
+      label_coolTiers: "FWU tiers",
+      label_coolCduSpare: "CDU spares",
+      cool_ac_auto: "— from {density}kW per rack. Uncheck to set it yourself.",
+      cool_ac_manual: "— entered by hand ({density}kW per rack)",
+      cool_h_split: "Split",
+      cool_h_air: "Air (AC)",
+      cool_h_height: "FWU height",
+      cool_h_liquid: "Liquid (LC)",
+      cool_r_split: "{density}kW per rack → AC {ac}% · LC {lc}% = {acKW}kW · {lcKW}kW",
+      cool_r_air: "{kw}kW × {cfm} CFM/kW × 1.699 × {margin} = {cmh} CMH. {n} FWUs + {spare} spare = {total}, {tiers} tiers → {per} CMH per tier",
+      cool_r_air_none: "No air share — the whole load goes to liquid.",
+      cool_r_height: "{h}m per tier × {tiers} = {total}m of FWU. Clear height {clear}m − (rack {rack}m + FWU {total}m) = {ra}m return-air space",
+      cool_r_liquid: "{kw}kW × {margin} ÷ {each}kW = {need} running + {spare} spare = {total} CDUs",
+      cool_r_liquid_none: "No liquid share — the whole load goes to air.",
+      cool_fwu_tier: "FWU tier {n} · H {h}m · SA {sa}m/s",
+      cool_fwu_short: "T{n} H {h}m",
+      cool_ra_space: "Return air {m}m",
+      cool_ra_over: "⚠ {m}m over — raise the floor height or change the tiers or velocity",
       label_hallUnits: "POD units in the hall",
       label_hallGrid: "Unit arrangement",
       label_hallInclude: "Include in the hall outline",
@@ -4138,6 +4200,304 @@
       });
   }
 
+  // ----- 냉각 분담 (AC / LC) -----
+  // 공랭(AC)은 풍량으로, 액랭(LC)은 CDU 대수로 떨어진다.
+  //   풍량(CMH) = IT × AC% × CFM/kW × 1.699 × 여유율        (1 CFM = 1.699 m³/h)
+  //   FWU 1단 높이 = 단당 풍량 ÷ (개구부폭 × 유효개구율 × SA풍속 × 3600)
+  //   RA 공간      = 순층고 − 장비 총고
+  //   CDU 대수     = ⌈IT × LC% × 여유율 ÷ CDU용량⌉ + 예비
+  const CFM_TO_CMH = 1.699;
+
+  // 랙 밀도에서 공랭이 감당할 만한 몫을 가늠한다 (구간 사이는 직선 보간).
+  // 설계 관행에서 끌어낸 기준값이지 제조사 확정값이 아니다.
+  const AC_SHARE_POINTS = [[20, 100], [40, 75], [70, 40], [110, 18], [160, 10]];
+  function acShareFromDensity(kwPerRack) {
+    const pts = AC_SHARE_POINTS;
+    if (kwPerRack <= pts[0][0]) return 100;
+    if (kwPerRack >= pts[pts.length - 1][0]) return pts[pts.length - 1][1];
+    for (let i = 1; i < pts.length; i++) {
+      const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+      if (kwPerRack <= x1) return y0 + (y1 - y0) * (kwPerRack - x0) / (x1 - x0);
+    }
+    return 100;
+  }
+
+  function coolPlan(d) {
+    const auto = (document.getElementById('coolAuto') || {}).checked;
+    const acInput = document.getElementById('coolAc');
+    const density = d.racks ? d.podKW / d.racks : 0;
+    let ac = auto ? Math.round(acShareFromDensity(density)) : (parseFloat(acInput && acInput.value) || 0);
+    ac = Math.max(0, Math.min(100, ac));
+    if (acInput) {
+      acInput.disabled = auto;
+      acInput.style.background = auto ? 'var(--primary-bg)' : '';
+      if (auto) acInput.value = ac;
+    }
+    const lc = 100 - ac;
+
+    const cfm = hallNum('coolCfm', 170);
+    const margin = hallNum('coolMargin', 1.1);
+    const openW = hallNum('coolOpenW', 2.4);
+    const openRatio = Math.min(1, hallNum('coolOpenRatio', 0.75));
+    const sa = hallNum('coolSa', 2.5);
+    const tiers = Math.max(1, Math.round(hallNum('coolTiers', 2)));
+    const fwuSpare = Math.max(0, Math.round(parseFloat((document.getElementById('coolFwuSpare') || {}).value) || 0));
+    const cduSpare = Math.max(0, Math.round(parseFloat((document.getElementById('coolCduSpare') || {}).value) || 0));
+
+    const acKW = d.podKW * ac / 100;
+    const lcKW = d.podKW * lc / 100;
+    const cmh = acKW * cfm * CFM_TO_CMH * margin;
+
+    // 유효 대수: 열 길이에 FWU가 몇 대 들어가는지 (양쪽 갤러리 기준 ×2)
+    const fwuAuto = (document.getElementById('coolFwuAuto') || {}).checked;
+    const fitN = Math.max(1, Math.floor((d.rowLen / 1000) / openW) * 2);
+    const nInputEl = document.getElementById('coolFwuN');
+    let n = fwuAuto ? fitN : Math.max(1, Math.round(parseFloat(nInputEl && nInputEl.value) || fitN));
+    if (nInputEl) {
+      nInputEl.disabled = fwuAuto;
+      nInputEl.style.background = fwuAuto ? 'var(--primary-bg)' : '';
+      if (fwuAuto) nInputEl.value = n;
+    }
+
+    const perTier = (n * tiers) > 0 ? cmh / (n * tiers) : 0;
+    const face = openW * openRatio * sa * 3600;               // 한 단이 1m 높이당 흘릴 수 있는 풍량
+    const tierH = face > 0 ? perTier / face : 0;              // m
+    const totalH = tierH * tiers;
+
+    // 순층고 = 층고 − 슬라브/보 − 이중바닥
+    const clear = (d.ceil - 1200 - d.raised) / 1000;          // m, 이중바닥 위 순높이
+    const rackHm = d.rackH / 1000;
+    const equipH = rackHm + totalH;                           // 랙 + FWU 적층
+    const ra = clear - equipH;
+
+    const cduNeed = lcKW > 0 ? Math.ceil(lcKW * margin / Math.max(1, d.cduKW)) : 0;
+    return {
+      ac, lc, acKW, lcKW, cmh, n, fwuSpare, total: n + fwuSpare, tiers,
+      perTier, tierH, totalH, clear, ra, density, rackHm, equipH,
+      cduNeed, cduSpare, cduTotal: cduNeed ? cduNeed + cduSpare : 0,
+      openW, openRatio, sa, cfm, margin, auto,
+    };
+  }
+
+  function renderCoolResult(d, c) {
+    const box = document.getElementById('coolResult');
+    if (!box) return;
+    const tight = c.ra < 0.5;
+    const rows = [
+      ['split', t('cool_r_split', {
+        ac: fmtN(c.ac), lc: fmtN(c.lc), acKW: fmtN(Math.round(c.acKW)), lcKW: fmtN(Math.round(c.lcKW)),
+        density: fmtN(Math.round(c.density)),
+      })],
+      ['air', c.acKW > 0 ? t('cool_r_air', {
+        kw: fmtN(Math.round(c.acKW)), cfm: fmtN(c.cfm), margin: fmtN(c.margin, 2),
+        cmh: fmtN(Math.round(c.cmh)), n: c.n, spare: c.fwuSpare, total: c.total,
+        tiers: c.tiers, per: fmtN(Math.round(c.perTier)),
+      }) : t('cool_r_air_none')],
+      ['height', c.acKW > 0 ? t('cool_r_height', {
+        h: fmtN(Math.round(c.tierH * 100) / 100, 2), tiers: c.tiers,
+        total: fmtN(Math.round(c.totalH * 100) / 100, 2),
+        clear: fmtN(Math.round(c.clear * 100) / 100, 2),
+        rack: fmtN(Math.round(c.rackHm * 100) / 100, 2),
+        ra: fmtN(Math.round(c.ra * 100) / 100, 2),
+      }) : '-'],
+      ['liquid', c.lcKW > 0 ? t('cool_r_liquid', {
+        kw: fmtN(Math.round(c.lcKW)), margin: fmtN(c.margin, 2), each: fmtN(d.cduKW),
+        need: c.cduNeed, spare: c.cduSpare, total: c.cduTotal,
+      }) : t('cool_r_liquid_none')],
+    ];
+    box.innerHTML = '';
+    rows.forEach(([k, text]) => {
+      const div = document.createElement('div');
+      div.className = 'cool-row' + (k === 'height' && tight && c.acKW > 0 ? ' warn' : '');
+      div.innerHTML = `<b>${t('cool_h_' + k)}</b><span>${text}</span>`;
+      box.appendChild(div);
+    });
+    const lcEl = document.getElementById('coolLc');
+    if (lcEl) lcEl.value = fmtN(c.lc) + '%';
+    const acNote = document.getElementById('coolAcNote');
+    if (acNote) acNote.textContent = ' ' + t(c.auto ? 'cool_ac_auto' : 'cool_ac_manual', { density: fmtN(Math.round(c.density)) });
+  }
+
+  // 냉각 단면 — 랙 위에 FWU를 적층하고 SA/RA 경로와 남는 높이를 보여준다
+  // 냉각 단면 — 열을 가로질러 자른 상세 단면. 홀 전체 폭이 아니라 '콜드·랙·핫·랙·콜드 + CDU'
+  // 한 구간만 그려야 0.4m 남짓한 FWU 단 높이가 눈에 들어온다.
+  function coolSpan(d, c) {
+    const gap = 1200;
+    const cdu = c.cduTotal > 0 ? gap + d.cduW : 0;
+    const racks = d.cold + d.rackD + d.hot + d.rackD + d.cold;
+    return { cdu, racks, gap, W: racks + cdu };
+  }
+
+  function drawCoolSection(target, d, c, sc, ox, oy) {
+    const X = mm => ox + mm * sc, S = mm => mm * sc;
+    const base = oy + d.ceil * sc;
+    const Y = mm => base - mm * sc;
+    const navy = '#3A2E75';
+    const span = coolSpan(d, c);
+    const W = span.W;
+    const beam = 1200;
+
+    // 바닥 슬라브
+    target.appendChild(svgEl('rect', { x: X(0), y: Y(0), width: S(W), height: 8, fill: '#8A8072' }));
+    // 실 외곽
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.ceil), width: S(W), height: S(d.ceil),
+      fill: 'none', stroke: '#5A5A5A', 'stroke-width': 2,
+    }));
+    // 상부 슬라브 + 보
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.ceil), width: S(W), height: S(beam),
+      fill: hexToRgba('#8A8072', 0.18), stroke: '#8A8072', 'stroke-width': 0.8,
+    }));
+    // 이중바닥
+    target.appendChild(svgEl('rect', {
+      x: X(0), y: Y(d.raised), width: S(W), height: S(d.raised),
+      fill: hexToRgba('#8A8072', 0.12), stroke: '#8A8072', 'stroke-width': 0.8,
+    }));
+
+    const rackTop = d.raised + d.rackH;
+    const tierMM = Math.max(1, c.tierH * 1000);
+    const equipTop = rackTop + c.totalH * 1000;
+    const raTop = d.ceil - beam;
+
+    // 랙 두 열 (등 맞댐) — 그 사이가 핫, 바깥이 콜드
+    const rowX = [d.cold, d.cold + d.rackD + d.hot];
+    rowX.forEach((rx, k) => {
+      target.appendChild(svgEl('rect', {
+        x: X(rx), y: Y(rackTop), width: S(d.rackD), height: S(d.rackH),
+        fill: hexToRgba(navy, 0.16), stroke: navy, 'stroke-width': 1.2,
+      }));
+      // FWU 적층 — 랙 바로 위
+      for (let i = 0; i < c.tiers; i++) {
+        target.appendChild(svgEl('rect', {
+          x: X(rx), y: Y(rackTop + (i + 1) * tierMM), width: S(d.rackD), height: S(tierMM),
+          fill: hexToRgba('#29A8E0', 0.18), stroke: '#1F7FB5', 'stroke-width': 1.2,
+        }));
+        if (k === 0 && S(tierMM) > 11) {
+          const lab = svgEl('text', {
+            x: X(rx + d.rackD / 2), y: Y(rackTop + (i + 0.5) * tierMM) + 4, 'text-anchor': 'middle',
+            'font-size': 12, 'font-weight': 800, fill: '#1F7FB5', 'font-family': 'sans-serif',
+            stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+          });
+          lab.textContent = t('cool_fwu_short', { n: i + 1, h: fmtN(Math.round(c.tierH * 100) / 100, 2) });
+          target.appendChild(lab);
+        }
+      }
+      // SA — FWU에서 콜드 아일로 내려보내는 흐름
+      const ax = rx + (k === 0 ? -d.cold / 2 : d.rackD + d.cold / 2);
+      target.appendChild(svgEl('path', {
+        d: 'M' + X(ax) + ',' + Y(equipTop) + ' L' + X(ax) + ',' + Y(d.raised + 200),
+        stroke: '#1F7FB5', 'stroke-width': 1.6, 'stroke-dasharray': '6 4', fill: 'none',
+      }));
+      target.appendChild(svgEl('path', {
+        d: 'M' + X(ax - 180) + ',' + Y(d.raised + 600) + ' L' + X(ax) + ',' + Y(d.raised + 200) + ' L' + X(ax + 180) + ',' + Y(d.raised + 600),
+        fill: 'none', stroke: '#1F7FB5', 'stroke-width': 1.6,
+      }));
+      const sal = svgEl('text', {
+        x: X(ax), y: Y(equipTop) + 16, 'text-anchor': 'middle',
+        'font-size': 12, 'font-weight': 800, fill: '#1F7FB5', 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+      });
+      sal.textContent = 'SA ' + fmtN(c.sa, 1) + 'm/s';
+      target.appendChild(sal);
+    });
+
+    // RA — 핫 아일에서 FWU로 올라가는 흐름
+    const hotMid = d.cold + d.rackD + d.hot / 2;
+    target.appendChild(svgEl('path', {
+      d: 'M' + X(hotMid) + ',' + Y(rackTop - 200) + ' L' + X(hotMid) + ',' + Y(equipTop),
+      stroke: '#C0392B', 'stroke-width': 1.6, 'stroke-dasharray': '6 4', fill: 'none',
+    }));
+    target.appendChild(svgEl('path', {
+      d: 'M' + X(hotMid - 180) + ',' + Y(equipTop - 400) + ' L' + X(hotMid) + ',' + Y(equipTop) + ' L' + X(hotMid + 180) + ',' + Y(equipTop - 400),
+      fill: 'none', stroke: '#C0392B', 'stroke-width': 1.6,
+    }));
+    const ral = svgEl('text', {
+      x: X(hotMid), y: Y(rackTop - 300) + 14, 'text-anchor': 'middle',
+      'font-size': 12, 'font-weight': 800, fill: '#C0392B', 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+    });
+    ral.textContent = 'RA';
+    target.appendChild(ral);
+
+    // 랙 표기 — 두 열 가운데에 한 번만
+    const rl = svgEl('text', {
+      x: X(span.racks / 2), y: Y(d.raised + d.rackH * 0.22) + 5, 'text-anchor': 'middle',
+      'font-size': 14, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+      stroke: '#FFFFFF', 'stroke-width': 3.5, 'paint-order': 'stroke',
+    });
+    rl.textContent = t('hall_rack_row', { n: d.perRow, kw: fmtN(Math.round(c.density)) });
+    target.appendChild(rl);
+
+    // RA 공간 (보 밑 환기 경로)
+    if (raTop > equipTop) {
+      target.appendChild(svgEl('rect', {
+        x: X(0), y: Y(raTop), width: S(span.racks), height: S(raTop - equipTop),
+        fill: hexToRgba('#C0392B', 0.07), stroke: 'none',
+      }));
+      const ra = svgEl('text', {
+        x: X(span.racks / 2), y: Y((raTop + equipTop) / 2) + 5, 'text-anchor': 'middle',
+        'font-size': 14, 'font-weight': 800, fill: '#C0392B', 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 3.5, 'paint-order': 'stroke',
+      });
+      ra.textContent = t('cool_ra_space', { m: fmtN(Math.round(c.ra * 100) / 100, 2) });
+      target.appendChild(ra);
+    } else {
+      const over = svgEl('text', {
+        x: X(span.racks / 2), y: Y(raTop) - 10, 'text-anchor': 'middle',
+        'font-size': 14, 'font-weight': 800, fill: '#C0392B', 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 3.5, 'paint-order': 'stroke',
+      });
+      over.textContent = t('cool_ra_over', { m: fmtN(Math.round(-c.ra * 100) / 100, 2) });
+      target.appendChild(over);
+    }
+
+    // CDU — 액랭 몫이 있을 때만 열 옆에
+    if (c.cduTotal > 0) {
+      const cduH = Math.min(2200, d.rackH);
+      const cx = span.racks + span.gap;
+      target.appendChild(svgEl('rect', {
+        x: X(cx), y: Y(d.raised + cduH), width: S(d.cduW), height: S(cduH),
+        fill: hexToRgba('#0F6E56', 0.16), stroke: '#0F6E56', 'stroke-width': 1.2,
+      }));
+      const cl = svgEl('text', {
+        x: X(cx + d.cduW / 2), y: Y(d.raised + cduH / 2) + 4, 'text-anchor': 'middle',
+        'font-size': 13, 'font-weight': 800, fill: '#0F6E56', 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+      });
+      cl.textContent = 'CDU x' + c.cduTotal;
+      target.appendChild(cl);
+    }
+
+    // 세로 치수 — 구간별로 한 줄, 전체는 그 바깥에 한 줄
+    const levels = [0, d.raised, rackTop, equipTop, raTop, d.ceil];
+    const dx1 = X(W) + 36;
+    for (let i = 0; i < levels.length - 1; i++) {
+      if (levels[i + 1] - levels[i] < 1) continue;
+      hallDim(target, dx1, Y(levels[i]), dx1, Y(levels[i + 1]), Math.round(levels[i + 1] - levels[i]) + '');
+    }
+    hallDim(target, dx1 + 44, Y(0), dx1 + 44, Y(d.ceil), Math.round(d.ceil) + '');
+
+    // 가로 치수 — 콜드 / 랙 / 핫 / 랙 / 콜드
+    const dy = Y(0) + 40;
+    let bx = 0;
+    [[d.cold, 'cold'], [d.rackD, 'rack'], [d.hot, 'hot'], [d.rackD, 'rack'], [d.cold, 'cold']].forEach(b => {
+      hallDim(target, X(bx), dy, X(bx + b[0]), dy, Math.round(b[0]) + '');
+      if (b[1] !== 'rack') {
+        const cx = X(bx + b[0] / 2), cy = Y(d.raised + d.rackH * 0.62);
+        const al = svgEl('text', {
+          x: cx, y: cy, 'text-anchor': 'middle',
+          'font-size': 13, 'font-weight': 800,
+          fill: b[1] === 'hot' ? '#C0392B' : '#1F7FB5', 'font-family': 'sans-serif',
+          stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
+        });
+        al.textContent = t(b[1] === 'hot' ? 'hall_hot_aisle' : 'hall_cold_aisle');
+        target.appendChild(al);
+      }
+      bx += b[0];
+    });
+  }
+
   // ----- 데이터홀 규모 산정 -----
   // POD 유닛을 평면에 깔아 홀 외곽을 낸다. 유닛 안의 콜드/핫 통로는 그대로 두고,
   // 유닛끼리는 이격(점검·배관 통로)으로 띄우며, 전기실은 유닛별 전용 또는 홀 측면 공용.
@@ -4249,13 +4609,17 @@
     const target = hallZoom.group;
     const d = hallPlanData();
 
-    const margin = hallView === 'sect' ? 70 : 100;
+    const margin = hallView === 'cool' ? 130 : (hallView === 'sect' ? 80 : 100);
     const availW = 900;
     const cl = hallCluster(d);
-    const baseW = hallView === 'cluster' ? cl.hallW : d.totalW;
+    const cool = coolPlan(d);
+    d.cduQty = cool.cduTotal > 0 ? cool.cduTotal : 1;
+    const baseW = hallView === 'cluster' ? cl.hallW
+      : (hallView === 'cool' ? coolSpan(d, cool).W : d.totalW);
     const baseH = hallView === 'plan' ? d.depth : (hallView === 'cluster' ? cl.hallD : d.ceil);
     // 화면 맞춤이면 폭에 맞춰 줄이고, 원래 크기면 랙 글씨가 읽히는 고정 축척으로 둔 뒤 스크롤한다
-    const fit = Math.min(availW / baseW, (hallView === 'sect' ? 320 : 460) / baseH);
+    const tallView = (hallView === 'sect' || hallView === 'cool');
+    const fit = Math.min(availW / baseW, (hallView === 'cool' ? 480 : (tallView ? 360 : 460)) / baseH);
     const sc = hallScale === 'real' ? Math.max(fit, 0.055) : fit;
     const w = baseW * sc + margin * 2;
     const hgt = baseH * sc + margin * 2;
@@ -4266,8 +4630,10 @@
     const ox = (Math.max(760, w) - baseW * sc) / 2;
     const oy = margin * 0.6;
 
+    renderCoolResult(d, cool);
     if (hallView === 'plan') drawHallPlan(target, d, sc, ox, oy);
     else if (hallView === 'cluster') drawHallCluster(target, d, cl, sc, ox, oy);
+    else if (hallView === 'cool') drawCoolSection(target, d, cool, sc, ox, oy);
     else drawHallSection(target, d, sc, ox, oy);
 
     hallZoom.reset();
@@ -4373,7 +4739,7 @@
   }
 
   // 수치에서 바로 읽히는 전기·기계·건축 메모
-  function renderHallReading(d) {
+  function renderHallReading(d, cool) {
     const box = document.getElementById('hallReading');
     if (!box) return;
     const pue = 1.2;
@@ -4383,7 +4749,9 @@
         rowKW: fmtN(Math.round(d.rowLen / d.rackW * d.rackKW)), rows: d.rows,
       })],
       ['mech', t('hall_read_mech', {
-        kw: fmtN(Math.round(d.podKW * 0.9)), cdu: d.cduQty - 1, total: d.cduQty,
+        lc: fmtN(cool.lc), ac: fmtN(cool.ac), fwu: cool.acKW > 0 ? cool.total : 0,
+        spare: cool.cduSpare,
+        kw: fmtN(Math.round(cool.lcKW)), cdu: cool.cduNeed, total: cool.cduTotal,
         each: fmtN(d.cduKW),
       })],
       ['arch', t('hall_read_arch', {
@@ -4426,7 +4794,7 @@
     const note = document.getElementById('hallRackNote');
     if (note) note.textContent = t('hall_rack_note', { racks: d.racks, rows: d.rows, perRow: d.perRow });
     renderHallCompare();
-    renderHallReading(d);
+    renderHallReading(d, coolPlan(d));
     const cdu = document.getElementById('hallCduNote');
     if (cdu) cdu.textContent = t('hall_cdu_note', { n: d.cduQty - 1, total: d.cduQty });
     const cool = document.getElementById('hallCoolNote');
@@ -4471,7 +4839,7 @@
   document.getElementById('hallSectBtn').addEventListener('click', () => setHallView('sect'));
   function setHallView(v) {
     hallView = v;
-    [['plan', 'hallPlanBtn'], ['sect', 'hallSectBtn'], ['cluster', 'hallClusterBtn']].forEach(([k, id]) => {
+    [['plan', 'hallPlanBtn'], ['sect', 'hallSectBtn'], ['cluster', 'hallClusterBtn'], ['cool', 'hallCoolBtn']].forEach(([k, id]) => {
       const b = document.getElementById(id);
       if (!b) return;
       b.classList.toggle('active', k === v);
@@ -4480,6 +4848,16 @@
     drawHall();
   }
   document.getElementById('hallClusterBtn').addEventListener('click', () => setHallView('cluster'));
+  document.getElementById('hallCoolBtn').addEventListener('click', () => setHallView('cool'));
+  ['coolAc', 'coolCfm', 'coolMargin', 'coolFwuN', 'coolFwuSpare', 'coolOpenW', 'coolOpenRatio', 'coolSa', 'coolTiers', 'coolCduSpare']
+    .forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', drawHall);
+    });
+  ['coolAuto', 'coolFwuAuto'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', drawHall);
+  });
   const patSel = document.getElementById('hallPattern');
   if (patSel) patSel.addEventListener('change', drawHall);
   Array.prototype.forEach.call(document.querySelectorAll('#hallScaleToggle .mode-btn'), btn => {
@@ -6041,6 +6419,8 @@
     'hallCold', 'hallHot', 'hallCduKW', 'hallElecW',
     'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil',
     'hallUnits', 'hallGrid', 'hallPodGap', 'hallService', 'hallPerim', 'hallPattern',
+    'coolAc', 'coolCfm', 'coolMargin', 'coolFwuN', 'coolFwuSpare', 'coolOpenW',
+    'coolOpenRatio', 'coolSa', 'coolTiers', 'coolCduSpare',
   ];
 
   function snapshotBundle() {
