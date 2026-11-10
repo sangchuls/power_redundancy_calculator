@@ -359,7 +359,7 @@
       sldb_pdu: '전력분배반', sldb_pod: '랙 그룹(POD)', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
-      hint_plan: '블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 더블클릭: 이름 편집 · Delete: 삭제',
+      hint_plan: '블럭 드래그: 이동 · 선택 후 모서리 드래그: 크기 조절 · 윗쪽 고리 드래그 또는 R키: 회전(15°씩, Alt는 자유각) · 더블클릭: 이름 편집 · Delete: 삭제',
       plan_add: '＋ 블럭 추가',
       plan_del: '블럭 삭제',
       plan_snap: '격자 맞춤',
@@ -873,7 +873,7 @@
       sldb_pdu: 'Power distribution unit', sldb_pod: 'Rack group (POD)', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
-      hint_plan: 'Drag a block to move it · select it and drag an edge to resize · double-click to rename · Delete to remove',
+      hint_plan: 'Drag a block to move it · select it and drag an edge to resize · drag the knob above it, or press R, to rotate (15° steps; hold Alt for any angle) · double-click to rename · Delete to remove',
       plan_add: '+ Add block',
       plan_del: 'Delete block',
       plan_snap: 'Snap to grid',
@@ -2629,6 +2629,26 @@
   }
   function planSnapV(v) { return planSnapOn() ? Math.round(v / PLAN_SNAP) * PLAN_SNAP : Math.round(v); }
 
+  // 블럭 회전각 — 0~359로 정규화해서 돌려준다
+  function planRot(b) {
+    const r = parseFloat(b && b.rot) || 0;
+    return ((r % 360) + 360) % 360;
+  }
+  // 회전한 블럭이 평면에서 실제로 차지하는 사각형 (90도 단위일 때만 뜻이 있다)
+  function planAabb(b, box) {
+    const r = planRot(b), s = box || b;
+    const swap = r % 180 === 90;
+    const cx = s.x + s.w / 2, cy = s.y + s.h / 2;
+    const w = swap ? s.h : s.w, h = swap ? s.w : s.h;
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+  }
+  function planRotateSelected(step) {
+    const b = planSelected ? planBlock(planSelected) : null;
+    if (!b || planAllMode) return;
+    b.rot = (planRot(b) + step + 360) % 360;
+    savePlans(); drawPlan();
+  }
+
   const PLAN_MAGNET = 9;     // 이 거리 안에 들어오면 이웃 블럭에 달라붙는다
   let planGuides = [];       // 스냅이 걸린 자리에 보여줄 안내선
 
@@ -2972,7 +2992,10 @@
     const color = PLAN_KIND_COLOR[b.kind] || PLAN_KIND_COLOR.etc;
     const x = ox + b.x * sc, y = oy + b.y * sc, w = b.w * sc, h = b.h * sc;
     const selected = !o.readonly && b.id === planSelected;
+    const rot = planRot(b);
+    const spin = rot ? 'rotate(' + rot + ' ' + (x + w / 2) + ' ' + (y + h / 2) + ')' : '';
     const grp = svgEl('g', o.readonly ? {} : { cursor: 'move' });
+    if (spin) grp.setAttribute('transform', spin);
     target.appendChild(grp);   // 먼저 붙여야 아래 planFitText가 글자 폭을 잴 수 있다
     grp.appendChild(svgEl('rect', {
       x, y, width: w, height: h, rx: 4,
@@ -3021,6 +3044,8 @@
 
     // 선택한 블럭에만 모서리 핸들 — 끌어서 크기를 바꾼다
     if (selected) {
+      const hgrp = svgEl('g', spin ? { transform: spin } : {});
+      target.appendChild(hgrp);
       const hs = [
         ['nw', x, y], ['n', x + w / 2, y], ['ne', x + w, y],
         ['w', x, y + h / 2], ['e', x + w, y + h / 2],
@@ -3036,8 +3061,39 @@
           e.stopPropagation();
           planDrag = { mode: 'resize', id: b.id, handle: k, start: { x: b.x, y: b.y, w: b.w, h: b.h }, from: planPoint(e) };
         });
-        target.appendChild(dot);
+        hgrp.appendChild(dot);
       });
+
+      // 회전 손잡이 — 윗변 위로 띄운 고리를 끌면 블럭이 돈다
+      const arm = 20;
+      hgrp.appendChild(svgEl('path', {
+        d: 'M' + (x + w / 2) + ',' + y + ' L' + (x + w / 2) + ',' + (y - arm),
+        stroke: color, 'stroke-width': 1.4, 'stroke-dasharray': '3 2', fill: 'none',
+      }));
+      const knob = svgEl('circle', {
+        cx: x + w / 2, cy: y - arm, r: 5.5,
+        fill: '#FFFFFF', stroke: color, 'stroke-width': 1.8, cursor: 'grab',
+      });
+      knob.addEventListener('pointerdown', e => {
+        e.stopPropagation();
+        const pt = planPoint(e);
+        const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+        planDrag = {
+          mode: 'rotate', id: b.id, cx: cx, cy: cy, start: rot,
+          grab: Math.atan2(pt.y - cy, pt.x - cx) * 180 / Math.PI,
+        };
+        drawPlan({ keepSchedule: true });
+      });
+      hgrp.appendChild(knob);
+      if (rot) {
+        const deg = svgEl('text', {
+          x: x + w / 2 + 12, y: y - arm + 4, 'text-anchor': 'start',
+          'font-size': 10, 'font-weight': 800, fill: color, 'font-family': 'sans-serif',
+          stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+        });
+        deg.textContent = Math.round(rot) + '\u00B0';
+        hgrp.appendChild(deg);
+      }
     }
   }
 
@@ -3350,45 +3406,76 @@
     const b = planBlock(planDrag.id);
     if (!b) { planDrag = null; return; }
     const p = planPoint(e);
-    if (planDrag.mode === 'move') {
+    const rot = planRot(b);
+    if (planDrag.mode === 'rotate') {
+      planGuides = [];
+      const ang = Math.atan2(p.y - planDrag.cy, p.x - planDrag.cx) * 180 / Math.PI;
+      let next = planDrag.start + (ang - planDrag.grab);
+      // 기본은 15도 눈금, Alt를 누르고 끌면 눈금 없이 자유롭게
+      if (!e.altKey) next = Math.round(next / 15) * 15;
+      b.rot = ((next % 360) + 360) % 360;
+    } else if (planDrag.mode === 'move') {
       // 이웃에 붙는 쪽이 우선이고, 걸리는 이웃이 없는 축만 격자로 떨어뜨린다
       const raw = { x: Math.max(0, p.x - planDrag.dx), y: Math.max(0, p.y - planDrag.dy), w: b.w, h: b.h };
-      const snapped = planSnapBox(raw, b.id);
-      b.x = Math.max(0, snapped.x !== raw.x ? snapped.x : planSnapV(raw.x));
-      b.y = Math.max(0, snapped.y !== raw.y ? snapped.y : planSnapV(raw.y));
+      if (rot % 90 !== 0) {
+        // 비스듬히 돌린 블럭은 맞댈 면이 없으니 격자로만 떨어뜨린다
+        planGuides = [];
+        b.x = Math.max(0, planSnapV(raw.x));
+        b.y = Math.max(0, planSnapV(raw.y));
+      } else {
+        // 90도 단위로 돌린 블럭은 돌아간 외곽(폭·깊이가 바뀐 사각형)을 기준으로 붙인다
+        const box = planAabb(b, raw);
+        const snapped = planSnapBox(box, b.id);
+        const nx = Math.max(0, snapped.x !== box.x ? snapped.x : planSnapV(box.x));
+        const ny = Math.max(0, snapped.y !== box.y ? snapped.y : planSnapV(box.y));
+        b.x = nx + box.w / 2 - raw.w / 2;
+        b.y = ny + box.h / 2 - raw.h / 2;
+      }
     } else {
       planGuides = [];
       const st = planDrag.start, k = planDrag.handle;
-      const dx = p.x - planDrag.from.x, dy = p.y - planDrag.from.y;
+      // 돌아간 블럭은 끌어당긴 양을 블럭 제 축으로 돌려 읽는다
+      const th = rot * Math.PI / 180, cos = Math.cos(th), sin = Math.sin(th);
+      const wdx = p.x - planDrag.from.x, wdy = p.y - planDrag.from.y;
+      const dx = rot ? wdx * cos + wdy * sin : wdx;
+      const dy = rot ? -wdx * sin + wdy * cos : wdy;
       let x = st.x, y = st.y, w = st.w, h = st.h;
       // 끌고 있는 변만 이웃 면에 붙인다
+      const snapEdge = rot ? () => null : planSnapEdge;
       if (k.indexOf('e') >= 0) {
-        const edge = planSnapEdge(st.x + st.w + dx, b.id, true);
+        const edge = snapEdge(st.x + st.w + dx, b.id, true);
         const right = edge !== null ? edge : planSnapV(st.x + st.w + dx);
         if (edge !== null) planGuides.push({ x1: edge, y1: st.y, x2: edge, y2: st.y + st.h });
         w = right - st.x;
       }
       if (k.indexOf('s') >= 0) {
-        const edge = planSnapEdge(st.y + st.h + dy, b.id, false);
+        const edge = snapEdge(st.y + st.h + dy, b.id, false);
         const bottom = edge !== null ? edge : planSnapV(st.y + st.h + dy);
         if (edge !== null) planGuides.push({ x1: st.x, y1: edge, x2: st.x + st.w, y2: edge });
         h = bottom - st.y;
       }
       if (k.indexOf('w') >= 0) {
-        const edge = planSnapEdge(st.x + dx, b.id, true);
+        const edge = snapEdge(st.x + dx, b.id, true);
         const left = Math.max(0, edge !== null ? edge : planSnapV(st.x + dx));
         if (edge !== null) planGuides.push({ x1: edge, y1: st.y, x2: edge, y2: st.y + st.h });
         w = st.x + st.w - left; x = left;
       }
       if (k.indexOf('n') >= 0) {
-        const edge = planSnapEdge(st.y + dy, b.id, false);
+        const edge = snapEdge(st.y + dy, b.id, false);
         const top = Math.max(0, edge !== null ? edge : planSnapV(st.y + dy));
         if (edge !== null) planGuides.push({ x1: st.x, y1: edge, x2: st.x + st.w, y2: edge });
         h = st.y + st.h - top; y = top;
       }
       if (w < 30) { if (k.indexOf('w') >= 0) x = st.x + st.w - 30; w = 30; }
       if (h < 24) { if (k.indexOf('n') >= 0) y = st.y + st.h - 24; h = 24; }
-      b.x = Math.max(0, Math.round(x)); b.y = Math.max(0, Math.round(y));
+      if (rot) {
+        // 블럭은 제 중심을 축으로 도니, 중심이 움직인 만큼을 다시 세계 좌표로 돌려준다
+        const ldx = (x + w / 2) - (st.x + st.w / 2), ldy = (y + h / 2) - (st.y + st.h / 2);
+        x = st.x + st.w / 2 + (ldx * cos - ldy * sin) - w / 2;
+        y = st.y + st.h / 2 + (ldx * sin + ldy * cos) - h / 2;
+      }
+      b.x = Math.round(x); b.y = Math.round(y);
+      if (!rot) { b.x = Math.max(0, b.x); b.y = Math.max(0, b.y); }
       b.w = Math.round(w); b.h = Math.round(h);
     }
     drawPlan({ keepSchedule: true });
@@ -3405,10 +3492,16 @@
     if (e.target === e.currentTarget && planSelected) { planSelected = null; drawPlan(); }
   });
   document.addEventListener('keydown', e => {
-    if (e.key !== 'Delete' && e.key !== 'Backspace') return;
     const tag = (e.target && e.target.tagName) || '';
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-    if (planSelected && !planAllMode) { e.preventDefault(); planDeleteSelected(); }
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (planSelected && !planAllMode) { e.preventDefault(); planDeleteSelected(); }
+      return;
+    }
+    // R: 90도씩 돌리기 (Shift면 반대 방향)
+    if ((e.key === 'r' || e.key === 'R') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      if (planSelected && !planAllMode) { e.preventDefault(); planRotateSelected(e.shiftKey ? -90 : 90); }
+    }
   });
 
   document.getElementById('planAddBlock').addEventListener('click', () => {
