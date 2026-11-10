@@ -364,7 +364,7 @@
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       h_fp_title: '기준층 평면 스터디',
       fp_arrange: '최적 배열 ↻',
-      fp_arrange_note: '최적 배열 {rank}/{total}안 — POD {dir} · 전기실 {side} · 회선 {len}m · 교차 {cross}곳 (버튼을 다시 누르면 다음 안)',
+      fp_arrange_note: '최적 배열 {rank}/{total}안 — POD {dir} · 전기실 {side} · 회선 {len}m · 교차 {cross}곳 · 겹침 {over}곳 (버튼을 다시 누르면 다음 안)',
       fp_pod_col_short: '세로',
       fp_pod_row_short: '가로',
       label_fpUnitRows: 'POD 유닛 타입',
@@ -913,7 +913,7 @@
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       h_fp_title: 'Typical floor study',
       fp_arrange: 'Best fit \u21bb',
-      fp_arrange_note: 'Arrangement {rank} of {total} — PODs {dir} · rooms {side} · feeders {len}m · {cross} crossings (press again for the next one)',
+      fp_arrange_note: 'Arrangement {rank} of {total} — PODs {dir} · rooms {side} · feeders {len}m · {cross} crossings · {over} overlaps (press again for the next one)',
       fp_pod_col_short: 'upright',
       fp_pod_row_short: 'across',
       label_fpUnitRows: 'POD unit type',
@@ -3931,6 +3931,7 @@
   // 후보 배열을 여러 개 만들어 '회선 길이 + 교차 수 + 남의 실을 뚫고 가는 수 + 외곽
   // 종횡비'로 점수를 매기고, 좋은 순으로 줄 세운다. 버튼을 누를 때마다 다음 안을 보여준다.
   let fpPlans = null, fpPlanIdx = 0, fpPlanKey = '';
+  let fpLastMetrics = null;     // 마지막으로 그린 회선의 길이·교차·겹침
 
   // 선분이 사각형 속을 지나는지 — 경로 후보를 고를 때 쓴다
   function fpSegHitsBox(a, b, box) {
@@ -3998,7 +3999,7 @@
     return out;
   }
 
-  function fpFeedLines(map, ortho) {
+  function fpFeedLinesHeuristic(map, ortho) {
     const out = [];
     if (!fpTopo) return out;
     const useOrtho = ortho === undefined ? true : ortho;
@@ -4098,6 +4099,298 @@
     return out;
   }
 
+  // ===== 격자 라우터 =====
+  // 모든 전기실·POD를 장애물로 놓고, 격자 위에서 회선을 하나씩 깐다.
+  //  · 다른 전기실·POD는 뚫고 지나갈 수 없다 (장애물 + 여유 간격)
+  //  · 다른 회선과 '가로지르는 것'은 허용하지만, 같은 줄 위를 겹쳐 달리는 것은 막는다
+  //  · 꺾임과 교차에는 비용을 물려 가장 곧고 덜 얽히는 길을 고른다
+  function fpBBox(b) {
+    const th = fpRotOf(b) * Math.PI / 180;
+    const c = Math.abs(Math.cos(th)), sn = Math.abs(Math.sin(th));
+    const w = Math.round((b.w * c + b.h * sn) * 100) / 100;
+    const h = Math.round((b.w * sn + b.h * c) * 100) / 100;
+    const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    return { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+  }
+
+  const FP_COST = { turn: 2.5, cross: 3, touch: 40, overlap: 250 };
+  const FP_DX = [0, 1, 0, -1], FP_DY = [-1, 0, 1, 0];   // 0=N 1=E 2=S 3=W
+
+  function fpRouteGrid(map, quality) {
+    const out = { lines: [], failed: [] };
+    if (!fpTopo) return out;
+    const obs = [];
+    fpTopo.rooms.forEach(r => { const b = map['room-' + r.i]; if (b) obs.push({ id: 'room-' + r.i, b: fpBBox(b) }); });
+    fpTopo.pods.forEach(pd => { const b = map['pod-' + pd.p]; if (b) obs.push({ id: 'pod-' + pd.p, b: fpBBox(b) }); });
+    if (!obs.length) return out;
+
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    obs.forEach(o => {
+      x0 = Math.min(x0, o.b.x); y0 = Math.min(y0, o.b.y);
+      x1 = Math.max(x1, o.b.x + o.b.w); y1 = Math.max(y1, o.b.y + o.b.h);
+    });
+    const fast = quality === 'fast';
+    const maxNodes = fast ? 4500 : 30000;
+    let cell = fast ? 1000 : 500;
+    const pad = 4000;
+    let W, H;
+    for (;;) {
+      W = Math.ceil((x1 - x0 + pad * 2) / cell) + 2;
+      H = Math.ceil((y1 - y0 + pad * 2) / cell) + 2;
+      if (W * H <= maxNodes) break;
+      cell += fast ? 500 : 250;
+    }
+    const gx0 = Math.floor((x0 - pad) / cell) * cell;
+    const gy0 = Math.floor((y0 - pad) / cell) * cell;
+    const N = W * H, S = N * 4;
+    const margin = Math.min(cell * 0.5, 700);
+    const nx = i => gx0 + i * cell, ny = j => gy0 + j * cell;
+
+    // 장애물 — 여유 간격만큼 부풀린 안쪽 격자점을 막는다
+    const blocked = new Uint8Array(N);
+    const byId = {};
+    const EPS = 1e-6;
+    obs.forEach(o => {
+      byId[o.id] = o.b;
+      const bx0 = o.b.x - margin, bx1 = o.b.x + o.b.w + margin;
+      const by0 = o.b.y - margin, by1 = o.b.y + o.b.h + margin;
+      const i0 = Math.max(0, Math.floor((bx0 - gx0) / cell)), i1 = Math.min(W - 1, Math.ceil((bx1 - gx0) / cell));
+      const j0 = Math.max(0, Math.floor((by0 - gy0) / cell)), j1 = Math.min(H - 1, Math.ceil((by1 - gy0) / cell));
+      for (let j = j0; j <= j1; j++) {
+        for (let i = i0; i <= i1; i++) {
+          const x = nx(i), y = ny(j);
+          if (x > bx0 + EPS && x < bx1 - EPS && y > by0 + EPS && y < by1 - EPS) blocked[j * W + i] = 1;
+        }
+      }
+    });
+
+    // 블럭 면 위의 출입구 후보. f: 0=위 1=오른쪽 2=아래 3=왼쪽, 나가는 방향도 f.
+    const portsOf = bb => {
+      const res = [];
+      for (let f = 0; f < 4; f++) {
+        const alongX = (f === 0 || f === 2);
+        const lo = alongX ? bb.x : bb.y, hi = alongX ? bb.x + bb.w : bb.y + bb.h;
+        const g0 = alongX ? gx0 : gy0;
+        const a = Math.ceil((lo + cell * 0.2 - g0) / cell - 1e-9);
+        const b = Math.floor((hi - cell * 0.2 - g0) / cell + 1e-9);
+        const idx = [];
+        for (let q = a; q <= b; q++) idx.push(q);
+        if (!idx.length) idx.push(Math.round(((lo + hi) / 2 - g0) / cell));
+        idx.forEach(q => {
+          let i, j, px, py;
+          if (alongX) {
+            i = q; px = Math.max(lo, Math.min(hi, nx(q)));
+            if (f === 0) { j = Math.floor((bb.y - margin - gy0) / cell + 1e-9); py = bb.y; }
+            else { j = Math.ceil((bb.y + bb.h + margin - gy0) / cell - 1e-9); py = bb.y + bb.h; }
+          } else {
+            j = q; py = Math.max(lo, Math.min(hi, ny(q)));
+            if (f === 3) { i = Math.floor((bb.x - margin - gx0) / cell + 1e-9); px = bb.x; }
+            else { i = Math.ceil((bb.x + bb.w + margin - gx0) / cell - 1e-9); px = bb.x + bb.w; }
+          }
+          if (i < 0 || j < 0 || i >= W || j >= H) return;
+          res.push({ i: i, j: j, f: f, px: px, py: py });
+        });
+      }
+      return res;
+    };
+
+    // 회선 목록 — 짧은 것부터 깔아야 긴 회선이 남은 틈을 돌아간다
+    const feeds = [];
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => {
+      const rb = byId['room-' + k], pb = byId['pod-' + pi];
+      if (!rb || !pb) return;
+      feeds.push({
+        k: k, pi: pi, rb: rb, pb: pb,
+        d: Math.abs(rb.x + rb.w / 2 - pb.x - pb.w / 2) + Math.abs(rb.y + rb.h / 2 - pb.y - pb.h / 2),
+      });
+    }));
+    feeds.sort((a, b) => a.d - b.d || a.k - b.k || a.pi - b.pi);
+
+    const gS = new Float32Array(S + N), par = new Int32Array(S + N);
+    const stamp = new Int32Array(S + N), closed = new Int32Array(S + N);
+    const hUsed = new Uint8Array(N), vUsed = new Uint8Array(N), nodeMask = new Uint8Array(N);
+    let run = 0;
+    const heapK = [], heapV = [];
+    const hpush = (k, v) => {
+      let i = heapK.length; heapK.push(k); heapV.push(v);
+      while (i > 0) {
+        const pp = (i - 1) >> 1;
+        if (heapK[pp] <= k) break;
+        heapK[i] = heapK[pp]; heapV[i] = heapV[pp]; i = pp;
+      }
+      heapK[i] = k; heapV[i] = v;
+    };
+    const hpop = () => {
+      const top = heapV[0];
+      const lk = heapK.pop(), lv = heapV.pop();
+      const n = heapK.length;
+      if (n) {
+        let i = 0;
+        for (;;) {
+          let c = 2 * i + 1;
+          if (c >= n) break;
+          if (c + 1 < n && heapK[c + 1] < heapK[c]) c++;
+          if (heapK[c] >= lk) break;
+          heapK[i] = heapK[c]; heapV[i] = heapV[c]; i = c;
+        }
+        heapK[i] = lk; heapV[i] = lv;
+      }
+      return top;
+    };
+
+    const failed = [];
+    const results = {};
+    feeds.forEach(fd => {
+      run++;
+      heapK.length = 0; heapV.length = 0;
+      const startInfo = {};
+      portsOf(fd.rb).forEach(pt => {
+        const n = pt.j * W + pt.i;
+        if (blocked[n]) return;
+        if (nodeMask[n] & (1 << ((pt.f + 2) & 3))) return;   // 이미 다른 회선이 이 출입구를 쓴다
+        const st = n * 4 + pt.f;
+        const g0 = (Math.abs(nx(pt.i) - pt.px) + Math.abs(ny(pt.j) - pt.py)) / cell;
+        startInfo[st] = pt;
+        const hh = (Math.max(0, fd.pb.x - nx(pt.i), nx(pt.i) - fd.pb.x - fd.pb.w)
+          + Math.max(0, fd.pb.y - ny(pt.j), ny(pt.j) - fd.pb.y - fd.pb.h)) / cell;
+        stamp[st] = run; gS[st] = g0; par[st] = -2;
+        hpush(g0 + hh, st);
+      });
+      const goals = {};
+      portsOf(fd.pb).forEach(pt => {
+        const n = pt.j * W + pt.i;
+        if (blocked[n]) return;
+        if (nodeMask[n] & (1 << ((pt.f + 2) & 3))) return;
+        if (!goals[n]) goals[n] = pt;
+      });
+
+      let found = -1, guard = 0;
+      const LIMIT = fast ? 60000 : 260000;
+      while (heapK.length && guard++ < LIMIT) {
+        const s0 = hpop();
+        if (s0 >= S) { found = s0; break; }
+        if (closed[s0] === run) continue;
+        closed[s0] = run;
+        const n = s0 >> 2, d = s0 & 3;
+        const i = n % W, j = (n - i) / W;
+        const gc = gS[s0];
+        const gp = goals[n];
+        if (gp) {
+          const toward = (gp.f + 2) & 3;
+          const tc = gc + (d !== toward ? FP_COST.turn : 0) + (nodeMask[n] ? FP_COST.touch : 0)
+            + (Math.abs(nx(i) - gp.px) + Math.abs(ny(j) - gp.py)) / cell;
+          const ti = S + n;
+          if (stamp[ti] !== run || tc < gS[ti]) {
+            stamp[ti] = run; gS[ti] = tc; par[ti] = s0;
+            hpush(tc, ti);
+          }
+        }
+        const mk = nodeMask[n];
+        for (let t = 0; t < 3; t++) {
+          const nd = t === 0 ? d : (t === 1 ? ((d + 1) & 3) : ((d + 3) & 3));
+          const ni = i + FP_DX[nd], nj = j + FP_DY[nd];
+          if (ni < 0 || nj < 0 || ni >= W || nj >= H) continue;
+          const m = nj * W + ni;
+          if (blocked[m]) continue;
+          let c = 1;
+          if (nd !== d) c += FP_COST.turn;
+          const used = nd === 1 ? hUsed[n] : (nd === 3 ? hUsed[n - 1] : (nd === 2 ? vUsed[n] : vUsed[n - W]));
+          if (used) c += FP_COST.overlap;
+          if (mk) {
+            if (nd === d && mk === ((d & 1) ? 5 : 10)) c += FP_COST.cross; else c += FP_COST.touch;
+          }
+          const ns = m * 4 + nd;
+          if (closed[ns] === run) continue;
+          const ng = gc + c;
+          if (stamp[ns] !== run || ng < gS[ns]) {
+            stamp[ns] = run; gS[ns] = ng; par[ns] = s0;
+            const hh = (Math.max(0, fd.pb.x - nx(ni), nx(ni) - fd.pb.x - fd.pb.w)
+              + Math.max(0, fd.pb.y - ny(nj), ny(nj) - fd.pb.y - fd.pb.h)) / cell;
+            hpush(ng + hh, ns);
+          }
+        }
+      }
+      if (found < 0) { failed.push({ room: fd.k, pod: fd.pi }); return; }
+
+      // 되짚어 노드 목록을 만든다
+      const goalNode = found - S;
+      const nodes = [];
+      let cur = par[found], startState = -1;
+      for (;;) {
+        nodes.push(cur >> 2);
+        if (par[cur] === -2) { startState = cur; break; }
+        cur = par[cur];
+      }
+      nodes.reverse();
+      const sp = startInfo[startState], gp2 = goals[goalNode];
+      const raw = [{ x: sp.px, y: sp.py }];
+      nodes.forEach(n => raw.push({ x: nx(n % W), y: ny((n - n % W) / W) }));
+      raw.push({ x: gp2.px, y: gp2.py });
+      // 한 줄 위의 중간 점은 지운다
+      const pts = [];
+      raw.forEach(q => {
+        const L = pts.length;
+        if (L && Math.abs(pts[L - 1].x - q.x) < 0.5 && Math.abs(pts[L - 1].y - q.y) < 0.5) return;
+        if (L >= 2) {
+          const a = pts[L - 2], b = pts[L - 1];
+          if ((Math.abs(a.x - b.x) < 0.5 && Math.abs(b.x - q.x) < 0.5)
+            || (Math.abs(a.y - b.y) < 0.5 && Math.abs(b.y - q.y) < 0.5)) { pts[L - 1] = q; return; }
+        }
+        pts.push(q);
+      });
+      let len = 0, over = 0;
+      for (let q = 1; q < pts.length; q++) len += Math.abs(pts[q].x - pts[q - 1].x) + Math.abs(pts[q].y - pts[q - 1].y);
+      // 쓴 줄을 표시한다
+      for (let q = 0; q + 1 < nodes.length; q++) {
+        const a = nodes[q], b = nodes[q + 1];
+        const dd = b === a + 1 ? 1 : (b === a - 1 ? 3 : (b === a + W ? 2 : 0));
+        const e = dd === 1 ? a : (dd === 3 ? b : (dd === 2 ? a : b));
+        const arr = (dd === 1 || dd === 3) ? hUsed : vUsed;
+        if (arr[e]) over++;
+        arr[e] = 1;
+        nodeMask[a] |= 1 << dd;
+        nodeMask[b] |= 1 << ((dd + 2) & 3);
+      }
+      nodeMask[nodes[0]] |= 1 << ((sp.f + 2) & 3);
+      nodeMask[goalNode] |= 1 << ((gp2.f + 2) & 3);
+      results[fd.k + ':' + fd.pi] = { pts: pts, len: len, room: fd.k, pod: fd.pi, over: over, route: 'grid' };
+    });
+
+    // 원래 순서(POD별, 목록 순서)로 내보낸다
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => {
+      const r = results[k + ':' + pi];
+      if (r) out.lines.push(r);
+    }));
+    out.failed = failed;
+    return out;
+  }
+
+  let fpRouteMemo = { key: '', lines: null };
+  function fpFeedLines(map, ortho, quality) {
+    if (!fpTopo) return [];
+    if (ortho === false) return fpFeedLinesHeuristic(map, false);
+    const q = quality || 'full';
+    const key = q + '|' + fpTopo.feeds.map(l => l.join(',')).join(';') + '|'
+      + Object.keys(map).sort().map(id => {
+        const b = map[id];
+        return id + ':' + Math.round(b.x) + ',' + Math.round(b.y) + ',' + Math.round(b.w) + ',' + Math.round(b.h) + ',' + Math.round(fpRotOf(b));
+      }).join('|');
+    if (fpRouteMemo.key === key && fpRouteMemo.lines) return fpRouteMemo.lines;
+    let res;
+    try { res = fpRouteGrid(map, q); } catch (e) { res = { lines: [], failed: [] }; }
+    let lines = res.lines;
+    // 길을 못 찾은 회선(장애물에 갇힌 경우)은 예전 방식으로라도 이어 둔다
+    const need = fpTopo.feeds.reduce((n, l) => n + l.length, 0);
+    if (lines.length < need) {
+      const have = new Set(lines.map(l => l.room + ':' + l.pod));
+      fpFeedLinesHeuristic(map, true).forEach(l => {
+        if (!have.has(l.room + ':' + l.pod)) { l.route = 'fallback'; lines.push(l); }
+      });
+    }
+    fpRouteMemo = { key: key, lines: lines };
+    return lines;
+  }
+
   // 두 선분이 '가로지르는지' — 끝이 닿기만 한 경우는 세지 않는다
   function fpCrosses(a, b, c, d) {
     const sg = (p, q, r) => Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
@@ -4111,8 +4404,33 @@
     return lo.x < box.x + box.w && hi.x > box.x && lo.y < box.y + box.h && hi.y > box.y;
   }
 
-  function fpScoreLayout(map) {
-    const lines = fpFeedLines(map);
+  function fpScoreLayout(map) { return fpScoreLines(map, fpFeedLinesHeuristic(map, true)); }
+
+  // 같은 줄 위를 겹쳐 달리는 구간 수
+  function fpOverlaps(segs) {
+    let n = 0;
+    for (let i = 0; i < segs.length; i++) {
+      for (let j = i + 1; j < segs.length; j++) {
+        const A = segs[i], B = segs[j];
+        if (A.room === B.room && A.pod === B.pod) continue;
+        const ah = Math.abs(A.a.y - A.b.y) < 0.5, bh = Math.abs(B.a.y - B.b.y) < 0.5;
+        if (ah && bh && Math.abs(A.a.y - B.a.y) < 0.5) {
+          const lo = Math.max(Math.min(A.a.x, A.b.x), Math.min(B.a.x, B.b.x));
+          const hi = Math.min(Math.max(A.a.x, A.b.x), Math.max(B.a.x, B.b.x));
+          if (hi - lo > 1) n++;
+        }
+        const av = Math.abs(A.a.x - A.b.x) < 0.5, bv = Math.abs(B.a.x - B.b.x) < 0.5;
+        if (av && bv && Math.abs(A.a.x - B.a.x) < 0.5) {
+          const lo = Math.max(Math.min(A.a.y, A.b.y), Math.min(B.a.y, B.b.y));
+          const hi = Math.min(Math.max(A.a.y, A.b.y), Math.max(B.a.y, B.b.y));
+          if (hi - lo > 1) n++;
+        }
+      }
+    }
+    return n;
+  }
+
+  function fpScoreLines(map, lines) {
     let len = 0;
     const segs = [];
     lines.forEach(ln => {
@@ -4145,9 +4463,10 @@
     });
     const w = Math.max(1, x1 - x0), h = Math.max(1, y1 - y0);
     const aspect = Math.abs(Math.log((w / h) / 1.6));
+    const over = fpOverlaps(segs);
     return {
-      score: len / 1000 + cross * 45 + through * 30 + aspect * 70,
-      len: len, cross: cross, through: through, w: w, h: h,
+      score: len / 1000 + cross * 45 + through * 400 + over * 120 + aspect * 70,
+      len: len, cross: cross, through: through, over: over, w: w, h: h,
     };
   }
 
@@ -4186,7 +4505,11 @@
       if (seen.has(key)) return;
       seen.add(key); out.push(pl);
     });
-    return out;
+    // 위쪽 안은 실제 라우터로 다시 길을 깔아 보고 순위를 고친다
+    const head = out.slice(0, 12), tail = out.slice(12);
+    head.forEach(pl => { pl.m = fpScoreLines(pl.map, fpFeedLines(pl.map, true, 'fast')); });
+    head.sort((a, b) => a.m.score - b.m.score);
+    return head.concat(tail);
   }
 
   function fpArrange() {
@@ -4209,12 +4532,13 @@
     drawFeedPlan();
     const note = document.getElementById('fpArrangeNote');
     if (note) {
+      const mt = fpLastMetrics || pl.m;
       note.textContent = t('fp_arrange_note', {
         rank: fpPlanIdx + 1, total: fpPlans.length,
         dir: t(pl.opts.podCol ? 'fp_pod_col_short' : 'fp_pod_row_short'),
         side: t('fp_side_' + pl.opts.side),
-        len: fmtN(Math.round(pl.m.len / 1000)),
-        cross: pl.m.cross,
+        len: fmtN(Math.round(mt.len / 1000)),
+        cross: mt.cross, over: mt.over || 0,
       });
     }
   }
@@ -4398,7 +4722,9 @@
     // 회선 — 블럭보다 먼저 깔아 블럭 밑으로 지나가게 한다
     const ortho = ((document.getElementById('fpRoute') || {}).value || 'ortho') === 'ortho';
     let totalLen = 0, drawn = 0;
-    fpFeedLines(fpBlocks, ortho).forEach(ln => {
+    const feedLines = fpFeedLines(fpBlocks, ortho, fpDrag ? 'fast' : 'full');
+    try { fpLastMetrics = fpScoreLines(fpBlocks, feedLines); } catch (e) { fpLastMetrics = null; }
+    feedLines.forEach(ln => {
       const room = fpTopo.rooms[ln.room];
       const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === ln.room)
         || (fpLit.kind === 'pod' && fpLit.i === ln.pod);
@@ -7265,15 +7591,45 @@
     if (!keep || keep.row < 0 || keep.cell < 0) return;
     const row = container.children[keep.row];
     const cell = row && row.children[keep.cell];
-    const el = cell && cell.querySelector('input, select');
+    let el = cell && cell.querySelector('input, select');
     if (!el) return;
-    const same = parseFloat(el.value) === parseFloat(keep.raw);
-    if (el.tagName === 'INPUT' && el.value !== keep.raw && (same || keep.raw === '' || keep.raw === '-')) {
-      el.value = keep.raw;
+    // 새로 만든 칸은 "16." 같은 입력 중인 글자를 모른다 — 치던 칸 자체를 제자리에 되돌려
+    // 글자·커서·선택이 그대로 이어지게 한다 (값은 모델이 이미 같은 값을 갖고 있다)
+    if (act !== el && act.tagName === el.tagName && act.type === el.type) {
+      act.style.borderColor = el.style.borderColor;
+      el.parentNode.replaceChild(act, el);
+      el = act;
     }
     el.focus();
     if (keep.start !== null) { try { el.setSelectionRange(keep.start, keep.end); } catch (e) {} }
   }
+
+  // 소수 입력칸 — type=number 는 "16." 같은 중간 글자를 빈 값으로 돌려주고 로캘에 따라
+  // 쉼표·점이 갈리는 등 입력이 거칠다. 글자 칸으로 바꿔 숫자와 점 하나만, 소수 N자리까지 받는다.
+  function makeDecimal(el, decimals) {
+    if (!el || el.dataset.decimal) return;
+    const dec = decimals === undefined ? 2 : decimals;
+    el.dataset.decimal = String(dec);
+    el.type = 'text';
+    el.setAttribute('inputmode', 'decimal');
+    el.setAttribute('autocomplete', 'off');
+    el.removeAttribute('step');
+    el.addEventListener('input', () => {
+      let v = el.value.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+      const first = v.indexOf('.');
+      if (first >= 0) v = v.slice(0, first + 1) + v.slice(first + 1).replace(/\./g, '');
+      if (first >= 0 && v.length - first - 1 > dec) v = v.slice(0, first + 1 + dec);
+      if (v !== el.value) {
+        let pos = null;
+        try { pos = el.selectionStart; } catch (e) {}
+        const before = el.value.length;
+        el.value = v;
+        if (pos !== null) { try { const q = Math.max(0, pos - (before - v.length)); el.setSelectionRange(q, q); } catch (e) {} }
+      }
+    }, true);
+  }
+  ['utilityCapacity', 'pf', 'upsEfficiency', 'safety', 'genTargetMW',
+    'coolMargin', 'coolOpenW', 'coolOpenRatio', 'coolSa'].forEach(id => makeDecimal(document.getElementById(id), 2));
 
   function renderSets() { keepFocus(setsTbody, renderSetsInner); }
 
@@ -7299,9 +7655,8 @@
       const tdLoad = document.createElement('td');
       const loadInputEl = document.createElement('input');
       loadInputEl.type = 'number';
-      loadInputEl.step = '0.01';
-      loadInputEl.min = '0';
       loadInputEl.value = set.loadMW;
+      makeDecimal(loadInputEl, 2);
       if (overCap) loadInputEl.style.borderColor = 'var(--warn)';
       loadInputEl.addEventListener('input', () => {
         if (midTyping(loadInputEl)) return;   // "16." 을 치는 중
