@@ -225,6 +225,16 @@
       warn_podSplit_sets: '⚠ {split}분할하려면 전기실 세트가 {split}개 이상이어야 합니다 (현재 {sets}개) — 같은 세트에 갈래가 몰려 쪼갠 효과가 없습니다.',
       hint_podSplit_n: 'POD 1개를 {split}갈래({blockKW}kW씩)로 쪼개 서로 다른 세트에 물립니다 — 갈래마다 온전한 {topo} 급전이고, 세트 부하가 고르게 맞습니다.',
       set_label: 'S{n}',
+      label_feedUnit: '급전 단위',
+      feed_unit_room: '전기실 모선',
+      feed_unit_tx: '변압기별',
+      label_txFanout: '변압기 1대당 분기 수 (POD)',
+      txfan_hint_off: "'변압기별'로 바꾸면 적용됩니다 — 변압기 한 대마다 회선이 따로 나옵니다.",
+      txfan_hint_1: '변압기 1대 → POD 1개 (1회선씩). POD당 {lines}회선.',
+      txfan_hint_n: '변압기 1대의 선이 POD {fan}개로 분기. POD당 {lines}회선.',
+      txfan_hint_all: '변압기 1대의 선이 세트 안 POD {fan}개 전부로 분기. POD당 {lines}회선.',
+      pod_feed_caption_tx: '각 POD {feeds}회선 급전 ({topo}) — 변압기마다 선이 나와 POD로 닿는다 (변압기당 POD {fan}개)',
+      legend_tx_feed_note: '변압기(T) 한 대마다 회선이 나옴 · 변압기를 더블클릭하면 그 1대만 상실 처리',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
       pod_chip: 'POD {n}',
@@ -517,6 +527,11 @@
       rv_imbalance_fix_count: "POD 수량을 세트 수의 배수로 맞추거나 세트 수를 조정하세요.",
       rv_balanced_h: "세트별 부하가 균등합니다",
       rv_balanced: "세트 {sets}개가 각각 {mw}MW씩 동일하게 분담합니다. 전기실 사양을 한 가지로 통일할 수 있습니다.",
+      rv_tx_skew_h: "변압기별 급전이 한 전기실에 치우쳤습니다",
+      rv_tx_skew: "전기실 1곳을 잃으면 어떤 POD는 급전 회선의 {worst}%를 한꺼번에 잃습니다 (고르게 나뉘면 {ideal}%).",
+      rv_tx_skew_fix: "변압기 1대당 분기 수를 늘려 더 많은 POD로 나누거나, 세트 안 POD 수를 전기실당 변압기 수와 맞추세요.",
+      rv_tx_ok_h: "변압기별 급전이 전기실마다 고르게 나뉘었습니다",
+      rv_tx_ok: "전기실 1곳을 잃어도 POD는 급전 회선의 최대 {worst}%만 잃습니다 (균등 기준 {ideal}%).",
       rv_comb_mismatch_h: "분배 방식이 이중화 방식과 맞지 않습니다",
       rv_comb_mismatch: "조합형은 POD당 2회선 고정이라 세트 안 {perSet}개 중 2곳씩만 물립니다. {topo}의 'N개 중 M개' 구조를 표현하지 못합니다.",
       rv_comb_mismatch_fix: "모선형 분배로 바꾸면 세트의 전기실 전부가 POD에 급전합니다.",
@@ -779,6 +794,16 @@
       warn_podSplit_sets: '⚠ Splitting {split} ways needs at least {split} room sets (currently {sets}) — the branches land in the same set, so the split buys nothing.',
       hint_podSplit_n: 'Each POD is split {split} ways ({blockKW}kW each) across different sets — every branch is still a full {topo} feed, and the sets come out even.',
       set_label: 'S{n}',
+      label_feedUnit: 'Feed unit',
+      feed_unit_room: 'Room bus',
+      feed_unit_tx: 'Per transformer',
+      label_txFanout: 'PODs branched from each transformer',
+      txfan_hint_off: "Switch to 'Per transformer' to apply — every transformer gets its own feeder.",
+      txfan_hint_1: 'One transformer feeds one POD (one feeder each). {lines} feeders per POD.',
+      txfan_hint_n: "Each transformer's feeder branches to {fan} PODs. {lines} feeders per POD.",
+      txfan_hint_all: "Each transformer's feeder branches to all {fan} PODs in the set. {lines} feeders per POD.",
+      pod_feed_caption_tx: '{feeds} feeders per POD ({topo}) — one feeder leaves each transformer ({fan} POD per transformer)',
+      legend_tx_feed_note: 'One feeder leaves each transformer (T) · double-click a transformer to fail just that one',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
       pod_feed_caption_comb: '2 feeders per POD (combinatorial) — a different pair of rooms carries half each, {pairs} combinations',
       pod_chip: 'POD {n}',
@@ -1071,6 +1096,11 @@
       rv_imbalance_fix_count: "Make the POD count a multiple of the set count, or adjust the set count.",
       rv_balanced_h: "Sets are evenly loaded",
       rv_balanced: "All {sets} sets carry {mw}MW each, so the rooms can share one specification.",
+      rv_tx_skew_h: "Per-transformer feeders lean on one room",
+      rv_tx_skew: "Losing one room costs some POD {worst}% of its feeders at once ({ideal}% when evenly spread).",
+      rv_tx_skew_fix: "Raise the PODs branched per transformer, or match the number of PODs in a set to the transformers per room.",
+      rv_tx_ok_h: "Per-transformer feeders are spread evenly across rooms",
+      rv_tx_ok: "Losing one room costs a POD at most {worst}% of its feeders ({ideal}% when perfectly even).",
       rv_comb_mismatch_h: "Distribution does not match the redundancy scheme",
       rv_comb_mismatch: "Combinatorial is fixed at 2 feeders per POD, pairing 2 of the {perSet} rooms in a set. It cannot express the N-of-M structure of {topo}.",
       rv_comb_mismatch_fix: "Switch to bus distribution so every room in the set feeds the POD.",
@@ -1426,6 +1456,7 @@
   // Non-empty => emergency mode driven by this explicit selection instead of the
   // automatic "last C modules" fallback.
   let manualFail4 = new Set();
+  let manualFailTx = new Set();   // 변압기 단위 상실: 'k:t' (전기실 통번호 : 변압기 번호)
 
   function updateDiagramModeButtons() {
     document.getElementById('modeNormalBtn').classList.toggle('active', diagramMode === 'normal');
@@ -1465,6 +1496,8 @@
   //  · 모선형: 이중화 방식이 정한 전기실 전부가 모선을 통해 모든 POD에 병렬 급전
   //  · 조합형: POD마다 서로 다른 전기실 2곳(N choose 2 조합)이 짝지어 이중급전
   let distMode = lsGet('prc_dist') === 'comb' ? 'comb' : 'bus';
+  // 급전 단위 — 'room': 전기실 모선(변압기를 한 모선에 병렬) / 'tx': 변압기마다 회선이 따로 나온다
+  let feedUnit = lsGet('prc_feedunit') === 'tx' ? 'tx' : 'room';
   function updateDistHint(combActive, perSet, pairCount, usedPairs, sets, topoName) {
     const el = document.getElementById('distHint');
     if (!el) return;
@@ -1494,6 +1527,34 @@
     lsSet('prc_dist', distMode);
     applyDistButtons();
     calculate();
+  }
+  function applyFeedUnitButtons() {
+    [['feedUnitRoomBtn', 'room'], ['feedUnitTxBtn', 'tx']].forEach(([id, u]) => {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      const on = feedUnit === u;
+      btn.classList.toggle('active', on);
+      btn.classList.toggle('normal', on);
+    });
+    const fan = document.getElementById('txFanout');
+    if (fan) fan.disabled = feedUnit !== 'tx';
+    const dist = ['distBusBtn', 'distCombBtn'];
+    dist.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = feedUnit === 'tx'; });
+  }
+  function setFeedUnit(u) {
+    feedUnit = u === 'tx' ? 'tx' : 'room';
+    lsSet('prc_feedunit', feedUnit);
+    manualFailTx.clear();
+    applyFeedUnitButtons();
+    calculate();
+  }
+  // 분기 수 안내 — 지금 고른 값으로 POD당 몇 회선이 되는지
+  function updateTxHint(fan, maxP, linesPerPod) {
+    const el = document.getElementById('txFanoutHint');
+    if (!el) return;
+    if (feedUnit !== 'tx') { el.textContent = t('txfan_hint_off'); return; }
+    const key = fan <= 1 ? 'txfan_hint_1' : (fan >= maxP ? 'txfan_hint_all' : 'txfan_hint_n');
+    el.textContent = t(key, { fan, lines: linesPerPod, max: maxP });
   }
 
   // ===== 전기실(물리적 방) 구성 =====
@@ -1538,6 +1599,15 @@
       }, ctx.split < ctx.sets ? 'rv_imbalance_fix_split' : 'rv_imbalance_fix_count');
     } else if (ctx.sets > 1) {
       add('good', 'rv_balanced', { sets: ctx.sets, mw: fmtN(Math.round(ctx.setLoad[0] / 100) / 10) });
+    }
+
+    // 3-2. 변압기별 급전이면 전기실 1곳을 잃을 때 POD가 한꺼번에 잃는 회선 비율을 본다
+    if (ctx.txMode) {
+      if (ctx.txWorstLoss > ctx.txIdealLoss * 1.4 + 1e-9) {
+        add('warn', 'rv_tx_skew', { worst: pct(ctx.txWorstLoss * 100), ideal: pct(ctx.txIdealLoss * 100), fan: ctx.txFan }, 'rv_tx_skew_fix');
+      } else {
+        add('good', 'rv_tx_ok', { worst: pct(ctx.txWorstLoss * 100), ideal: pct(ctx.txIdealLoss * 100), fan: ctx.txFan });
+      }
     }
 
     // 4. 분배 방식이 이중화 방식을 표현하는가
@@ -1604,7 +1674,7 @@
   function updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, M, podPlan) {
     const el = document.getElementById('allocVerdict');
     if (!el) return;
-    const over = rooms.filter(r => r.capacityKW > 0 && r.loadKW > r.capacityKW + 0.5).length;
+    const over = rooms.filter(r => (r.capacityKW > 0 && r.loadKW > r.capacityKW + 0.5) || r.txOver > 0).length;
     let key, color;
     if (unfedPods > 0) { key = 'alloc_unfed'; color = 'var(--warn)'; }
     else if (over > 0) { key = 'alloc_over'; color = 'var(--warn)'; }
@@ -2001,7 +2071,7 @@
   // Per-block dblclick handlers (added inside renderDiagram, since blocks are
   // redrawn every render) call stopPropagation so only a genuine background click reaches here.
   document.getElementById('diagramSvg').addEventListener('dblclick', () => {
-    manualFail4.clear();
+    manualFail4.clear(); manualFailTx.clear();
     diagramMode = 'normal';
     updateDiagramModeButtons();
     calculate();
@@ -2081,6 +2151,8 @@
       let failedRooms;
       if (manualFail4.size > 0) {
         failedRooms = [...manualFail4].filter(i => i < rooms.length);
+      } else if (manualFailTx.size > 0) {
+        failedRooms = [];     // 변압기만 골라 껐다 — 방 단위 자동 상실은 걸지 않는다
       } else {
         // 자동: 세트마다 마지막 C개 방을 상실시킨다 (세트별 최악 상황)
         failedRooms = [];
@@ -2117,7 +2189,7 @@
     //         그중 3개만 살아 있어도 POD 전량을 커버한다 (대기이중화는 Duty+캐쳐).
     // 조합형: POD마다 세트 안의 전기실 2곳이 짝을 지어 절반씩 — 2회선 고정이라
     //         "4개 중 3개" 같은 구성은 표현하지 못한다.
-    const combPossible = distMode === 'comb' && roomPlan.perSet >= 3;
+    const combPossible = feedUnit !== 'tx' && distMode === 'comb' && roomPlan.perSet >= 3;
     if (combPossible) rooms.forEach(r => { if (r.state === 'idle') r.state = 'active'; });
     const pairs = combPossible ? combPairs(roomPlan.perSet) : null;
     const pairUse = new Array(rooms.length).fill(0);
@@ -2140,6 +2212,10 @@
       return [a, b];
     };
     const podFeeds = [];
+    const txMode = feedUnit === 'tx';
+    const srcFeeds = {};                                         // 'k:t' -> 그 변압기가 급전하는 POD 목록
+    const podSrc = Array.from({ length: podCount }, () => []);   // POD -> 급전하는 변압기 목록
+    let txFanEff = 1;
     for (let p = 0; p < podCount; p++) {
       const si = podSet[p];
       if (combPossible) { podFeeds.push(roomPairFor(si)); continue; }
@@ -2149,7 +2225,40 @@
         : modules.map((_, k) => k);
       podFeeds.push(feedModules.map(mi => base + mi));
     }
-    const feedsPerPod = podFeeds.length ? podFeeds[0].length : 0;
+    if (txMode) {
+      // 변압기를 급전 단위로 내린다. 세트 안의 변압기를 방 순서대로 줄 세워 커서를 돌리며
+      // POD를 fan개씩 물려 주면, POD마다 전기실별로 같은 수(±1)의 변압기를 받는다.
+      // 대기 이중화의 캐쳐는 Duty 상실 때 어느 POD든 받아야 하므로 변압기마다 세트 전체 POD에 물린다.
+      const maxP = Math.max(1, ...roomPlan.setPods.map(l => l.length));
+      txFanEff = Math.max(1, Math.min(maxP, Math.round(parseFloat((document.getElementById('txFanout') || {}).value) || 1)));
+      roomPlan.setPods.forEach((pods, si) => {
+        const P = pods.length;
+        if (!P) return;
+        let cursor = 0;
+        rooms.forEach((r, k) => {
+          if (r.setIndex !== si) return;
+          const catcher = currentTopo === 'standby' && r.role === 'catcher';
+          for (let ti = 0; ti < r.txCount; ti++) {
+            const f = catcher ? P : Math.min(txFanEff, P);
+            const list = [];
+            for (let j = 0; j < f; j++) list.push(pods[(cursor + j) % P]);
+            srcFeeds[k + ':' + ti] = list;
+            if (!catcher) cursor += f;
+          }
+        });
+      });
+      rooms.forEach((r, k) => {
+        for (let ti = 0; ti < r.txCount; ti++) {
+          (srcFeeds[k + ':' + ti] || []).forEach(p => podSrc[p].push(k + ':' + ti));
+        }
+      });
+      podFeeds.length = 0;
+      for (let p = 0; p < podCount; p++) {
+        podFeeds.push([...new Set(podSrc[p].map(key => Number(key.split(':')[0])))]);
+      }
+    }
+    const feedsPerPod = txMode ? podSrc.reduce((m, l) => Math.max(m, l.length), 0)
+      : (podFeeds.length ? podFeeds[0].length : 0);
     // 하이라이트 판정 — 전기실/POD 어느 쪽을 골랐든 같은 식으로 쓴다
     if (highlightPod !== null && highlightPod >= podCount) highlightPod = null;
     const anyHL = highlightRoom !== null || highlightPod !== null;
@@ -2168,14 +2277,39 @@
     //  · 분산/완전이중화 평상시 M방 → 방당 1/M, 1방 상실 → 남은 방이 1/(M-1)
     //  · 대기이중화 평상시 Duty가 전량, Duty 상실 → 투입된 캐쳐가 전량
     const podCarriers = [];
-    for (let p = 0; p < podCount; p++) {
-      const live = podFeeds[p].filter(r => rooms[r] && rooms[r].state === 'active');
-      podCarriers.push(live);
-      const each = live.length ? podLoadKW / live.length : 0;
-      live.forEach(r => { rooms[r].loadKW += each; });
+    if (txMode) {
+      // 변압기마다 상태·부하를 따로 갖는다 — 살아 있는 변압기만 POD 부하를 똑같이 나눠 받는다
+      rooms.forEach((r, k) => {
+        r.tx = Array.from({ length: r.txCount }, (_, ti) => ({
+          state: manualFailTx.has(k + ':' + ti) ? 'offline' : r.state, load: 0,
+        }));
+      });
+      for (let p = 0; p < podCount; p++) {
+        const live = podSrc[p].filter(key => {
+          const [k, ti] = key.split(':').map(Number);
+          return rooms[k] && rooms[k].tx[ti] && rooms[k].tx[ti].state === 'active';
+        });
+        podCarriers.push(live);
+        const each = live.length ? podLoadKW / live.length : 0;
+        live.forEach(key => { const [k, ti] = key.split(':').map(Number); rooms[k].tx[ti].load += each; });
+      }
+      rooms.forEach(r => {
+        r.loadKW = r.tx.reduce((n, x) => n + x.load, 0);
+        const capTx = r.capacityKW / Math.max(1, r.txCount);
+        r.txOver = r.tx.filter(x => x.state === 'active' && x.load > capTx + 0.5).length;
+        r.txWorst = r.tx.reduce((m, x) => (x.state === 'active' && capTx > 0 ? Math.max(m, x.load / capTx * 100) : m), 0);
+      });
+    } else {
+      for (let p = 0; p < podCount; p++) {
+        const live = podFeeds[p].filter(r => rooms[r] && rooms[r].state === 'active');
+        podCarriers.push(live);
+        const each = live.length ? podLoadKW / live.length : 0;
+        live.forEach(r => { rooms[r].loadKW += each; });
+      }
     }
     const roomRatio = r => (r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0);
-    const worstRatio = rooms.reduce((m, r) => Math.max(m, roomRatio(r)), 0);
+    // 변압기별 급전이면 방 평균이 아니라 가장 무거운 변압기 한 대가 기준이다
+    const worstRatio = rooms.reduce((m, r) => Math.max(m, txMode ? (r.txWorst || 0) : roomRatio(r)), 0);
     // 3oo4의 핵심은 평상시가 아니라 '1실 상실 시'다 — 세트 부하를 남은 N개가 떠안을 때의
     // 부하율을 따로 계산해 같이 보여준다 (설계를 결정하는 쪽은 이 숫자다).
     const worstEmergency = rooms.reduce((m, r) => {
@@ -2184,6 +2318,18 @@
     }, 0);
     const unfedPods = podCarriers.filter(c => !c.length).length;
     updateAllocVerdict(rooms, worstRatio, unfedPods, podCount, feedsPerPod, worstEmergency, N, N + C, podPlan);
+    updateTxHint(txFanEff, Math.max(1, ...roomPlan.setPods.map(l => l.length)), feedsPerPod);
+    // 전기실 1곳을 잃을 때 한 POD가 잃는 회선의 최대 비율 — 균등이면 1/(세트 안 전기실 수)
+    let txWorstLoss = 0, txIdealLoss = 0;
+    if (txMode && currentTopo !== 'standby') {
+      for (let p = 0; p < podCount; p++) {
+        const cnt = {};
+        podSrc[p].forEach(key => { const k = key.split(':')[0]; cnt[k] = (cnt[k] || 0) + 1; });
+        const tot = podSrc[p].length || 1;
+        Object.keys(cnt).forEach(k => { txWorstLoss = Math.max(txWorstLoss, cnt[k] / tot); });
+      }
+      txIdealLoss = 1 / Math.max(1, roomPlan.perSet);
+    }
 
     // 검토 의견에 넘길 요약 — 위에서 이미 구한 값만 모은다
     const needPerRoom = Math.max(...roomPlan.designPerRoom);
@@ -2224,6 +2370,7 @@
       topo: topoShortName, topoKind: currentTopo, comb: combPossible,
       split: podPlan.split, pods: podPlan.pods, podKW: podPlan.podKW, loadKW,
       feedsPerPod, rating, totalTx: rooms.reduce((n, r) => n + r.txCount, 0),
+      txMode: txMode && currentTopo !== 'standby', txFan: txFanEff, txWorstLoss, txIdealLoss,
       maxTx: Math.max(...rooms.map(r => r.txCount)),
       needPerRoom, gotPerRoom, head: (gotPerRoom / Math.max(1, needPerRoom) - 1) * 100,
       setLoad: roomPlan.setLoad, setSpread: minSetLoad > 0 ? maxSetLoad / minSetLoad : 1,
@@ -2267,8 +2414,57 @@
     const busGap = 15;
     const busY0 = podY + podH + 24;
     const busY = k => busY0 + k * busGap;
+
+    // ----- 변압기별 급전: 변압기 한 대마다 선이 나와 POD로 닿는다 -----
+    // 선은 전기실 윗면의 변압기 자리에서 올라가 가로줄(레일)을 타고 POD 밑면으로 꽂힌다.
+    // 겹치지 않는 레일은 한 단에 모아 세로 공간을 아낀다.
+    const TX_W = 30, TX_CH_GAP = 11;
+    const txPortX = (k, ti) => {
+      const r = rooms[k];
+      const x0 = startX + k * (boxW + gap);
+      const row = Math.floor(ti / 3), col = ti % 3;
+      const rowCount = Math.min(3, r.txCount - row * 3);
+      const rowW = rowCount * TX_W + (rowCount - 1) * 8;
+      return x0 + boxW / 2 - rowW / 2 + col * (TX_W + 8) + TX_W / 2;
+    };
+    const txRails = [];
+    const txRisers = [];
+    let txChannels = 0;
+    if (txMode) {
+      const maxFeeds = podSrc.reduce((m, l) => Math.max(m, l.length), 1);
+      const tapSp = Math.min(6, Math.max(2.5, (podW - 5) / maxFeeds));
+      const portXs = [];
+      Object.keys(srcFeeds).forEach(key => { const [k, ti] = key.split(':').map(Number); portXs.push(txPortX(k, ti)); });
+      const tapAt = {};
+      for (let p = 0; p < podCount; p++) {
+        const n = podSrc[p].length;
+        const baseX = j => podCx(p) + (j - (n - 1) / 2) * tapSp;
+        // 가지의 세로선이 다른 변압기의 인입 세로선과 한 줄 위에 얹히지 않게 POD 단위로 살짝 민다
+        let shift = 0;
+        for (const sh of [0, 1.5, -1.5, 3, -3, 4.5, -4.5]) {
+          if (podSrc[p].every((_, j) => portXs.every(px => Math.abs(px - (baseX(j) + sh)) > 1.4))) { shift = sh; break; }
+        }
+        podSrc[p].forEach((key, j) => { tapAt[p + '|' + key] = baseX(j) + shift; });
+      }
+      Object.keys(srcFeeds).forEach(key => {
+        const [k, ti] = key.split(':').map(Number);
+        const px = txPortX(k, ti);
+        const xs = [px];
+        srcFeeds[key].forEach(p => xs.push(tapAt[p + '|' + key]));
+        txRails.push({ k, ti, key, pods: srcFeeds[key], portX: px, x0: Math.min.apply(null, xs), x1: Math.max.apply(null, xs), tapAt });
+      });
+      const ends = [];
+      txRails.slice().sort((a, b) => a.x0 - b.x0 || a.k - b.k || a.ti - b.ti).forEach(rl => {
+        let ch = ends.findIndex(e => e < rl.x0 - 5);
+        if (ch < 0) { ch = ends.length; ends.push(-Infinity); }
+        ends[ch] = rl.x1; rl.ch = ch;
+      });
+      txChannels = ends.length;
+    }
+    const txRailY = rl => busY0 + rl.ch * TX_CH_GAP;
     // 조합형은 모선 없이 곡선으로 바로 잇는다 — 모선 자리만큼의 세로 공간이 필요 없다
-    const moduleY = combLayout ? podY + podH + 86 : busY(moduleCount - 1) + 30;
+    const moduleY = combLayout ? podY + podH + 86
+      : (txMode ? busY0 + txChannels * TX_CH_GAP + 30 : busY(moduleCount - 1) + 30);
 
     const maxRoomTx = rooms.reduce((m, r) => Math.max(m, r.txCount), 1);
     const txRowsNeeded = Math.ceil(maxRoomTx / 3);
@@ -2404,6 +2600,39 @@
           }
         });
       }
+    } else if (txMode) {
+      txRails.forEach(rl => {
+        const tx = rooms[rl.k].tx[rl.ti];
+        const off = tx.state === 'offline', idle = tx.state === 'idle';
+        const color = off ? offlineBorder : (idle ? standbyBorder : roomColor(rl.k));
+        const dash = (off || idle) ? '4,3' : 'none';
+        const y = txRailY(rl);
+        const anyLit = rl.pods.some(p => edgeLit(p, rl.k));
+        const anyStrong = rl.pods.some(p => edgeStrong(p, rl.k));
+        const base = !anyLit ? 0.1 : (off ? 0.5 : (idle ? 0.75 : 0.95));
+        svgTarget.appendChild(svgEl('path', {
+          d: `M${rl.x0},${y} L${rl.x1},${y}`, fill: 'none', stroke: color,
+          'stroke-width': anyStrong ? 2.2 : 1.5, 'stroke-dasharray': dash, opacity: base,
+        }));
+        svgTarget.appendChild(svgEl('path', {
+          d: `M${rl.portX},${y} L${rl.portX},${moduleY}`, fill: 'none', stroke: color,
+          'stroke-width': anyStrong ? 2.2 : 1.5, 'stroke-dasharray': dash, opacity: base,
+        }));
+        svgTarget.appendChild(svgEl('circle', { cx: rl.portX, cy: y, r: 2.4, fill: color, opacity: base }));
+        rl.pods.forEach(p => {
+          const x = rl.tapAt[p + '|' + rl.key];
+          const lit = edgeLit(p, rl.k), strong = edgeStrong(p, rl.k);
+          svgTarget.appendChild(svgEl('path', {
+            d: `M${x},${podY + podH} L${x},${y}`, fill: 'none', stroke: color,
+            'stroke-width': strong ? 2.4 : 1.3, 'stroke-dasharray': dash,
+            opacity: !lit ? 0.1 : (off ? 0.5 : (idle ? 0.75 : 0.95)),
+          }));
+          svgTarget.appendChild(svgEl('circle', {
+            cx: x, cy: y, r: strong ? 2.8 : 2, fill: color, opacity: !lit ? 0.1 : (off ? 0.5 : 1),
+          }));
+        });
+        txRisers.push({ rl: rl, color: color, base: base });
+      });
     } else {
     // 모선형: 전기실마다 자기 색의 수평 모선을 하나씩 깔고, POD는 자기에게 급전하는 모선마다
     // 짧은 수직 분기선을 내려 접점(점)으로 연결한다. 접점이 없는 교차는 연결이 아니다.
@@ -2482,7 +2711,7 @@
       fill: '#8A8072', 'font-family': 'sans-serif',
       stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
     });
-    feedCaption.textContent = t(combPossible ? 'pod_feed_caption_comb' : 'pod_feed_caption', { feeds: feedsPerPod, topo: topoShort, pairs: usedPairKeys.size });
+    feedCaption.textContent = t(txMode ? 'pod_feed_caption_tx' : (combPossible ? 'pod_feed_caption_comb' : 'pod_feed_caption'), { feeds: feedsPerPod, topo: topoShort, pairs: usedPairKeys.size, fan: txFanEff });
     svgTarget.appendChild(feedCaption);
 
     rooms.forEach((mod, i) => {
@@ -2510,7 +2739,7 @@
         if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
         // 상실은 방 단위 — i는 전기실 통번호다 (모듈 번호 mi를 쓰면 다른 세트의 같은 자리도 꺼진다)
         if (manualFail4.has(i)) manualFail4.delete(i); else manualFail4.add(i);
-        diagramMode = manualFail4.size > 0 ? 'emergency' : 'normal';
+        diagramMode = (manualFail4.size + manualFailTx.size) > 0 ? 'emergency' : 'normal';
         updateDiagramModeButtons();
         calculate();
       });
@@ -2566,6 +2795,11 @@
 
       const txW = 30;
       for (let t = 0; t < txCount; t++) {
+        // 변압기별 급전이면 변압기마다 상태·부하율이 다르다
+        const txs = (txMode && mod.tx) ? mod.tx[t] : null;
+        const tOff = txs ? txs.state === 'offline' : isOffline;
+        const tIdle = txs ? txs.state === 'idle' : isIdle;
+        const tPct = txs ? ((tOff || tIdle) ? 0 : txs.load / Math.max(1, mod.capacityKW / Math.max(1, txCount)) * 100) : perTxPct;
         const row = Math.floor(t / 3);
         const col = t % 3;
         const rowCount = Math.min(3, txCount - row * 3);
@@ -2574,22 +2808,36 @@
         const tx = rowStartX + col * (txW + 8);
         const ty = startTxY + row * (22 + 34);
 
-        const txColor = isOffline ? txOfflineFill : (isIdle ? txIdleFill : mColor);
+        const txColor = tOff ? txOfflineFill : (tIdle ? txIdleFill : mColor);
         const txRect = svgEl('rect', { x: tx, y: ty, width: txW, height: 22, rx: 4, fill: txColor });
         moduleGroup.appendChild(txRect);
         const txLabel = svgEl('text', { x: tx + txW / 2, y: ty + 15, 'text-anchor': 'middle', 'font-size': 9, 'font-weight': 700, fill: '#fff', 'font-family': 'sans-serif' });
-        txLabel.textContent = isOffline ? '✕' : 'T';
+        txLabel.textContent = tOff ? '✕' : 'T';
         moduleGroup.appendChild(txLabel);
 
-        const pctLabel = svgEl('text', { x: tx + txW / 2, y: ty + 33, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : mColor), 'font-family': 'sans-serif' });
-        pctLabel.textContent = isOffline ? '-' : (isIdle ? '0%' : fmtN(perTxPct) + '%');
+        const pctLabel = svgEl('text', { x: tx + txW / 2, y: ty + 33, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: tOff ? '#C8604F' : (tIdle ? '#9A90BB' : mColor), 'font-family': 'sans-serif' });
+        pctLabel.textContent = tOff ? '-' : (tIdle ? '0%' : fmtN(tPct) + '%');
         moduleGroup.appendChild(pctLabel);
 
         // per-transformer rated capacity, tiny — kept to a compact "N.NMVA" so it stays clear
         // of the tx block's edges even for larger custom rating values.
-        const ratingLabel = svgEl('text', { x: tx + txW / 2, y: ty + 44, 'text-anchor': 'middle', 'font-size': 6.2, 'font-weight': 600, fill: isOffline ? '#C8604F' : (isIdle ? '#9A90BB' : '#8A8072'), 'font-family': 'sans-serif' });
+        const ratingLabel = svgEl('text', { x: tx + txW / 2, y: ty + 44, 'text-anchor': 'middle', 'font-size': 6.2, 'font-weight': 600, fill: tOff ? '#C8604F' : (tIdle ? '#9A90BB' : '#8A8072'), 'font-family': 'sans-serif' });
         ratingLabel.textContent = fmtN(rating / 1000) + 'MVA';
         moduleGroup.appendChild(ratingLabel);
+        if (txMode) {
+          // 변압기 1대만 더블클릭으로 상실 지정 — 방 전체 상실과는 따로다
+          const hitRect = svgEl('rect', { x: tx - 2, y: ty - 2, width: txW + 4, height: 50, fill: 'transparent', cursor: 'pointer' });
+          hitRect.addEventListener('dblclick', e => {
+            e.stopPropagation();
+            if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; }
+            const key = i + ':' + t;
+            if (manualFailTx.has(key)) manualFailTx.delete(key); else manualFailTx.add(key);
+            diagramMode = (manualFail4.size + manualFailTx.size) > 0 ? 'emergency' : 'normal';
+            updateDiagramModeButtons();
+            calculate();
+          });
+          moduleGroup.appendChild(hitRect);
+        }
       }
 
       // module summary caption
@@ -2606,6 +2854,17 @@
       moduleGroup.appendChild(ratioText);
 
       svgTarget.appendChild(moduleGroup);
+    });
+
+    // 변압기별 급전 — 방 윗면에서 변압기 윗면까지 가는 짧은 인입선은 방 상자 위에 얹는다
+    txRisers.forEach(rs => {
+      const rl = rs.rl;
+      const row = Math.floor(rl.ti / 3);
+      const top = moduleY + 64 + row * (22 + 34);
+      svgTarget.appendChild(svgEl('path', {
+        d: `M${rl.portX},${moduleY} L${rl.portX},${top}`, fill: 'none', stroke: rs.color,
+        'stroke-width': 1.1, 'stroke-dasharray': '2,2', opacity: Math.min(0.9, rs.base),
+      }));
     });
 
     // total caption at bottom
@@ -2650,6 +2909,13 @@
     noteDiv.style.marginTop = '4px';
     noteDiv.innerHTML = `<span class="swatch" style="background:#7A6BCB"></span>${t('legend_tx_note')}`;
     legend.appendChild(noteDiv);
+    if (txMode) {
+      const txFeedDiv = document.createElement('div');
+      txFeedDiv.className = 'item';
+      txFeedDiv.style.width = '100%';
+      txFeedDiv.innerHTML = `<span class="swatch" style="background:#7A6BCB"></span>${t('legend_tx_feed_note')}`;
+      legend.appendChild(txFeedDiv);
+    }
     const podNoteDiv = document.createElement('div');
     podNoteDiv.className = 'item';
     podNoteDiv.style.width = '100%';
@@ -7502,7 +7768,7 @@
     currentTopo = opt.dataset.topo;
     nInput.value = opt.dataset.n;
     cInput.value = opt.dataset.c;
-    manualFail4.clear(); // module indices/roles are topology-specific — stale selections don't carry over
+    manualFail4.clear(); manualFailTx.clear(); // module indices/roles are topology-specific — stale selections don't carry over
     diagramMode = 'normal';
     updateDiagramModeButtons();
     applyTopoMeta();
@@ -7535,7 +7801,7 @@
       });
       if (el === nInput || el === cInput) {
         // module count/roles changed — stale manual 상실 selections no longer map to valid modules
-        manualFail4.clear();
+        manualFail4.clear(); manualFailTx.clear();
         diagramMode = 'normal';
         updateDiagramModeButtons();
       }
@@ -7544,12 +7810,16 @@
   });
 
   applyDistButtons();
+  applyFeedUnitButtons();
+  document.getElementById('feedUnitRoomBtn').addEventListener('click', () => setFeedUnit('room'));
+  document.getElementById('feedUnitTxBtn').addEventListener('click', () => setFeedUnit('tx'));
+  document.getElementById('txFanout').addEventListener('input', () => { if (feedUnit === 'tx') calculate(); });
   document.getElementById('distBusBtn').addEventListener('click', () => setDistMode('bus'));
   document.getElementById('distCombBtn').addEventListener('click', () => setDistMode('comb'));
 
   document.getElementById('modeNormalBtn').addEventListener('click', () => {
     diagramMode = 'normal';
-    manualFail4.clear();
+    manualFail4.clear(); manualFailTx.clear();
     updateDiagramModeButtons();
     calculate();
   });
@@ -7743,7 +8013,7 @@
       Array.prototype.forEach.call(redundancyOpts, o => {
         o.classList.toggle('active', o.dataset.topo === preset.topo && o.dataset.n == preset.n && o.dataset.c == preset.c);
       });
-      manualFail4.clear();
+      manualFail4.clear(); manualFailTx.clear();
       diagramMode = 'normal';
       updateDiagramModeButtons();
       applyTopoMeta();
@@ -8071,7 +8341,7 @@
   const PRESET_FIELDS = [
     'utilityCapacity', 'itCapacityInput', 'hallCountInput', 'load', 'rating',
     'pf', 'upsEfficiency', 'safety', 'podCapacity', 'podCount', 'podSplit',
-    'nInput', 'cInput', 'roomSets', 'roomsPerSet', 'roomCapacity',
+    'nInput', 'cInput', 'roomSets', 'roomsPerSet', 'roomCapacity', 'txFanout',
   ];
   const PRESET_CHECKS = ['loadSyncCheckbox', 'podAuto', 'roomCapAuto', 'roomsPerSetAuto'];
   const presetSelect = document.getElementById('presetSelect');
@@ -8093,7 +8363,7 @@
     PRESET_CHECKS.forEach(id => { const el = document.getElementById(id); if (el) checks[id] = el.checked; });
     const activeOpt = Array.prototype.findIndex.call(redundancyOpts, o => o.classList.contains('active'));
     return {
-      v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode,
+      v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode, feedUnit,
       podSet: Object.assign({}, podSetOverride), loadSource,
       sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey })),
     };
@@ -8117,12 +8387,15 @@
     if (Array.isArray(snap.sets)) {
       sets = snap.sets.map(st => ({ id: setIdCounter++, loadMW: st.loadMW, presetKey: st.presetKey }));
     }
-    manualFail4.clear();
+    manualFail4.clear(); manualFailTx.clear();
     podSetOverride = Object.assign({}, snap.podSet || {});
     if (snap.loadSource) loadSource = snap.loadSource;
     diagramMode = 'normal';
     updateDiagramModeButtons();
     distMode = snap.dist === 'comb' ? 'comb' : 'bus';
+    feedUnit = snap.feedUnit === 'tx' ? 'tx' : 'room';
+    lsSet('prc_feedunit', feedUnit);
+    try { applyFeedUnitButtons(); } catch (e) {}
     lsSet('prc_dist', distMode);
     applyDistButtons();
     applyTopoMeta();

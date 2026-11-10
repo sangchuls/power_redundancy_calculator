@@ -304,6 +304,20 @@
       <button class="mode-btn" id="distCombBtn" data-i18n="dist_comb">조합형 분배</button>
     </div>
     <div class="hint" id="distHint" style="margin:-4px 0 8px;"></div>
+    <div class="field-row" style="margin:6px 0 8px; align-items:flex-start;">
+      <div class="field" style="flex:0 0 auto;">
+        <label data-i18n="label_feedUnit">급전 단위</label>
+        <div class="mode-toggle" style="margin:0;">
+          <button class="mode-btn" id="feedUnitRoomBtn" data-i18n="feed_unit_room">전기실 모선</button>
+          <button class="mode-btn" id="feedUnitTxBtn" data-i18n="feed_unit_tx">변압기별</button>
+        </div>
+      </div>
+      <div class="field" id="txFanoutField">
+        <label for="txFanout" data-i18n="label_txFanout">변압기 1대당 분기 수 (POD)</label>
+        <input type="number" id="txFanout" value="1" step="1" min="1">
+        <div class="hint" id="txFanoutHint"></div>
+      </div>
+    </div>
     <div class="pod-assign" id="podSetAssign"></div>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="modeNormalBtn" data-mode="normal" data-i18n="mode_normal">평상시</button>
