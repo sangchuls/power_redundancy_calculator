@@ -72,11 +72,6 @@
         <label data-i18n="label_hallCapacity">홀당 용량 (IT ÷ 개수, 자동계산)</label>
         <input type="text" id="hallCapacityDisplay" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
       </div>
-      <div class="field">
-        <label data-i18n="label_maxSetCapacity">권장 최대용량 (MW, 자동계산)</label>
-        <input type="text" id="maxSetCapacity" value="9" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
-        <div class="hint" data-i18n="hint_maxSetCapacity">변압기 정격×안전율×3(N) 기준 — ①번 값에 따라 자동 재계산, 초과 시 표에 경고만 표시</div>
-      </div>
     </div>
     <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
       <button id="autoSplitBtn" class="quick-btn" data-i18n="btn_autoSplit">데이터홀 개수로 균등 자동 분할</button>
@@ -612,7 +607,7 @@
     <div class="field-row">
       <div class="field">
         <label for="coolAc" data-i18n="label_coolAc">AC(공랭) 담당 비율 (%)</label>
-        <input type="number" id="coolAc" value="100" step="5" min="0" max="100" disabled style="background:var(--primary-bg);">
+        <input type="number" id="coolAc" value="14" step="5" min="0" disabled style="background:var(--primary-bg);">
         <div class="hint">
           <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
             <input type="checkbox" id="coolAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_coolAuto">랙 밀도로 자동 산정</span>
@@ -622,7 +617,7 @@
       </div>
       <div class="field">
         <label for="coolLc" data-i18n="label_coolLc">LC(액랭) 담당 비율 (%)</label>
-        <input type="number" id="coolLc" value="90" step="5" min="0" max="100" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+        <input type="number" id="coolLc" value="86" step="5" min="0" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
       </div>
       <div class="field">
         <label for="coolCfm" data-i18n="label_coolCfm">CFM / kW</label>

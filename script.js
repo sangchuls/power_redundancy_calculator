@@ -14,7 +14,6 @@
       h0_title: '전체 용량 계획', h0_desc: '수전 · IT용량 → PUE 자동계산 → 데이터홀 개수 분할(하이브리드 가능)',
       label_utility: '수전용량 (MW)', label_it: 'IT용량 (MW)', label_pue: 'PUE (수전 ÷ IT, 자동계산)',
       label_hallCount: '데이터홀 개수', label_hallCapacity: '홀당 용량 (IT ÷ 개수, 자동계산)',
-      label_maxSetCapacity: '권장 최대용량 (MW, 자동계산)',
       label_itSync: "데이터홀 합계와 연동",
       label_loadSource: "분석할 데이터홀",
       h_hall_title: "데이터홀 평면 검토",
@@ -119,6 +118,7 @@
       cool_h_height: "FWU 높이",
       cool_h_liquid: "액랭 (LC)",
       cool_r_split: "랙 {density}kW/대 → AC {ac}% · LC {lc}% = {acKW}kW · {lcKW}kW",
+      cool_split_sum: " — 합계 {sum}% ({kw}kW)",
       cool_h_place: "FWU 배치",
       cool_r_air: "{kw}kW × {cfm}CFM/kW × 1.699 × {margin} = {cmh} CMH ÷ 1대 {unit} CMH → FWU {n}대 + 예비 {spare}대 = {total}대",
       cool_r_place_ok: "기류 방향(열에 수직)으로 열 양쪽에 배치 — {total}대 ÷ {tiers}단 = {spots}개소, 양쪽 {side}개소씩. 폭 {w}m × {side} = {need}m ≤ 열 길이 {row}m",
@@ -180,7 +180,6 @@
       src_note_manual: "아래 총부하 칸에 직접 입력하세요. ⓪번과 연동되지 않습니다.",
       hint_itSync_on: " — 아래 데이터홀 {n}개의 용량 합계 {mw}MW를 그대로 씁니다. 목표값을 직접 넣으려면 체크 해제.",
       hint_itSync_off: " — 직접 입력한 목표값입니다 (데이터홀 합계 {mw}MW). \"데이터홀 개수로 균등 자동 분할\"로 아래 표에 나눠 담으세요.",
-      hint_maxSetCapacity: '유효용량 × N × 모듈당 변압기 대수로 ①~③번 값에서 자동 산출 — 초과하는 데이터홀은 아래 표에 경고 표시',
       btn_autoSplit: '데이터홀 개수로 균등 자동 분할', btn_addSet: '+ 데이터홀 수동 추가',
       th_hall: '데이터홀', th_itCap: 'IT용량 (MW)', th_topo: '이중화 방식', th_perRoomTx: '전기실당 변압기',
       th_totalModules: '총 모듈수', th_totalTx: '총 변압기', th_normal: '평상시', th_emergency: '비상시',
@@ -570,7 +569,7 @@
       comb_summary_normal: '전기실 {m}개 × 평상시 부하 {perRoom}MW = 총 IT부하 {total}MW (전기실 조합 {zones}개 사용 · POD당 {zoneLoad}MW)',
       comb_summary_emergency: '전기실 {room} 상실 시 나머지 {rest}개 전기실이 각 {newLoad}MW로 상승 (평상시 {oldLoad}MW 대비 +{diff}MW)',
 
-      hall_row: '데이터홀 {n}', overcap_row: '최대({max}MW) 초과', btn_detail: '상세보기', btn_delete: '삭제',
+      hall_row: '데이터홀 {n}', btn_detail: '상세보기', btn_delete: '삭제',
       summary_hallCount: '데이터홀 수', summary_sumLoad: '데이터홀 IT용량 합계', summary_target: '목표 IT용량',
       summary_diff: '차이', summary_sumUnits: '전체 변압기 합계',
       unit_gae: '{n}개', unit_dae: '{n}대',
@@ -583,7 +582,6 @@
       h0_title: 'Overall capacity plan', h0_desc: 'Utility · IT capacity → auto PUE → data hall count split (hybrid supported)',
       label_utility: 'Utility capacity (MW)', label_it: 'IT capacity (MW)', label_pue: 'PUE (utility ÷ IT, auto)',
       label_hallCount: 'Data hall count', label_hallCapacity: 'Per-hall capacity (IT ÷ count, auto)',
-      label_maxSetCapacity: 'Recommended max capacity (MW, auto)',
       label_itSync: "Follow the data hall total",
       label_loadSource: "Data hall to analyse",
       h_hall_title: "Data hall layout review",
@@ -688,6 +686,7 @@
       cool_h_height: "FWU height",
       cool_h_liquid: "Liquid (LC)",
       cool_r_split: "{density}kW per rack → AC {ac}% · LC {lc}% = {acKW}kW · {lcKW}kW",
+      cool_split_sum: " — total {sum}% ({kw}kW)",
       cool_h_place: "FWU layout",
       cool_r_air: "{kw}kW × {cfm} CFM/kW × 1.699 × {margin} = {cmh} CMH \u00F7 {unit} CMH per unit \u2192 {n} FWUs + {spare} spare = {total}",
       cool_r_place_ok: "Across the airflow, on both sides of the row — {total} units \u00F7 {tiers} tiers = {spots} bays, {side} per side. {w}m \u00D7 {side} = {need}m \u2264 row length {row}m",
@@ -749,7 +748,6 @@
       src_note_manual: "Type the total load below. It will not follow ⓪.",
       hint_itSync_on: " — uses the {mw}MW sum of the {n} data halls below. Uncheck to enter a target instead.",
       hint_itSync_off: " — a target you entered (halls below total {mw}MW). Use \\u201csplit evenly\\u201d to distribute it.",
-      hint_maxSetCapacity: 'Derived from ①~③ as effective capacity × N × transformers per module — halls above it are flagged in the table below',
       btn_autoSplit: 'Auto-split evenly by hall count', btn_addSet: '+ Add hall manually',
       th_hall: 'Data hall', th_itCap: 'IT capacity (MW)', th_topo: 'Redundancy', th_perRoomTx: 'Tx per room',
       th_totalModules: 'Total modules', th_totalTx: 'Total tx', th_normal: 'Normal', th_emergency: 'Emergency',
@@ -1139,7 +1137,7 @@
       comb_summary_normal: '{m} rooms × normal load {perRoom}MW = total IT load {total}MW ({zones} feed combinations in use · {zoneLoad}MW per POD)',
       comb_summary_emergency: 'If room {room} is lost, the other {rest} rooms rise to {newLoad}MW each (+{diff}MW vs. {oldLoad}MW normal)',
 
-      hall_row: 'Data hall {n}', overcap_row: 'Exceeds max ({max}MW)', btn_detail: 'Details', btn_delete: 'Delete',
+      hall_row: 'Data hall {n}', btn_detail: 'Details', btn_delete: 'Delete',
       summary_hallCount: 'Data halls', summary_sumLoad: 'Sum of hall IT capacity', summary_target: 'Target IT capacity',
       summary_diff: 'Difference', summary_sumUnits: 'Total transformers',
       unit_gae: '{n}', unit_dae: '{n}',
@@ -1426,7 +1424,7 @@
     // (이 calculate()의 최초 1회 호출은 ⑤번 const들이 아직 선언되기 전에 실행되므로,
     // 그 시점의 TDZ 참조 오류는 무시 — ⑤번 초기화가 끝난 뒤 다시 호출되면서 정상 반영됨)
     if (typeof renderRefTable === 'function') { try { renderRefTable(); } catch (e) {} }
-    if (typeof refreshMaxSetCapacityHint === 'function') { try { refreshMaxSetCapacityHint(); renderSets(); } catch (e) {} }
+    try { renderSets(); } catch (e) {}
   }
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -6322,29 +6320,25 @@
     return 100;
   }
 
-  let coolEdited = 'ac';     // 마지막으로 손댄 칸 ('ac' | 'lc')
   function coolPlan(d) {
     const auto = (document.getElementById('coolAuto') || {}).checked;
     const acInput = document.getElementById('coolAc');
     const lcInput = document.getElementById('coolLc');
     const density = d.racks ? d.podKW / d.racks : 0;
-    // 손으로 고칠 때는 마지막에 건드린 칸을 기준으로 삼는다 — AC를 적든 LC를 적든 된다
-    let ac;
-    if (auto) ac = Math.round(acShareFromDensity(density));
-    else if (coolEdited === 'lc' && lcInput) ac = 100 - (parseFloat(lcInput.value) || 0);
-    else ac = parseFloat(acInput && acInput.value) || 0;
-    ac = Math.max(0, Math.min(100, ac));
-    const lc = 100 - ac;
-    if (acInput) {
-      acInput.disabled = auto;
-      acInput.style.background = auto ? 'var(--primary-bg)' : '';
-      if (auto || coolEdited === 'lc') acInput.value = ac;
+    // 자동이면 밀도에서 AC를 잡고 LC는 나머지. 직접 입력이면 둘은 서로 독립이다 —
+    // 액랭 랙도 공랭이 일부 받는 열(보조 냉각)이 있어 합이 100을 넘을 수 있다.
+    let ac, lc;
+    if (auto) { ac = Math.round(acShareFromDensity(density)); lc = 100 - ac; }
+    else {
+      ac = Math.max(0, parseFloat(acInput && acInput.value) || 0);
+      lc = Math.max(0, parseFloat(lcInput && lcInput.value) || 0);
     }
-    if (lcInput) {
-      lcInput.disabled = auto;
-      lcInput.style.background = auto ? 'var(--primary-bg)' : '';
-      if (auto || coolEdited !== 'lc') lcInput.value = lc;
-    }
+    [[acInput, ac], [lcInput, lc]].forEach(([el, v]) => {
+      if (!el) return;
+      el.disabled = auto;
+      el.style.background = auto ? 'var(--primary-bg)' : '';
+      if (auto) el.value = v;
+    });
 
     const cfm = hallNum('coolCfm', 170);
     const margin = hallNum('coolMargin', 1.1);
@@ -6405,7 +6399,7 @@
       ['split', t('cool_r_split', {
         ac: fmtN(c.ac), lc: fmtN(c.lc), acKW: fmtN(Math.round(c.acKW)), lcKW: fmtN(Math.round(c.lcKW)),
         density: fmtN(Math.round(c.density)),
-      })],
+      }) + (Math.abs(c.ac + c.lc - 100) > 0.001 ? t('cool_split_sum', { sum: fmtN(c.ac + c.lc), kw: fmtN(Math.round(c.acKW + c.lcKW)) }) : '')],
       ['air', c.acKW > 0 ? t('cool_r_air', {
         kw: fmtN(Math.round(c.acKW)), cfm: fmtN(c.cfm), margin: fmtN(c.margin, 2),
         cmh: fmtN(Math.round(c.cmh)), n: c.n, spare: c.fwuSpare, total: c.total,
@@ -6977,15 +6971,11 @@
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', drawHall);
     });
-  // AC/LC는 어느 쪽을 적어도 된다 — 마지막에 손댄 칸을 기준으로 나머지를 채운다
-  [['coolAc', 'ac'], ['coolLc', 'lc']].forEach(([id, which]) => {
+  // AC/LC는 각각 따로 적는다 (서로 맞추지 않는다)
+  ['coolAc', 'coolLc'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.addEventListener('input', () => {
-      if (midTyping(el)) return;
-      coolEdited = which;
-      drawHall();
-    });
+    el.addEventListener('input', () => { if (!midTyping(el)) drawHall(); });
   });
   ['coolAuto'].forEach(id => {
     const el = document.getElementById(id);
@@ -7815,7 +7805,6 @@
   const hallCountInput = document.getElementById('hallCountInput');
   const hallCapacityDisplay = document.getElementById('hallCapacityDisplay');
   const loadSyncCheckbox = document.getElementById('loadSyncCheckbox');
-  const maxSetCapacityInput = document.getElementById('maxSetCapacity');
   const autoSplitBtn = document.getElementById('autoSplitBtn');
   const addSetBtn = document.getElementById('addSetBtn');
   const setsTbody = document.getElementById('setsTbody');
@@ -7870,25 +7859,6 @@
     const it = computeItCapacity();
     if (!utility || !it || utility <= 0 || it <= 0) return null;
     return utility / it;
-  }
-
-  function computeMaxSetCapacity() {
-    // ①의 유효용량(정격×PF×안전율×UPS효율) × N × 모듈당 변압기 대수.
-    // 모듈당 1대로 고정해두면 2대 이상 쓰는 구성에서 멀쩡한 데이터홀마다 경고가 떴다.
-    const rating = parseFloat(ratingInput.value);
-    const { pf, upsEff, safety } = getGlobalDeratingFactors();
-    if (!rating || !safety) return null;
-    const effectiveCap = computeEffectiveCapacity(rating, pf, safety, upsEff);
-    const n = Math.max(1, parseInt(nInput.value) || 3);
-    const perModule = Math.max(1, lastPerModuleUnits || 1);
-    return (effectiveCap * n * perModule) / 1000; // MW
-  }
-
-  function refreshMaxSetCapacityHint() {
-    const derived = computeMaxSetCapacity();
-    if (derived) {
-      maxSetCapacityInput.value = Number(derived.toFixed(2));
-    }
   }
 
   function updatePueDisplay() {
@@ -8134,12 +8104,10 @@
     if (typeof syncItCapacityFromSets === 'function') { try { syncItCapacityFromSets(); } catch (e) {} }
     if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     setsTbody.innerHTML = '';
-    const maxCap = parseFloat(maxSetCapacityInput.value) || null;
 
     sets.forEach((set, idx) => {
       const preset = TOPO_PRESETS[set.presetKey];
       const result = computeSetResult(set);
-      const overCap = maxCap && set.loadMW > maxCap + 0.001;
       const overload = result.emergencyPct > 100;
 
       const tr = document.createElement('tr');
@@ -8154,7 +8122,6 @@
       loadInputEl.type = 'number';
       loadInputEl.value = set.loadMW;
       makeDecimal(loadInputEl, 2);
-      if (overCap) loadInputEl.style.borderColor = 'var(--warn)';
       loadInputEl.addEventListener('input', () => {
         if (midTyping(loadInputEl)) return;   // "16." 을 치는 중
         set.loadMW = parseFloat(loadInputEl.value) || 0;
@@ -8164,12 +8131,6 @@
         renderSets();
       });
       tdLoad.appendChild(loadInputEl);
-      if (overCap) {
-        const warnSpan = document.createElement('div');
-        warnSpan.className = 'hint warn-cell';
-        warnSpan.textContent = t('overcap_row', { max: fmtN(maxCap) });
-        tdLoad.appendChild(warnSpan);
-      }
       tr.appendChild(tdLoad);
 
       const tdTopo = document.createElement('td');
@@ -8271,7 +8232,7 @@
 
   autoSplitBtn.addEventListener('click', autoSplitSets);
   addSetBtn.addEventListener('click', () => {
-    const perHall = updateHallCapacityDisplay() || parseFloat(maxSetCapacityInput.value) || 9;
+    const perHall = updateHallCapacityDisplay() || 9;
     sets.push({ id: setIdCounter++, loadMW: Number(perHall.toFixed(2)), presetKey: '3oo4' });
     renderSets();
   });
@@ -8289,13 +8250,11 @@
     renderSets();
   });
   [ratingInput, safetyInput, pfInput, upsEfficiencyInput].forEach(el => el.addEventListener('input', () => {
-    refreshMaxSetCapacityHint();
     renderSets();
   }));
 
-  // init: compute PUE, derive recommended max cap from ① defaults, set default hall count from it, auto-split once
+  // init: compute PUE, set default hall count, auto-split once
   updatePueDisplay();
-  refreshMaxSetCapacityHint();
   updateHallCapacityDisplay();
   autoSplitSets();
   refreshLoadSourceOptions();
@@ -8366,7 +8325,6 @@
     applyDistButtons();
     applyTopoMeta();
     updatePueDisplay();
-    refreshMaxSetCapacityHint();
     updateHallCapacityDisplay();
     renderSets();
     calculate();
