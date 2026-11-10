@@ -144,8 +144,11 @@
       hall_rack_note: "랙 {racks}개 · {rows}열 × {perRow}대",
       hall_cdu_note: "소요 {n}대 + 예비 1대 = {total}대 (N+1)",
       hall_elec_room: "전기실",
-      hall_hot_aisle: "핫",
-      hall_cold_aisle: "콜드",
+      hall_hot_aisle: "HOT AISLE",
+      hall_cold_aisle: "COLD AISLE",
+      hall_hot_short: "HOT",
+      hall_cold_short: "COLD",
+      hall_fwu_note: "FWU {n}대 · 단당 {each} CMH",
       hall_raised: "이중바닥",
       hall_rack_top: "랙 상단",
       hall_busway: "버스웨이",
@@ -690,8 +693,11 @@
       hall_rack_note: "{racks} racks · {rows} row(s) of {perRow}",
       hall_cdu_note: "{n} required + 1 spare = {total} (N+1)",
       hall_elec_room: "Electrical room",
-      hall_hot_aisle: "Hot",
-      hall_cold_aisle: "Cold",
+      hall_hot_aisle: "HOT AISLE",
+      hall_cold_aisle: "COLD AISLE",
+      hall_hot_short: "HOT",
+      hall_cold_short: "COLD",
+      hall_fwu_note: "{n} FWUs · {each} CMH each",
       hall_raised: "Raised floor",
       hall_rack_top: "Rack top",
       hall_busway: "Busway",
@@ -4965,6 +4971,7 @@
         const el = document.createElement('input');
         el.type = 'number'; el.min = '0'; el.step = step; el.value = r[key];
         el.addEventListener('input', () => {
+          if (midTyping(el)) return;
           r[key] = parseFloat(el.value) || 0;
           saveHallRacks();
           renderHallRackTotals();
@@ -5077,7 +5084,6 @@
     const cold = hallNum('hallCold', 1200);
     const hot = hallNum('hallHot', 1000);
     const cduKW = hallNum('hallCduKW', 1800);
-    const elecW = hallNum('hallElecW', 4600);
 
     const racks = racksTotal;
     const rows = rowsOpt;
@@ -5090,7 +5096,6 @@
 
     // 가로: 전기실 | 전실 | 랙열 | 매니폴드 | CDU
     const bands = [
-      { key: 'elec', mm: elecW },
       { key: 'front', mm: aisleEnd },
       { key: 'racks', mm: rowLen },
       { key: 'manifold', mm: manifoldW },
@@ -5106,7 +5111,7 @@
     const areaM2 = (totalW / 1000) * (depth / 1000);
     return {
       podIdx, podKW, rackKW, racks, rows, perRow, pairs, rackW, rackD, cold, hot,
-      rowLen, cduQty, cduKW, cduW, manifoldW, aisleEnd, elecW, edge,
+      rowLen, cduQty, cduKW, cduW, manifoldW, aisleEnd, elecW: 0, edge,
       bands, totalW, depth, areaM2, perim, seq: hallRackSequence(),
       buswayLen: rows * rowLen,
       raised: hallNum('hallRaised', 800), rackH: hallNum('hallRackH', 2200),
@@ -5116,7 +5121,7 @@
   }
 
   // 치수선 (mm 표기). 글씨는 도면 축척과 무관하게 읽히도록 크게 잡는다.
-  const HALL_DIM_FS = 22;
+  const HALL_DIM_FS = 11;
   function hallDim(target, x1, y1, x2, y2, text, opts) {
     const o = opts || {};
     const col = '#8A8072';
@@ -5172,24 +5177,6 @@
     const bandX = {};
     d.bands.forEach(b => { bandX[b.key] = cursor; cursor += b.mm; });
 
-    // 전기실 / UPS
-    target.appendChild(svgEl('rect', {
-      x: X(0), y: Y(0), width: S(d.elecW), height: S(d.depth),
-      fill: hexToRgba('#6F5FBF', 0.1), stroke: '#6F5FBF', 'stroke-width': 1.4,
-    }));
-    const elecLabel = svgEl('text', {
-      x: X(d.elecW / 2), y: Y(d.depth / 2), 'text-anchor': 'middle',
-      'font-size': 11, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif',
-    });
-    elecLabel.textContent = t('hall_elec_room');
-    target.appendChild(elecLabel);
-    const elecSub = svgEl('text', {
-      x: X(d.elecW / 2), y: Y(d.depth / 2) + 13, 'text-anchor': 'middle',
-      'font-size': 8, 'font-weight': 600, fill: '#6F5FBF', 'font-family': 'sans-serif',
-    });
-    elecSub.textContent = 'UPS / ' + t('plan_kind_batt');
-    target.appendChild(elecSub);
-
     // 랙 열 — 패턴대로 나눈 순서를 열마다 깐다
     const rackX = bandX.racks;
     const rowSeq = hallRowSequences(d.rows);
@@ -5235,8 +5222,8 @@
       }
       // 열 이름 — 통로 치수가 커져서 행 위에 두면 겹친다. 행 왼쪽 바깥에 세운다.
       const rowLab = svgEl('text', {
-        x: X(rackX) - 8, y: Y(y + d.rackD / 2) + 5, 'text-anchor': 'end',
-        'font-size': 15, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+        x: X(rackX) - 6, y: Y(y + d.rackD / 2) + 4, 'text-anchor': 'end',
+        'font-size': 11, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
         stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
       });
       rowLab.textContent = t('hall_row_label', { letter: 'ABCDEFGH'[r] || (r + 1) });
@@ -5255,6 +5242,32 @@
         stroke: 'none',
       }));
       hallAisleLabel(target, X(rackX + d.rowLen / 2), Y((gapTop + gapBot) / 2), isHot, gapBot - gapTop);
+    }
+
+    // FWU — 냉각 분담에서 나온 대수를 열 양쪽 갤러리(주변 여유)에 나눠 깐다
+    const coolP = coolPlan(d);
+    if (coolP.total > 0 && coolP.acKW > 0) {
+      const half = Math.ceil(coolP.total / 2);
+      const faceW = coolP.openW * 1000;
+      [{ n: half, y0: 0 }, { n: coolP.total - half, y0: d.depth - d.edge }].forEach(side => {
+        if (side.n <= 0) return;
+        const step = d.rowLen / side.n;
+        const bw = Math.min(faceW, step * 0.88);
+        for (let i = 0; i < side.n; i++) {
+          target.appendChild(svgEl('rect', {
+            x: X(rackX + i * step + (step - bw) / 2), y: Y(side.y0 + 120),
+            width: S(bw), height: S(Math.max(400, d.edge - 240)),
+            fill: hexToRgba('#29A8E0', 0.18), stroke: '#1F7FB5', 'stroke-width': 0.9,
+          }));
+        }
+      });
+      const fl = svgEl('text', {
+        x: X(rackX + d.rowLen / 2), y: Y(d.depth - d.edge / 2) + 3, 'text-anchor': 'middle',
+        'font-size': 9, 'font-weight': 800, fill: '#1F7FB5', 'font-family': 'sans-serif',
+        stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
+      });
+      fl.textContent = t('hall_fwu_note', { n: coolP.total, each: fmtN(Math.round(coolP.perTier)) });
+      target.appendChild(fl);
     }
 
     // 매니폴드 + CDU
@@ -5328,16 +5341,16 @@
       x: X(0), y: Y(d.raised), width: S(widthMM), height: S(d.raised),
       fill: hexToRgba('#8A8072', 0.12), stroke: '#8A8072', 'stroke-width': 0.8,
     }));
-    const rf = svgEl('text', { x: X(d.elecW / 2), y: Y(d.raised / 2) + 4, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke' });
+    const rf = svgEl('text', { x: X(d.aisleEnd / 2), y: Y(d.raised / 2) + 4, 'text-anchor': 'middle', 'font-size': 13, 'font-weight': 700, fill: '#8A8072', 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke' });
     rf.textContent = t('hall_raised') + ' ' + Math.round(d.raised);
     target.appendChild(rf);
 
     // 전기실
     target.appendChild(svgEl('rect', {
-      x: X(0), y: Y(d.ceil), width: S(d.elecW), height: S(d.ceil),
+      x: X(0), y: Y(d.ceil), width: 0, height: S(d.ceil),
       fill: hexToRgba('#6F5FBF', 0.08), stroke: '#6F5FBF', 'stroke-width': 1.2,
     }));
-    const el = svgEl('text', { x: X(d.elecW / 2), y: Y(d.ceil * 0.6), 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif' });
+    const el = svgEl('text', { x: -9999, y: 0, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 800, fill: '#6F5FBF', 'font-family': 'sans-serif' });
     el.textContent = t('hall_elec_room');
     target.appendChild(el);
 
@@ -5408,18 +5421,29 @@
     return 100;
   }
 
+  let coolEdited = 'ac';     // 마지막으로 손댄 칸 ('ac' | 'lc')
   function coolPlan(d) {
     const auto = (document.getElementById('coolAuto') || {}).checked;
     const acInput = document.getElementById('coolAc');
+    const lcInput = document.getElementById('coolLc');
     const density = d.racks ? d.podKW / d.racks : 0;
-    let ac = auto ? Math.round(acShareFromDensity(density)) : (parseFloat(acInput && acInput.value) || 0);
+    // 손으로 고칠 때는 마지막에 건드린 칸을 기준으로 삼는다 — AC를 적든 LC를 적든 된다
+    let ac;
+    if (auto) ac = Math.round(acShareFromDensity(density));
+    else if (coolEdited === 'lc' && lcInput) ac = 100 - (parseFloat(lcInput.value) || 0);
+    else ac = parseFloat(acInput && acInput.value) || 0;
     ac = Math.max(0, Math.min(100, ac));
+    const lc = 100 - ac;
     if (acInput) {
       acInput.disabled = auto;
       acInput.style.background = auto ? 'var(--primary-bg)' : '';
-      if (auto) acInput.value = ac;
+      if (auto || coolEdited === 'lc') acInput.value = ac;
     }
-    const lc = 100 - ac;
+    if (lcInput) {
+      lcInput.disabled = auto;
+      lcInput.style.background = auto ? 'var(--primary-bg)' : '';
+      if (auto || coolEdited !== 'lc') lcInput.value = lc;
+    }
 
     const cfm = hallNum('coolCfm', 170);
     const margin = hallNum('coolMargin', 1.1);
@@ -5498,8 +5522,6 @@
       div.innerHTML = `<b>${t('cool_h_' + k)}</b><span>${text}</span>`;
       box.appendChild(div);
     });
-    const lcEl = document.getElementById('coolLc');
-    if (lcEl) lcEl.value = fmtN(c.lc) + '%';
     const acNote = document.getElementById('coolAcNote');
     if (acNote) acNote.textContent = ' ' + t(c.auto ? 'cool_ac_auto' : 'cool_ac_manual', { density: fmtN(Math.round(c.density)) });
   }
@@ -5677,7 +5699,7 @@
           fill: b[1] === 'hot' ? '#C0392B' : '#1F7FB5', 'font-family': 'sans-serif',
           stroke: '#FFFFFF', 'stroke-width': 3, 'paint-order': 'stroke',
         });
-        al.textContent = t(b[1] === 'hot' ? 'hall_hot_aisle' : 'hall_cold_aisle');
+        al.textContent = t(b[1] === 'hot' ? 'hall_hot_short' : 'hall_cold_short');
         target.appendChild(al);
       }
       bx += b[0];
@@ -5777,8 +5799,8 @@
         }));
       }
       const tag = svgEl('text', {
-        x: X(ux + c.unitW / 2), y: Y(uy) - 8, 'text-anchor': 'middle',
-        'font-size': 15, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
+        x: X(ux + c.unitW / 2), y: Y(uy) - 6, 'text-anchor': 'middle',
+        'font-size': 11, 'font-weight': 800, fill: navy, 'font-family': 'sans-serif',
       });
       tag.textContent = t('hall_unit_tag', { n: i + 1, kw: fmtN(Math.round(d.podKW)) });
       target.appendChild(tag);
@@ -5864,11 +5886,10 @@
     const rackW = hallNum('hallRackW', 600), rackD = hallNum('hallRackD', 1200);
     const cold = hallNum('hallCold', 1200), hot = hallNum('hallHot', 1000);
     const perim = hallNum('hallPerim', 1200);
-    const elecW = hallNum('hallElecW', 4600);
     const rowLen = perRow * rackW;
     let gaps = 0;
     for (let r = 0; r < rows - 1; r++) gaps += (r % 2 === 0) ? hot : cold;
-    const w = elecW + 2000 + rowLen + 800 + 2700;
+    const w = 2000 + rowLen + 800 + 2700;
     const depth = perim * 2 + rows * rackD + gaps;
     return { rows, perRow, rowLen, w, depth, area: (w / 1000) * (depth / 1000), busway: rows * rowLen };
   }
@@ -6037,11 +6058,21 @@
   }
   document.getElementById('hallClusterBtn').addEventListener('click', () => setHallView('cluster'));
   document.getElementById('hallCoolBtn').addEventListener('click', () => setHallView('cool'));
-  ['coolAc', 'coolCfm', 'coolMargin', 'coolFwuN', 'coolFwuSpare', 'coolOpenW', 'coolOpenRatio', 'coolSa', 'coolTiers', 'coolCduSpare']
+  ['coolCfm', 'coolMargin', 'coolFwuN', 'coolFwuSpare', 'coolOpenW', 'coolOpenRatio', 'coolSa', 'coolTiers', 'coolCduSpare']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', drawHall);
     });
+  // AC/LC는 어느 쪽을 적어도 된다 — 마지막에 손댄 칸을 기준으로 나머지를 채운다
+  [['coolAc', 'ac'], ['coolLc', 'lc']].forEach(([id, which]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      if (midTyping(el)) return;
+      coolEdited = which;
+      drawHall();
+    });
+  });
   ['coolAuto', 'coolFwuAuto'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', drawHall);
@@ -7113,7 +7144,45 @@
     });
   }
 
-  function renderSets() {
+  // 표를 통째로 다시 그리면 치던 칸이 사라져 한 글자마다 커서를 다시 잡아야 한다.
+  // 자리(행·열)를 기억했다가 되찾아 주고, "16." 처럼 아직 수가 아닌 중간 상태는
+  // 원문 그대로 되돌린다 — 그러지 않으면 소수점을 찍는 순간 지워진다.
+  function midTyping(el) {
+    return !!(el && el.value === '' && el.validity && el.validity.badInput);
+  }
+
+  function keepFocus(container, render) {
+    const act = document.activeElement;
+    let keep = null;
+    if (container && act && container.contains(act) && (act.tagName === 'INPUT' || act.tagName === 'SELECT')) {
+      const row = act.closest('tr');
+      const cell = act.closest('td, th');
+      if (row && cell && row.parentNode) {
+        keep = {
+          row: Array.prototype.indexOf.call(row.parentNode.children, row),
+          cell: Array.prototype.indexOf.call(row.children, cell),
+          raw: act.value, start: null, end: null,
+        };
+        try { keep.start = act.selectionStart; keep.end = act.selectionEnd; } catch (e) {}
+      }
+    }
+    render();
+    if (!keep || keep.row < 0 || keep.cell < 0) return;
+    const row = container.children[keep.row];
+    const cell = row && row.children[keep.cell];
+    const el = cell && cell.querySelector('input, select');
+    if (!el) return;
+    const same = parseFloat(el.value) === parseFloat(keep.raw);
+    if (el.tagName === 'INPUT' && el.value !== keep.raw && (same || keep.raw === '' || keep.raw === '-')) {
+      el.value = keep.raw;
+    }
+    el.focus();
+    if (keep.start !== null) { try { el.setSelectionRange(keep.start, keep.end); } catch (e) {} }
+  }
+
+  function renderSets() { keepFocus(setsTbody, renderSetsInner); }
+
+  function renderSetsInner() {
     if (typeof syncItCapacityFromSets === 'function') { try { syncItCapacityFromSets(); } catch (e) {} }
     if (typeof refreshLoadSourceOptions === 'function') { try { refreshLoadSourceOptions(); } catch (e) {} }
     setsTbody.innerHTML = '';
@@ -7140,6 +7209,7 @@
       loadInputEl.value = set.loadMW;
       if (overCap) loadInputEl.style.borderColor = 'var(--warn)';
       loadInputEl.addEventListener('input', () => {
+        if (midTyping(loadInputEl)) return;   // "16." 을 치는 중
         set.loadMW = parseFloat(loadInputEl.value) || 0;
         syncItCapacityFromSets();
         updatePueDisplay();
