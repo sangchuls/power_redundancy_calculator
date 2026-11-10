@@ -3636,6 +3636,7 @@
   let fpTopo = null;                 // ④가 넘겨준 구성
   let fpBlocks = fpLoad();           // id -> { x, y, w, h, rot }
   let fpSel = null, fpDrag = null, fpGuides = [], fpLit = null;
+  let fpView = { sc: 1, ox: 0, oy: 0 };   // 마지막으로 그린 축척·원점 (mm <-> px)
 
   function fpLoad() {
     try {
@@ -3779,21 +3780,41 @@
   function fpItemById(id) { return fpItems().find(it => it.id === id); }
   function fpCenter(b) { return { cx: b.x + b.w / 2, cy: b.y + b.h / 2 }; }
 
-  // 두 블럭을 잇는 경로. 직각이면 가운데에서 한 번 꺾고, 회선마다 차선을 벌려 겹침을 피한다.
-  function fpRoute(a, b, lane, ortho) {
-    const A = fpCenter(a), B = fpCenter(b);
-    if (!ortho) return 'M' + A.cx + ',' + A.cy + ' L' + B.cx + ',' + B.cy;
-    if (Math.abs(B.cy - A.cy) >= Math.abs(B.cx - A.cx)) {
-      const my = (A.cy + B.cy) / 2 + lane;
-      return 'M' + A.cx + ',' + A.cy + ' L' + A.cx + ',' + my + ' L' + B.cx + ',' + my + ' L' + B.cx + ',' + B.cy;
+  // 두 블럭을 잇는 경로. 중심이 아니라 마주보는 '면'에서 떠나 면으로 들어가고,
+  // 한 실에서 여러 회선이 나갈 때는 면을 따라 자리를 벌려 세운다.
+  function fpLink(ra, rb, tSrc, tDst, lane, ortho) {
+    const a = fpAabb(ra), b = fpAabb(rb);
+    const dx = (b.x + b.w / 2) - (a.x + a.w / 2);
+    const dy = (b.y + b.h / 2) - (a.y + a.h / 2);
+    const vertical = Math.abs(dy) >= Math.abs(dx);
+    let s, e;
+    if (vertical) {
+      const down = dy > 0;
+      s = { x: a.x + a.w * tSrc, y: down ? a.y + a.h : a.y };
+      e = { x: b.x + b.w * tDst, y: down ? b.y : b.y + b.h };
+    } else {
+      const right = dx > 0;
+      s = { x: right ? a.x + a.w : a.x, y: a.y + a.h * tSrc };
+      e = { x: right ? b.x : b.x + b.w, y: b.y + b.h * tDst };
     }
-    const mx = (A.cx + B.cx) / 2 + lane;
-    return 'M' + A.cx + ',' + A.cy + ' L' + mx + ',' + A.cy + ' L' + mx + ',' + B.cy + ' L' + B.cx + ',' + B.cy;
-  }
-  function fpRouteLen(a, b, lane, ortho) {
-    const A = fpCenter(a), B = fpCenter(b);
-    if (!ortho) return Math.hypot(B.cx - A.cx, B.cy - A.cy);
-    return Math.abs(B.cx - A.cx) + Math.abs(B.cy - A.cy) + Math.abs(lane) * 2;
+    if (!ortho) {
+      return { pts: [s, e], len: Math.sqrt((e.x - s.x) * (e.x - s.x) + (e.y - s.y) * (e.y - s.y)) };
+    }
+    const pts = [s];
+    if (vertical) {
+      const lo = Math.min(s.y, e.y), hi = Math.max(s.y, e.y);
+      // 꺾는 줄은 두 면 사이에 가둔다 — 블럭을 되넘어가면 그림이 엉킨다
+      const mid = Math.max(lo, Math.min(hi, (s.y + e.y) / 2 + lane));
+      pts.push({ x: s.x, y: mid }, { x: e.x, y: mid });
+    } else {
+      const lo = Math.min(s.x, e.x), hi = Math.max(s.x, e.x);
+      const mid = Math.max(lo, Math.min(hi, (s.x + e.x) / 2 + lane));
+      pts.push({ x: mid, y: s.y }, { x: mid, y: e.y });
+    }
+    pts.push(e);
+    let len = 0;
+    for (let i = 1; i < pts.length; i++) len += Math.abs(pts[i].x - pts[i - 1].x) + Math.abs(pts[i].y - pts[i - 1].y);
+    return { pts: pts, len: len };
   }
 
   function fpSnapBox(box, selfId) {
@@ -3839,7 +3860,9 @@
     if (!svg || !m) return { x: 0, y: 0 };
     const pt = svg.createSVGPoint();
     pt.x = evt.clientX; pt.y = evt.clientY;
-    return pt.matrixTransform(m.inverse());
+    const q = pt.matrixTransform(m.inverse());
+    // 그리기 좌표를 다시 mm로 되돌린다
+    return { x: (q.x - fpView.ox) / fpView.sc, y: (q.y - fpView.oy) / fpView.sc };
   }
 
   function drawFeedPlan() {
@@ -3868,13 +3891,21 @@
     x0 -= pad; y0 -= pad; x1 += pad; y1 += pad;
     const spanW = Math.max(1, x1 - x0), spanD = Math.max(1, y1 - y0);
     const margin = 46;
-    const sc = Math.min(880 / spanW, 540 / spanD);
-    const w = spanW * sc + margin * 2, hgt = spanD * sc + margin * 2;
-    svg.setAttribute('width', Math.max(760, w));
-    svg.setAttribute('height', Math.max(360, hgt));
-    svg.setAttribute('viewBox', '0 0 ' + Math.max(760, w) + ' ' + Math.max(360, hgt));
-    const ox = (Math.max(760, w) - spanW * sc) / 2 - x0 * sc;
-    const oy = margin - y0 * sc;
+    let sc, ox, oy;
+    if (fpDrag) {
+      // 끄는 중에는 직전 축척을 그대로 써야 블럭이 손끝을 따라온다
+      sc = fpView.sc; ox = fpView.ox; oy = fpView.oy;
+    } else {
+      sc = Math.min(880 / spanW, 540 / spanD);
+      const w0 = Math.max(760, spanW * sc + margin * 2);
+      ox = (w0 - spanW * sc) / 2 - x0 * sc;
+      oy = margin - y0 * sc;
+      const h0 = Math.max(360, spanD * sc + margin * 2);
+      svg.setAttribute('width', w0);
+      svg.setAttribute('height', h0);
+      svg.setAttribute('viewBox', '0 0 ' + w0 + ' ' + h0);
+      fpView = { sc: sc, ox: ox, oy: oy };
+    }
     const X = mm => ox + mm * sc, Y = mm => oy + mm * sc, S = mm => mm * sc;
 
     // 격자 (5m)
@@ -3891,27 +3922,40 @@
     // 회선 — 블럭보다 먼저 깔아 블럭 밑으로 지나가게 한다
     const ortho = ((document.getElementById('fpRoute') || {}).value || 'ortho') === 'ortho';
     const roomsN = fpTopo.rooms.length;
+    // 전기실마다 자기가 먹이는 POD 목록 — 나가는 자리를 면을 따라 나눠 쓰기 위해서다
+    const roomFeeds = {};
+    fpTopo.feeds.forEach((list, pi) => list.forEach(k => { (roomFeeds[k] = roomFeeds[k] || []).push(pi); }));
     let totalLen = 0, drawn = 0;
     fpTopo.feeds.forEach((list, pi) => {
       const pb = fpBlocks['pod-' + pi];
       if (!pb) return;
-      list.forEach(k => {
+      list.forEach((k, ki) => {
         const rb = fpBlocks['room-' + k];
         if (!rb) return;
         const room = fpTopo.rooms[k];
+        const mine = roomFeeds[k] || [];
+        const tSrc = (Math.max(0, mine.indexOf(pi)) + 1) / (mine.length + 1);
+        const tDst = (ki + 1) / (list.length + 1);
         const lane = (k - (roomsN - 1) / 2) * FP_LANE;
         const lit = !fpLit || (fpLit.kind === 'room' && fpLit.i === k) || (fpLit.kind === 'pod' && fpLit.i === pi);
         const off = room && room.state === 'offline';
-        const path = fpRoute(rb, pb, lane, ortho);
-        const scaled = path.replace(/([-\d.]+),([-\d.]+)/g, (m0, a, b) => X(parseFloat(a)) + ',' + Y(parseFloat(b)));
+        const link = fpLink(rb, pb, tSrc, tDst, lane, ortho);
+        const color = off ? '#DB8478' : roomColor(k);
         target.appendChild(svgEl('path', {
-          d: scaled, fill: 'none',
-          stroke: off ? '#DB8478' : roomColor(k),
+          d: link.pts.map((q, qi) => (qi ? 'L' : 'M') + X(q.x) + ',' + Y(q.y)).join(' '),
+          fill: 'none', stroke: color,
           'stroke-width': lit ? (fpLit ? 2.6 : 1.8) : 1.2,
           'stroke-dasharray': off ? '7 5' : '',
           opacity: lit ? 1 : 0.13,
         }));
-        totalLen += fpRouteLen(rb, pb, lane, ortho);
+        // 어느 면에서 떠나 어느 면으로 들어가는지 점으로 찍어 둔다
+        [link.pts[0], link.pts[link.pts.length - 1]].forEach(q => {
+          target.appendChild(svgEl('circle', {
+            cx: X(q.x), cy: Y(q.y), r: lit ? 2.6 : 1.8,
+            fill: color, opacity: lit ? 1 : 0.13,
+          }));
+        });
+        totalLen += link.len;
         drawn++;
       });
     });
@@ -3989,6 +4033,8 @@
       });
     }
 
+    // makeZoomable이 svg의 mousedown으로 화면을 끌기 때문에, 블럭 위에서는 막아 둔다
+    grp.addEventListener('mousedown', e => e.stopPropagation());
     grp.addEventListener('pointerdown', e => {
       e.stopPropagation();
       const pt = fpPoint(e);
@@ -4015,6 +4061,7 @@
         x: hx - 4, y: hy - 4, width: 8, height: 8, rx: 2,
         fill: '#FFFFFF', stroke: it.color, 'stroke-width': 1.6, cursor: cursors[k],
       });
+      dot.addEventListener('mousedown', e => e.stopPropagation());
       dot.addEventListener('pointerdown', e => {
         e.stopPropagation();
         fpDrag = { mode: 'resize', id: it.id, handle: k, start: { x: b.x, y: b.y, w: b.w, h: b.h }, from: fpPoint(e) };
@@ -4029,6 +4076,7 @@
     const knob = svgEl('circle', {
       cx: cx, cy: y - arm, r: 5.5, fill: '#FFFFFF', stroke: it.color, 'stroke-width': 1.8, cursor: 'grab',
     });
+    knob.addEventListener('mousedown', e => e.stopPropagation());
     knob.addEventListener('pointerdown', e => {
       e.stopPropagation();
       const pt = fpPoint(e);
