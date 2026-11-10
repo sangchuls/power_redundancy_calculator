@@ -1,5 +1,11 @@
+  // ===== 저장소 =====
+  // 저장소가 막힌 환경(시크릿 모드·차단 설정·샌드박스 iframe)에서는 localStorage 접근 자체가 예외를 던진다.
+  // 맨 위의 첫 읽기에서 터지면 앱 전체가 죽으므로, 읽기·쓰기를 모두 이 둘을 거친다.
+  function lsGet(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function lsSet(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+
   // ===== i18n =====
-  let currentLang = localStorage.getItem('prc_lang') || 'ko';
+  let currentLang = lsGet('prc_lang') || 'ko';
 
   const I18N = {
     ko: {
@@ -641,7 +647,6 @@
       cool_hybrid: "Hybrid (DLC + air trim)",
       hall_cool_dlc: "Direct liquid to the rack — for 100-133kW per rack densities",
       hall_cool_air: "Air handlers — typically 30-40kW per rack, needs aisle containment",
-      hall_cool_air_x: "",
       hall_cool_hybrid: "DLC takes the bulk, air trims the rest — around 80kW per rack",
       hall_view_plan: "POD plan",
       hall_view_cluster: "Hall layout",
@@ -1140,7 +1145,7 @@
 
   function setLang(lang) {
     currentLang = lang;
-    localStorage.setItem('prc_lang', lang);
+    lsSet('prc_lang', lang);
     document.getElementById('langKoBtn').classList.toggle('active', lang === 'ko');
     document.getElementById('langEnBtn').classList.toggle('active', lang === 'en');
     applyStaticTranslations();
@@ -1164,10 +1169,10 @@
   document.getElementById('langEnBtn').classList.toggle('active', currentLang === 'en');
 
   // ===== 화면 보기 방식: 순차형(기본, 원래처럼 위→아래) / 듀얼형(왼쪽 입력 · 오른쪽 다이어그램 고정) =====
-  let viewMode = localStorage.getItem('prc_view') || 'sequential';
+  let viewMode = lsGet('prc_view') || 'sequential';
   function setViewMode(mode) {
     viewMode = mode;
-    localStorage.setItem('prc_view', mode);
+    lsSet('prc_view', mode);
     document.body.classList.toggle('view-dual', mode === 'dual');
     document.getElementById('viewSeqBtn').classList.toggle('active', mode === 'sequential');
     document.getElementById('viewDualBtn').classList.toggle('active', mode === 'dual');
@@ -1193,13 +1198,16 @@
   // Shared effective-capacity formula:
   // 최종 가용 유효전력(kW) = 변압기용량(kVA) × 역률(PF) × 안전율(부하율) × UPS효율
   function getGlobalDeratingFactors() {
-    const pf = parseFloat(pfInput.value) || 1;
-    const upsEff = parseFloat(upsEfficiencyInput.value) || 1;
-    const safety = parseFloat(safetyInput.value) || 1;
+    const unit = el => Math.min(1, Math.max(0.01, parseFloat(el.value) || 1));
+    const pf = unit(pfInput);
+    const upsEff = unit(upsEfficiencyInput);
+    const safety = unit(safetyInput);
     return { pf, upsEff, safety, combined: pf * upsEff * safety };
   }
   function computeEffectiveCapacity(ratingKVA, pf, safety, upsEff) {
-    return ratingKVA * pf * safety * upsEff;
+    const v = ratingKVA * pf * safety * upsEff;
+    // 0·빈칸·음수가 들어와도 0으로 나누지 않게 바닥을 둔다 (입력 점검 문구는 calculate가 따로 띄운다)
+    return (isFinite(v) && v > 1) ? v : 1;
   }
   function updateEffectiveFormulaNote() {
     const rating = parseFloat(ratingInput.value);
@@ -1456,7 +1464,7 @@
   // 두 가지 방식을 토글로 전환한다.
   //  · 모선형: 이중화 방식이 정한 전기실 전부가 모선을 통해 모든 POD에 병렬 급전
   //  · 조합형: POD마다 서로 다른 전기실 2곳(N choose 2 조합)이 짝지어 이중급전
-  let distMode = localStorage.getItem('prc_dist') === 'comb' ? 'comb' : 'bus';
+  let distMode = lsGet('prc_dist') === 'comb' ? 'comb' : 'bus';
   function updateDistHint(combActive, perSet, pairCount, usedPairs, sets, topoName) {
     const el = document.getElementById('distHint');
     if (!el) return;
@@ -1483,7 +1491,7 @@
   }
   function setDistMode(mode) {
     distMode = mode === 'comb' ? 'comb' : 'bus';
-    localStorage.setItem('prc_dist', distMode);
+    lsSet('prc_dist', distMode);
     applyDistButtons();
     calculate();
   }
@@ -2686,7 +2694,7 @@
 
   function loadPlans() {
     try {
-      const raw = JSON.parse(localStorage.getItem('prc_plans') || 'null');
+      const raw = JSON.parse(lsGet('prc_plans') || 'null');
       if (raw && Array.isArray(raw.tabs) && raw.tabs.length) {
         raw.tabs.forEach(tab => (tab.blocks || []).forEach(b => {
           const n = parseInt(String(b.id).replace(/\D/g, ''), 10);
@@ -2698,7 +2706,7 @@
     return [{ name: t('plan_tab_default', { n: 1 }), blocks: [] }];
   }
   function savePlans() {
-    try { localStorage.setItem('prc_plans', JSON.stringify({ tabs: planTabs })); } catch (e) {}
+    try { lsSet('prc_plans', JSON.stringify({ tabs: planTabs })); } catch (e) {}
   }
   // 이름 편집 입력칸의 확정 처리. blur만 믿으면 포커스가 잡히지 않은 환경에서 편집이
   // 갇히므로, Enter·Escape·바깥 클릭까지 모두 받아준다.
@@ -3682,12 +3690,12 @@
 
   function fpLoad() {
     try {
-      const raw = JSON.parse(localStorage.getItem(FP_KEY) || 'null');
+      const raw = JSON.parse(lsGet(FP_KEY) || 'null');
       if (raw && typeof raw === 'object') return raw;
     } catch (e) {}
     return {};
   }
-  function fpSave() { try { localStorage.setItem(FP_KEY, JSON.stringify(fpBlocks)); } catch (e) {} }
+  function fpSave() { try { lsSet(FP_KEY, JSON.stringify(fpBlocks)); } catch (e) {} }
 
   function fpNum(id, dflt) {
     const el = document.getElementById(id);
@@ -3707,8 +3715,17 @@
   }
 
   // ④가 계산을 끝낼 때마다 불린다
+  let fpSig = (() => { try { return lsGet('prc_feedplan_sig') || null; } catch (e) { return null; } })();
   function setFeedPlan(data) {
     fpTopo = data;
+    const sig = [data.units, data.split, data.pods.length, data.rooms.length, data.sets].join('/');
+    if (fpSig && fpSig !== sig) fpBlocks = {};          // 블럭 구성이 달라졌다 → 새로 깐다
+    fpSig = sig;
+    try { lsSet('prc_feedplan_sig', sig); } catch (e) {}
+    Object.keys(fpBlocks).forEach(id => {                // 사라진 전기실·POD 블럭은 버린다
+      const m = /^(room|pod)-(\d+)$/.exec(id);
+      if (m && Number(m[2]) >= (m[1] === 'room' ? data.rooms.length : data.pods.length)) delete fpBlocks[id];
+    });
     if (fpLit && ((fpLit.kind === 'room' && fpLit.i >= data.rooms.length)
       || (fpLit.kind === 'pod' && fpLit.i >= data.pods.length))) fpLit = null;
     fpEnsure();
@@ -5349,13 +5366,13 @@
 
   function loadHallRacks() {
     try {
-      const raw = JSON.parse(localStorage.getItem('prc_hallracks') || 'null');
+      const raw = JSON.parse(lsGet('prc_hallracks') || 'null');
       if (Array.isArray(raw) && raw.length) return raw;
     } catch (e) {}
     return RACK_DEFAULTS.map(r => Object.assign({}, r));
   }
   function saveHallRacks() {
-    try { localStorage.setItem('prc_hallracks', JSON.stringify(hallRacks)); } catch (e) {}
+    try { lsSet('prc_hallracks', JSON.stringify(hallRacks)); } catch (e) {}
   }
   function hallRackTotals() {
     let qty = 0, kw = 0;
@@ -6697,7 +6714,7 @@
   }
 
   ['hallRackW', 'hallRackD', 'hallCold', 'hallHot', 'hallPerim',
-   'hallCduKW', 'hallElecW', 'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil']
+   'hallCduKW', 'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil']
     .forEach(id => {
       const el = document.getElementById(id);
       if (el) el.addEventListener('input', drawHall);
@@ -6814,7 +6831,7 @@
   // 블럭끼리가 아니라 기존 선에서 따내야 하는 장비를 연결하기 위한 노드).
   SLD_TYPE_MAP.junction = { key: 'junction', abbr: '', cat: 'bus' };
 
-  let sldMode = localStorage.getItem('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
+  let sldMode = lsGet('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
   let sldAutoGraph = { nodes: [], edges: [], notes: [] };
   let sldSelectedId = null;
   let sldSeq = 0;
@@ -6822,7 +6839,7 @@
 
   function loadSldManualGraph() {
     try {
-      const g = JSON.parse(localStorage.getItem('prc_sld_graph') || 'null');
+      const g = JSON.parse(lsGet('prc_sld_graph') || 'null');
       if (g && Array.isArray(g.nodes) && Array.isArray(g.edges)) {
         g.nodes.forEach(n => {
           const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
@@ -6837,7 +6854,7 @@
 
   function saveSldManualGraph() {
     try {
-      localStorage.setItem('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges }));
+      lsSet('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges }));
     } catch (e) {}
   }
   function sldGraph() { return sldMode === 'manual' ? sldManualGraph : sldAutoGraph; }
@@ -7277,7 +7294,7 @@
 
   function setSldMode(mode) {
     sldMode = mode === 'manual' ? 'manual' : 'auto';
-    localStorage.setItem('prc_sld_mode', sldMode);
+    lsSet('prc_sld_mode', sldMode);
     document.getElementById('sldAutoBtn').classList.toggle('active', sldMode === 'auto');
     document.getElementById('sldManualBtn').classList.toggle('active', sldMode === 'manual');
     document.getElementById('sldManualUI').style.display = sldMode === 'manual' ? 'block' : 'none';
@@ -8063,12 +8080,12 @@
 
   function loadPresetStore() {
     try {
-      const raw = JSON.parse(localStorage.getItem(PRESET_KEY) || '{}');
+      const raw = JSON.parse(lsGet(PRESET_KEY) || '{}');
       return (raw && typeof raw === 'object') ? raw : {};
     } catch (e) { return {}; }
   }
   function savePresetStore(store) {
-    try { localStorage.setItem(PRESET_KEY, JSON.stringify(store)); } catch (e) {}
+    try { lsSet(PRESET_KEY, JSON.stringify(store)); } catch (e) {}
   }
   function snapshotSettings() {
     const fields = {}, checks = {};
@@ -8106,7 +8123,7 @@
     diagramMode = 'normal';
     updateDiagramModeButtons();
     distMode = snap.dist === 'comb' ? 'comb' : 'bus';
-    localStorage.setItem('prc_dist', distMode);
+    lsSet('prc_dist', distMode);
     applyDistButtons();
     applyTopoMeta();
     updatePueDisplay();
@@ -8127,13 +8144,13 @@
 
   function loadFeedback() {
     try {
-      const raw = JSON.parse(localStorage.getItem(FB_KEY) || '[]');
+      const raw = JSON.parse(lsGet(FB_KEY) || '[]');
       if (Array.isArray(raw)) return raw;
     } catch (e) {}
     return [];
   }
   function saveFeedback() {
-    try { localStorage.setItem(FB_KEY, JSON.stringify(feedback)); } catch (e) {}
+    try { lsSet(FB_KEY, JSON.stringify(feedback)); } catch (e) {}
   }
 
   // 의견과 함께 남겨 두면 나중에 재현하기 쉬운 현재 상태 한 줄
@@ -8368,23 +8385,28 @@
   // ⓪~④ 입력값만이 아니라 ⑤ 평면 탭, ⑥ 데이터홀 치수, ⑦ SLD 수동 작도까지 함께 담는다.
   const HALL_FIELDS = [
     'hallCooling', 'hallRackKW', 'hallRacksPerRow', 'hallRackW', 'hallRackD',
-    'hallCold', 'hallHot', 'hallCduKW', 'hallElecW',
+    'hallCold', 'hallHot', 'hallCduKW',
     'hallRaised', 'hallRackH', 'hallBusway', 'hallCeil',
     'hallUnits', 'hallGrid', 'hallPodGap', 'hallService', 'hallPerim', 'hallPattern',
     'coolAc', 'coolCfm', 'coolMargin', 'coolFwuCmh', 'coolFwuSpare', 'coolOpenW',
     'coolOpenRatio', 'coolSa', 'coolTiers', 'coolCduSpare',
+    // ④-2 기준층 평면 스터디 — 블럭 자리만 저장하고 이 값들을 잃으면 다시 그릴 때 배치가 어긋난다
+    'fpRoomW', 'fpRoomD', 'fpCorr', 'fpRoomSide', 'fpPodDir', 'fpUnitRows', 'fpRoute',
   ];
+  const HALL_CHECKS = ['coolAuto', 'hallIncCdu', 'fpSnap', 'fpMagnet', 'fpShowHall', 'fpShowRacks'];
 
   function snapshotBundle() {
     const hall = {};
     HALL_FIELDS.forEach(id => { const el = document.getElementById(id); if (el) hall[id] = el.value; });
+    const hallChecks = {};
+    HALL_CHECKS.forEach(id => { const el = document.getElementById(id); if (el) hallChecks[id] = el.checked; });
     return {
       app: 'power_redundancy_calculator',
       version: 1,
       savedAt: new Date().toISOString(),
       name: (presetNameInput.value || '').trim() || presetSelect.value || '',
       settings: snapshotSettings(),
-      hall,
+      hall, hallChecks,
       plans: { tabs: planTabs },
       feedPlan: fpBlocks,
       sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges },
@@ -8407,6 +8429,7 @@
     }
     if (data.feedPlan && typeof data.feedPlan === 'object') {
       fpBlocks = data.feedPlan;
+      fpSig = null;
       fpSel = null; fpLit = null;
       fpSave();
     }
@@ -8435,6 +8458,12 @@
       Object.keys(data.hall).forEach(id => {
         const el = document.getElementById(id);
         if (el) el.value = data.hall[id];
+      });
+    }
+    if (data.hallChecks) {
+      Object.keys(data.hallChecks).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.checked = !!data.hallChecks[id];
       });
     }
     if (data.ui && data.ui.lang && data.ui.lang !== currentLang) setLang(data.ui.lang);
