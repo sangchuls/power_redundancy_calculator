@@ -3932,6 +3932,72 @@
   // 종횡비'로 점수를 매기고, 좋은 순으로 줄 세운다. 버튼을 누를 때마다 다음 안을 보여준다.
   let fpPlans = null, fpPlanIdx = 0, fpPlanKey = '';
 
+  // 선분이 사각형 속을 지나는지 — 경로 후보를 고를 때 쓴다
+  function fpSegHitsBox(a, b, box) {
+    const lo = { x: Math.min(a.x, b.x), y: Math.min(a.y, b.y) };
+    const hi = { x: Math.max(a.x, b.x), y: Math.max(a.y, b.y) };
+    return lo.x < box.x + box.w - 1 && hi.x > box.x + 1
+      && lo.y < box.y + box.h - 1 && hi.y > box.y + 1;
+  }
+  // POD를 타고 넘는 쪽이 훨씬 나쁘다 — 가중치를 달리 준다
+  function fpPolyBlocked(pts, boxes) {
+    let n = 0;
+    for (let i = 1; i < pts.length; i++) {
+      boxes.forEach(bx => { if (fpSegHitsBox(pts[i - 1], pts[i], bx.box)) n += bx.w; });
+    }
+    return n;
+  }
+  function fpPolyLen(pts) {
+    let n = 0;
+    for (let i = 1; i < pts.length; i++) n += Math.abs(pts[i].x - pts[i - 1].x) + Math.abs(pts[i].y - pts[i - 1].y);
+    return n;
+  }
+
+  // 전기실 → POD 경로 후보.
+  // 곧장 가면 옆 POD 위를 타고 넘으므로, POD 무리 바깥 복도를 타고 돌아
+  // 열 끝단으로 들어오는 길도 함께 만들어 두고 막히지 않는 쪽을 고른다.
+  function fpRouteOptions(ra, pa, zone, tSrc, tDst, lane) {
+    const out = [];
+    const rc = { x: ra.x + ra.w / 2, y: ra.y + ra.h / 2 };
+    const pc = { x: pa.x + pa.w / 2, y: pa.y + pa.h / 2 };
+    const sx = ra.x + ra.w * tSrc, sy = ra.y + ra.h * tSrc;
+    const ex = pa.x + pa.w * tDst, ey = pa.y + pa.h * tDst;
+
+    // 곧장 — 가까운 면끼리 가운데서 한 번 꺾는다
+    const dx = pc.x - rc.x, dy = pc.y - rc.y;
+    if (Math.abs(dy) >= Math.abs(dx)) {
+      const s = { x: sx, y: dy > 0 ? ra.y + ra.h : ra.y };
+      const e = { x: ex, y: dy > 0 ? pa.y : pa.y + pa.h };
+      const lo = Math.min(s.y, e.y), hi = Math.max(s.y, e.y);
+      const mid = Math.max(lo, Math.min(hi, (s.y + e.y) / 2 + lane));
+      out.push([s, { x: s.x, y: mid }, { x: e.x, y: mid }, e]);
+    } else {
+      const s = { x: dx > 0 ? ra.x + ra.w : ra.x, y: sy };
+      const e = { x: dx > 0 ? pa.x : pa.x + pa.w, y: ey };
+      const lo = Math.min(s.x, e.x), hi = Math.max(s.x, e.x);
+      const mid = Math.max(lo, Math.min(hi, (s.x + e.x) / 2 + lane));
+      out.push([s, { x: mid, y: s.y }, { x: mid, y: e.y }, e]);
+    }
+
+    if (!zone) return out;
+    const m = 2200;
+    // 위·아래 복도를 타고 열 끝단으로
+    [-1, 1].forEach(dir => {
+      const chan = dir < 0 ? zone.y - m - Math.abs(lane) : zone.y + zone.h + m + Math.abs(lane);
+      const s = { x: sx, y: (rc.y > chan) ? ra.y : ra.y + ra.h };
+      const e = { x: ex, y: dir < 0 ? pa.y : pa.y + pa.h };
+      out.push([s, { x: s.x, y: chan }, { x: e.x, y: chan }, e]);
+    });
+    // 좌·우 복도를 타고 옆면으로
+    [-1, 1].forEach(dir => {
+      const chan = dir < 0 ? zone.x - m - Math.abs(lane) : zone.x + zone.w + m + Math.abs(lane);
+      const s = { x: (rc.x > chan) ? ra.x : ra.x + ra.w, y: sy };
+      const e = { x: dir < 0 ? pa.x : pa.x + pa.w, y: ey };
+      out.push([s, { x: chan, y: s.y }, { x: chan, y: e.y }, e]);
+    });
+    return out;
+  }
+
   function fpFeedLines(map, ortho) {
     const out = [];
     if (!fpTopo) return out;
@@ -3939,11 +4005,23 @@
     const box = id => (map[id] ? fpAabb(map[id]) : null);
     const mid = b => ({ x: b.x + b.w / 2, y: b.y + b.h / 2 });
 
+    // POD가 모여 있는 범위 — 이 바깥이 회선이 지나다닐 복도다
+    let zone = null;
+    fpTopo.pods.forEach(pod => {
+      const a = box('pod-' + pod.p);
+      if (!a) return;
+      zone = zone ? {
+        x: Math.min(zone.x, a.x), y: Math.min(zone.y, a.y),
+        x2: Math.max(zone.x2, a.x + a.w), y2: Math.max(zone.y2, a.y + a.h),
+      } : { x: a.x, y: a.y, x2: a.x + a.w, y2: a.y + a.h };
+    });
+    if (zone) { zone.w = zone.x2 - zone.x; zone.h = zone.y2 - zone.y; }
+    const podBoxes = fpTopo.pods.map(pod => ({ id: 'pod-' + pod.p, box: box('pod-' + pod.p) })).filter(b => b.box);
+
     const roomFeeds = {};
     fpTopo.feeds.forEach((list, pi) => list.forEach(k => { (roomFeeds[k] = roomFeeds[k] || []).push(pi); }));
 
-    // 전기실에서 나가는 자리 순서 — 목적지가 놓인 순서대로 면을 따라 세운다.
-    // 번호 순으로 내보내면 멀쩡한 배치에서도 코앞에서 선이 엇갈린다.
+    // 전기실에서 나가는 자리 순서 — 목적지가 놓인 순서대로 면을 따라 세운다
     const roomOrder = {};
     Object.keys(roomFeeds).forEach(key => {
       const k = Number(key);
@@ -3957,7 +4035,7 @@
         const pc = mid(pb);
         if (Math.abs(pc.y - rc.y) >= Math.abs(pc.x - rc.x)) vert++;
       });
-      const byX = vert * 2 >= roomFeeds[k].length;   // 위아래로 나가면 좌우 순
+      const byX = vert * 2 >= roomFeeds[k].length;
       roomOrder[k] = roomFeeds[k].slice().sort((a, b) => {
         const A = box('pod-' + a), B = box('pod-' + b);
         if (!A || !B) return 0;
@@ -3967,37 +4045,54 @@
     });
 
     fpTopo.feeds.forEach((list, pi) => {
-      const pb = map['pod-' + pi];
       const pa = box('pod-' + pi);
-      if (!pb || !pa) return;
+      if (!pa) return;
       const pc = mid(pa);
       const items = [];
       list.forEach(k => {
-        const rb = map['room-' + k];
         const ra = box('room-' + k);
-        if (!rb || !ra) return;
+        if (!ra) return;
         const rc = mid(ra);
         const dx = pc.x - rc.x, dy = pc.y - rc.y;
         const vertical = Math.abs(dy) >= Math.abs(dx);
-        items.push({ k: k, rb: rb, rc: rc, dx: dx, dy: dy, vertical: vertical,
+        items.push({ k: k, ra: ra, rc: rc, vertical: vertical,
           travel: vertical ? Math.abs(dx) : Math.abs(dy) });
       });
-      // 들어오는 자리는 출발지가 늘어선 순서대로
       const seats = items.slice().sort((a, b) => a.vertical
         ? (a.rc.x - b.rc.x) || (a.rc.y - b.rc.y)
         : (a.rc.y - b.rc.y) || (a.rc.x - b.rc.x));
       const seatOf = {};
       seats.forEach((it, idx) => { seatOf[it.k] = idx; });
-      // 차선은 '멀리서 오는 선'부터 바깥쪽으로 — 부챗살처럼 펴져 서로 넘지 않는다
       items.sort((a, b) => b.travel - a.travel);
       items.forEach((it, rank) => {
-        const sign = it.vertical ? (it.dy > 0 ? -1 : 1) : (it.dx > 0 ? -1 : 1);
         const mine = roomOrder[it.k] || [];
-        const link = fpLink(it.rb, pb,
-          (Math.max(0, mine.indexOf(pi)) + 1) / (mine.length + 1),
-          (seatOf[it.k] + 1) / (items.length + 1),
-          sign * rank * FP_LANE, useOrtho);
-        out.push({ pts: link.pts, len: link.len, room: it.k, pod: pi });
+        const tSrc = (Math.max(0, mine.indexOf(pi)) + 1) / (mine.length + 1);
+        const tDst = (seatOf[it.k] + 1) / (items.length + 1);
+        const lane = rank * FP_LANE;
+        if (!useOrtho) {
+          const a = { x: it.ra.x + it.ra.w / 2, y: it.ra.y + it.ra.h / 2 };
+          const b = { x: pa.x + pa.w / 2, y: pa.y + pa.h / 2 };
+          out.push({ pts: [a, b], len: fpPolyLen([a, b]), room: it.k, pod: pi });
+          return;
+        }
+        // 다른 POD와 다른 전기실을 넘지 않는 길을 고른다
+        const blockers = podBoxes.filter(b => b.id !== 'pod-' + pi).map(b => ({ box: b.box, w: 10 }));
+        fpTopo.rooms.forEach(r => {
+          if (r.i === it.k) return;
+          const rb = box('room-' + r.i);
+          if (rb) blockers.push({ box: rb, w: 1 });
+        });
+        let best = null;
+        const tries = [];
+        [lane, lane + FP_LANE * 2, 0].forEach(lv => {
+          fpRouteOptions(it.ra, pa, zone, tSrc, tDst, lv).forEach(pts => tries.push(pts));
+        });
+        tries.forEach(pts => {
+          const bl = fpPolyBlocked(pts, blockers);
+          const len = fpPolyLen(pts);
+          if (!best || bl < best.bl || (bl === best.bl && len < best.len)) best = { pts: pts, bl: bl, len: len };
+        });
+        if (best) out.push({ pts: best.pts, len: best.len, room: it.k, pod: pi });
       });
     });
     return out;
