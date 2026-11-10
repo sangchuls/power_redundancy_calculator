@@ -194,7 +194,7 @@
       label_totalModules: '총 모듈(전기실) 수 (N + C)',
       h3_title: '계산 결과', step_effCap_label: '유효용량', step_effCap_formula: '정격 × 안전율',
       h4_title: '구성 다이어그램', mode_normal: '평상시', mode_emergency: '비상시',
-      hint_diagram4: '휠로 확대/축소 · 전기실/POD 클릭: 연결 회선 하이라이트 · 전기실 더블클릭: 상실 지정 / 빈 곳 더블클릭: 평상시 복귀',
+      hint_diagram4: '휠로 확대/축소 · 전기실/POD 클릭: 연결 회선 하이라이트 · 전기실 이름 더블클릭: 방 전체 상실 · 변압기(T) 더블클릭: 그 1대만 상실 / 빈 곳 더블클릭: 평상시 복귀',
       btn_zoomReset: '리셋',
       btn_expand: '크게 보기',
       btn_modalClose: '닫기 ✕',
@@ -762,7 +762,7 @@
       label_totalModules: 'Total modules/rooms (N + C)',
       h3_title: 'Calculation result', step_effCap_label: 'Effective capacity', step_effCap_formula: 'Rating × safety factor',
       h4_title: 'Configuration diagram', mode_normal: 'Normal', mode_emergency: 'Emergency',
-      hint_diagram4: 'Wheel to zoom · click a room or a POD: highlight what it connects to · double-click a room: mark lost / double-click empty space: back to normal',
+      hint_diagram4: 'Wheel to zoom · click a room or a POD: highlight what it connects to · double-click a room name: lose the whole room · double-click a transformer (T): lose just that one / double-click empty space: back to normal',
       btn_zoomReset: 'Reset',
       btn_expand: 'Expand',
       btn_modalClose: 'Close ✕',
@@ -2159,6 +2159,11 @@
           for (let k = 0; k < perSetFail; k++) failedRooms.push(si * roomPlan.perSet + roomPlan.perSet - 1 - k);
         }
       }
+      // 변압기를 하나씩 모두 껐다면 그 방은 상실과 같다
+      rooms.forEach((r, k) => {
+        if (r.txCount > 0 && failedRooms.indexOf(k) < 0
+          && Array.from({ length: r.txCount }, (_, ti) => manualFailTx.has(k + ':' + ti)).every(Boolean)) failedRooms.push(k);
+      });
       failedRooms.forEach(i => { if (rooms[i]) rooms[i].state = 'offline'; });
       // 대기이중화: 같은 세트 안에서 쓰러진 Duty 수만큼 캐쳐를 투입한다
       if (currentTopo === 'standby') {
@@ -2274,14 +2279,17 @@
     // 부하를 똑같이 나눠 받는다. 전기실의 실제 부하는 이 분배 결과의 합이다.
     //  · 분산/완전이중화 평상시 M방 → 방당 1/M, 1방 상실 → 남은 방이 1/(M-1)
     //  · 대기이중화 평상시 Duty가 전량, Duty 상실 → 투입된 캐쳐가 전량
+    // 변압기마다 상태를 따로 갖는다 — 전기실 이름을 더블클릭하면 방 전체, T를 더블클릭하면 그 1대만 꺼진다.
+    rooms.forEach((r, k) => {
+      r.tx = Array.from({ length: r.txCount }, (_, ti) => ({
+        state: manualFailTx.has(k + ':' + ti) ? 'offline' : r.state, load: 0,
+      }));
+    });
+    // 방이 가동 중이라도 변압기가 한 대도 안 남았으면 급전할 수 없다
+    const roomLive = k => !!rooms[k] && rooms[k].state === 'active' && rooms[k].tx.some(x => x.state === 'active');
     const podCarriers = [];
     if (txMode) {
-      // 변압기마다 상태·부하를 따로 갖는다 — 살아 있는 변압기만 POD 부하를 똑같이 나눠 받는다
-      rooms.forEach((r, k) => {
-        r.tx = Array.from({ length: r.txCount }, (_, ti) => ({
-          state: manualFailTx.has(k + ':' + ti) ? 'offline' : r.state, load: 0,
-        }));
-      });
+      // 살아 있는 변압기만 POD 부하를 똑같이 나눠 받는다
       for (let p = 0; p < podCount; p++) {
         const live = podSrc[p].filter(key => {
           const [k, ti] = key.split(':').map(Number);
@@ -2291,23 +2299,32 @@
         const each = live.length ? podLoadKW / live.length : 0;
         live.forEach(key => { const [k, ti] = key.split(':').map(Number); rooms[k].tx[ti].load += each; });
       }
-      rooms.forEach(r => {
-        r.loadKW = r.tx.reduce((n, x) => n + x.load, 0);
-        const capTx = r.capacityKW / Math.max(1, r.txCount);
-        r.txOver = r.tx.filter(x => x.state === 'active' && x.load > capTx + 0.5).length;
-        r.txWorst = r.tx.reduce((m, x) => (x.state === 'active' && capTx > 0 ? Math.max(m, x.load / capTx * 100) : m), 0);
-      });
     } else {
       for (let p = 0; p < podCount; p++) {
-        const live = podFeeds[p].filter(r => rooms[r] && rooms[r].state === 'active');
+        const live = podFeeds[p].filter(roomLive);
         podCarriers.push(live);
         const each = live.length ? podLoadKW / live.length : 0;
         live.forEach(r => { rooms[r].loadKW += each; });
       }
     }
-    const roomRatio = r => (r.capacityKW > 0 ? r.loadKW / r.capacityKW * 100 : 0);
-    // 변압기별 급전이면 방 평균이 아니라 가장 무거운 변압기 한 대가 기준이다
-    const worstRatio = rooms.reduce((m, r) => Math.max(m, txMode ? (r.txWorst || 0) : roomRatio(r)), 0);
+    // 방·변압기별 마무리 — 모선에 병렬이면 방 부하를 살아 있는 변압기가 똑같이 나눠 진다
+    rooms.forEach(r => {
+      if (txMode) r.loadKW = r.tx.reduce((n, x) => n + x.load, 0);
+      const live = r.tx.filter(x => x.state === 'active');
+      if (!txMode) {
+        const each = live.length ? r.loadKW / live.length : 0;
+        r.tx.forEach(x => { x.load = x.state === 'active' ? each : 0; });
+      }
+      const capTx = r.capacityKW / Math.max(1, r.txCount);
+      r.liveCapKW = live.length * capTx;          // 살아 있는 변압기만큼의 용량
+      r.txOver = live.filter(x => x.load > capTx + 0.5).length;
+      r.txWorst = live.reduce((m, x) => (capTx > 0 ? Math.max(m, x.load / capTx * 100) : m), 0);
+    });
+    // 가동 중인 방은 남은 변압기 용량이 기준, 상실·대기는 원래 용량
+    const roomCap = r => (r.state === 'active' ? r.liveCapKW : r.capacityKW);
+    const roomRatio = r => (roomCap(r) > 0 ? r.loadKW / roomCap(r) * 100 : 0);
+    // 가장 무거운 변압기 한 대가 기준이다
+    const worstRatio = rooms.reduce((m, r) => Math.max(m, r.txWorst || 0), 0);
     // 3oo4의 핵심은 평상시가 아니라 '1실 상실 시'다 — 세트 부하를 남은 N개가 떠안을 때의
     // 부하율을 따로 계산해 같이 보여준다 (설계를 결정하는 쪽은 이 숫자다).
     const worstEmergency = rooms.reduce((m, r) => {
@@ -2794,7 +2811,7 @@
       const txW = 30;
       for (let t = 0; t < txCount; t++) {
         // 변압기별 급전이면 변압기마다 상태·부하율이 다르다
-        const txs = (txMode && mod.tx) ? mod.tx[t] : null;
+        const txs = mod.tx ? mod.tx[t] : null;
         const tOff = txs ? txs.state === 'offline' : isOffline;
         const tIdle = txs ? txs.state === 'idle' : isIdle;
         const tPct = txs ? ((tOff || tIdle) ? 0 : txs.load / Math.max(1, mod.capacityKW / Math.max(1, txCount)) * 100) : perTxPct;
@@ -2822,7 +2839,7 @@
         const ratingLabel = svgEl('text', { x: tx + txW / 2, y: ty + 44, 'text-anchor': 'middle', 'font-size': 6.2, 'font-weight': 600, fill: tOff ? '#C8604F' : (tIdle ? '#9A90BB' : '#8A8072'), 'font-family': 'sans-serif' });
         ratingLabel.textContent = fmtN(rating / 1000) + 'MVA';
         moduleGroup.appendChild(ratingLabel);
-        if (txMode) {
+        {
           // 변압기 1대만 더블클릭으로 상실 지정 — 방 전체 상실과는 따로다
           const hitRect = svgEl('rect', { x: tx - 2, y: ty - 2, width: txW + 4, height: 50, fill: 'transparent', cursor: 'pointer' });
           hitRect.addEventListener('dblclick', e => {
@@ -2841,14 +2858,15 @@
       // module summary caption
       const capY = moduleY + (ownerLabel ? 64 : 57) + txRowsNeeded * (22 + 34) + 6;
       const countText = svgEl('text', { x: x + boxW / 2, y: capY, 'text-anchor': 'middle', 'font-size': 10, 'font-weight': 700, fill: labelColor, 'font-family': 'sans-serif' });
-      countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: txCount, kw: fmtN(Math.round(mod.loadKW)) });
+      const liveTxN = mod.tx ? mod.tx.filter(x => x.state === 'active').length : txCount;
+      countText.textContent = isOffline ? t('count_offline', { n: txCount }) : t('count_active', { n: isActive ? liveTxN : txCount, kw: fmtN(Math.round(mod.loadKW)) });
       moduleGroup.appendChild(countText);
 
       // 분배 결과 — 이 방에 배정된 부하가 방 용량의 몇 %인지. 넘치면 붉게.
       const ratio = roomRatio(mod);
-      const overCap = mod.capacityKW > 0 && mod.loadKW > mod.capacityKW + 0.5;
+      const overCap = roomCap(mod) > 0 && mod.loadKW > roomCap(mod) + 0.5;
       const ratioText = svgEl('text', { x: x + boxW / 2, y: capY + 13, 'text-anchor': 'middle', 'font-size': 8.5, 'font-weight': 700, fill: overCap ? '#C8604F' : '#9A90BB', 'font-family': 'sans-serif' });
-      ratioText.textContent = t('room_cap_line', { cap: fmtN(Math.round(mod.capacityKW)), pct: fmtN(Math.round(ratio * 10) / 10) });
+      ratioText.textContent = t('room_cap_line', { cap: fmtN(Math.round(roomCap(mod))), pct: fmtN(Math.round(ratio * 10) / 10) });
       moduleGroup.appendChild(ratioText);
 
       svgTarget.appendChild(moduleGroup);
