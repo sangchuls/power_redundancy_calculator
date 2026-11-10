@@ -1494,8 +1494,10 @@
   //  · 모선형: 이중화 방식이 정한 전기실 전부가 모선을 통해 모든 POD에 병렬 급전
   //  · 조합형: POD마다 서로 다른 전기실 2곳(N choose 2 조합)이 짝지어 이중급전
   let distMode = lsGet('prc_dist') === 'comb' ? 'comb' : 'bus';
-  // 급전 단위 — 'room': 전기실 모선(변압기를 한 모선에 병렬) / 'tx': 변압기마다 회선이 따로 나온다
-  let feedUnit = lsGet('prc_feedunit') === 'tx' ? 'tx' : 'room';
+  // 급전 단위 — 'room': 전기실 모선(변압기를 한 모선에 병렬) / 'tx': 변압기마다 회선이 따로 나온다.
+  // 변압기별은 선이 많아 복잡하므로 저장하지 않는다 — 열 때마다 간결한 전기실 모선으로 시작하고,
+  // 필요할 때 '변압기별' 버튼을 눌러 본다. (설정 파일·프리셋에는 담겨 그대로 복원된다.)
+  let feedUnit = 'room';
   function updateDistHint(combActive, perSet, pairCount, usedPairs, sets, topoName) {
     const el = document.getElementById('distHint');
     if (!el) return;
@@ -1541,7 +1543,6 @@
   }
   function setFeedUnit(u) {
     feedUnit = u === 'tx' ? 'tx' : 'room';
-    lsSet('prc_feedunit', feedUnit);
     manualFailTx.clear();
     applyFeedUnitButtons();
     calculate();
@@ -8337,7 +8338,6 @@
     updateDiagramModeButtons();
     distMode = snap.dist === 'comb' ? 'comb' : 'bus';
     feedUnit = snap.feedUnit === 'tx' ? 'tx' : 'room';
-    lsSet('prc_feedunit', feedUnit);
     try { applyFeedUnitButtons(); } catch (e) {}
     lsSet('prc_dist', distMode);
     applyDistButtons();
