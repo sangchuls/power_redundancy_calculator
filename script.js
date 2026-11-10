@@ -3707,24 +3707,22 @@
     put('hall', { x: 0, y: 0, w: hallW, h: hallD });
     if (force) fpBlocks.hall = { x: 0, y: 0, w: hallW, h: hallD, rot: 0 };
 
+    // 급전 분할은 열을 길이 방향으로 정확히 등분한다 — 2분할이면 반 토막 둘이 이어 선다
     const split = Math.max(1, fpTopo.split);
-    const branchGap = 600;
-    const branchH = (unitD - (split - 1) * branchGap) / split;   // 분할 가지 하나의 두께
+    const segW = unitW / split;
     fpTopo.pods.forEach(pod => {
       const col = pod.unit % cols, row = Math.floor(pod.unit / cols);
       const ux = service + col * (footW + gap);
       const uy = service + row * (footH + gap);
-      const off = pod.branch * (branchH + branchGap);
-      let box, rot;
-      if (podCol) {
-        // 세로: 열 길이가 위아래로, 가지는 좌우로 선다. 글씨도 같이 눕도록 90도를 준다.
-        const cx = ux + off + branchH / 2, cy = uy + unitW / 2;
-        box = { x: cx - unitW / 2, y: cy - branchH / 2, w: unitW, h: branchH };
-        rot = 90;
-      } else {
-        box = { x: ux, y: uy + off, w: unitW, h: branchH };
-        rot = 0;
-      }
+      const off = pod.branch * segW;
+      const rot = podCol ? 90 : 0;
+      // 바닥에서 차지하는 칸
+      const fx = podCol ? ux : ux + off;
+      const fy = podCol ? uy + off : uy;
+      const fw = podCol ? unitD : segW;
+      const fh = podCol ? segW : unitD;
+      const cx = fx + fw / 2, cy = fy + fh / 2;
+      const box = { x: cx - segW / 2, y: cy - unitD / 2, w: segW, h: unitD };
       if (force || !fpBlocks['pod-' + pod.p]) fpBlocks['pod-' + pod.p] = Object.assign({ rot: rot }, box);
     });
 
@@ -3771,6 +3769,81 @@
     });
   }
 
+  // ⑥ 랙 구성·열 수에서 POD 한 유닛의 치수를 가져온다.
+  // 급전 분할은 그 열을 길이 방향으로 정확히 split등분한 것이다 — 2분할이면 반 토막 둘.
+  function fpPodGeom() {
+    let cl = null, d = null;
+    try { d = hallPlanData(); cl = hallCluster(d); } catch (e) {}
+    const unitW = cl ? cl.unitW : 24000, unitD = cl ? cl.unitD : 12000;
+    const split = Math.max(1, fpTopo ? fpTopo.split : 1);
+    return {
+      cl: cl, d: d, unitW: unitW, unitD: unitD, split: split,
+      segW: unitW / split,            // 가지 하나가 맡는 열 길이
+      segD: unitD,
+      cols: cl ? cl.cols : 1, rows: cl ? cl.rows : 1,
+      service: cl ? cl.service : 2000, gap: cl ? cl.gap : 2400,
+    };
+  }
+
+  // 랙 스터디가 바뀌면 POD 블럭의 치수도 따라간다.
+  // 유닛이 지금 놓인 자리(외곽 왼쪽 위)와 회전은 그대로 두고 크기·가지 배열만 다시 잡는다.
+  function fpSyncPods() {
+    if (!fpTopo) return;
+    const g = fpPodGeom();
+    const byUnit = {};
+    fpTopo.pods.forEach(pod => { (byUnit[pod.unit] = byUnit[pod.unit] || []).push(pod); });
+    let touched = false;
+    Object.keys(byUnit).forEach(u => {
+      const list = byUnit[u].sort((a, b) => a.branch - b.branch);
+      const first = fpBlocks['pod-' + list[0].p];
+      if (!first) return;
+      const rot = fpRotOf(first);
+      const alongY = rot % 180 === 90;
+      let x0 = Infinity, y0 = Infinity;
+      list.forEach(pod => {
+        const b = fpBlocks['pod-' + pod.p];
+        if (!b) return;
+        const a = fpAabb(b);
+        x0 = Math.min(x0, a.x); y0 = Math.min(y0, a.y);
+      });
+      if (!isFinite(x0)) return;
+      list.forEach(pod => {
+        const id = 'pod-' + pod.p;
+        const b = fpBlocks[id] || { rot: rot };
+        const fx = alongY ? x0 : x0 + pod.branch * g.segW;
+        const fy = alongY ? y0 + pod.branch * g.segW : y0;
+        const fw = alongY ? g.segD : g.segW;
+        const fh = alongY ? g.segW : g.segD;
+        const cx = fx + fw / 2, cy = fy + fh / 2;
+        const nb = { x: cx - g.segW / 2, y: cy - g.segD / 2, w: g.segW, h: g.segD, rot: fpRotOf(b) };
+        if (!fpBlocks[id] || fpBlocks[id].w !== nb.w || fpBlocks[id].h !== nb.h
+          || Math.abs(fpBlocks[id].x - nb.x) > 0.5 || Math.abs(fpBlocks[id].y - nb.y) > 0.5) touched = true;
+        fpBlocks[id] = nb;
+      });
+    });
+
+    // 데이터홀 외곽도 같은 스터디에서 나온다 — 지금 놓인 왼쪽 위를 잡고 크기만 고친다
+    const hall = fpBlocks.hall;
+    if (hall && g.cl) {
+      const podCol = ((document.getElementById('fpPodDir') || {}).value || 'col') === 'col';
+      const cols = podCol ? g.rows : g.cols;
+      const rowsN = podCol ? g.cols : g.rows;
+      const footW = podCol ? g.unitD : g.unitW;
+      const footH = podCol ? g.unitW : g.unitD;
+      const hw = g.service * 2 + cols * footW + (cols - 1) * g.gap;
+      const hd = g.service * 2 + rowsN * footH + (rowsN - 1) * g.gap;
+      if (Math.abs(hall.w - hw) > 0.5 || Math.abs(hall.h - hd) > 0.5) {
+        const a = fpAabb(hall);
+        const alongY = fpRotOf(hall) % 180 === 90;
+        const fw = alongY ? hd : hw, fh = alongY ? hw : hd;
+        const cx = a.x + fw / 2, cy = a.y + fh / 2;
+        fpBlocks.hall = { x: cx - hw / 2, y: cy - hd / 2, w: hw, h: hd, rot: fpRotOf(hall) };
+        touched = true;
+      }
+    }
+    if (touched) { fpSave(); drawFeedPlan(); }
+  }
+
   // 화면에 올릴 블럭 목록 — ④ 구성에서 바로 만든다
   function fpItems() {
     if (!fpTopo) return [];
@@ -3784,7 +3857,9 @@
       const tag = fpTopo.split > 1 ? (pod.unit + 1) + '-' + (ROOM_LETTERS[pod.branch] || pod.branch + 1) : String(pod.unit + 1);
       out.push({
         id: 'pod-' + pod.p, kind: 'pod', i: pod.p, b: b, color: '#3A2E75',
-        label: 'POD ' + tag, sub: fmtN(Math.round(pod.kW)) + 'kW',
+        label: 'POD ' + tag,
+        sub: fmtN(Math.round(pod.kW)) + 'kW',
+        sub2: Math.round(b.w) + '\u00D7' + Math.round(b.h),
       });
     });
     fpTopo.rooms.forEach(r => {
@@ -5449,6 +5524,8 @@
     hallZoom.reset();
     renderHallLegend();
     updateHallSummary(d);
+    // ④-2의 POD 블럭은 이 스터디에서 치수를 받는다
+    try { fpSyncPods(); } catch (e) {}
   }
 
   function renderHallLegend() {
