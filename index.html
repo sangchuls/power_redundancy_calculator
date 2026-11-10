@@ -609,13 +609,13 @@
 
     <div class="field-row" style="margin-top:12px;">
       <div class="field">
-        <label for="coolFwuN" data-i18n="label_coolFwuN">FWU 유효 대수 (N)</label>
-        <input type="number" id="coolFwuN" value="16" step="1" min="1" disabled style="background:var(--primary-bg);">
-        <div class="hint">
-          <label style="display:inline-flex; align-items:center; gap:5px; cursor:pointer; font-weight:700; color:var(--primary);">
-            <input type="checkbox" id="coolFwuAuto" checked style="width:13px; height:13px; margin:0;"> <span data-i18n="label_coolFwuAuto">열 길이에 맞춰 자동</span>
-          </label>
-        </div>
+        <label for="coolFwuCmh" data-i18n="label_coolFwuCmh">FWU 1대 풍량 (CMH)</label>
+        <input type="number" id="coolFwuCmh" value="15000" step="1000" min="1000">
+      </div>
+      <div class="field">
+        <label for="coolFwuN" data-i18n="label_coolFwuN">FWU 필요 대수 (N, 자동)</label>
+        <input type="number" id="coolFwuN" value="0" disabled style="background:var(--primary-bg); color:var(--primary); font-weight:700;">
+        <div class="hint" data-i18n="hint_coolFwuN">AC 부하 풍량 ÷ 1대 풍량, 올림</div>
       </div>
       <div class="field">
         <label for="coolFwuSpare" data-i18n="label_coolFwuSpare">FWU 예비 (대)</label>
