@@ -235,6 +235,15 @@
       txfan_hint_all: '변압기 1대의 선이 세트 안 POD {fan}개 전부로 분기. POD당 {lines}회선.',
       pod_feed_caption_tx: '각 POD {feeds}회선 급전 ({topo}) — 변압기마다 선이 나와 POD로 닿는다 (변압기당 POD {fan}개)',
       legend_tx_feed_note: '변압기(T) 한 대마다 회선이 나옴 · 변압기를 더블클릭하면 그 1대만 상실 처리',
+      sum_title_rooms: '전기실 요약표',
+      sum_title_pods: 'POD 요약표',
+      sum_h_room: '전기실', sum_h_set: '세트·그룹', sum_h_state: '상태', sum_h_tx: '변압기', sum_h_cap: '용량 (kW)',
+      sum_h_load: '부하 (kW)', sum_h_ratio: '부하율', sum_h_feed: '급전 POD',
+      sum_h_pod: 'POD 블록', sum_h_podload: 'POD 부하 (kW)', sum_h_podset: '세트', sum_h_podrooms: '급전 전기실', sum_h_lines: '급전 회선 (가동 / 전체)',
+      sum_total: '합계',
+      sum_tx_cell: '{n}대 × {rating}kVA', sum_tx_cell_part: '{live}/{n}대 × {rating}kVA',
+      sum_pods_many: 'POD {n}개', sum_lines: '회선 {n}',
+      sum_mode_note: '※ 부하와 부하율은 지금 선택한 {mode} 기준입니다. 부하율은 가장 무거운 변압기 한 대 기준입니다.',
       pod_feed_caption: '각 POD {feeds}회선 급전 ({topo}) — 전기실별 급전모선에서 POD마다 분기',
       pod_feed_caption_comb: '각 POD 2회선 급전 (조합형) — POD마다 다른 전기실 2곳이 짝을 지어 절반씩, 조합 {pairs}개',
       pod_chip: 'POD {n}',
@@ -804,6 +813,15 @@
       txfan_hint_all: "Each transformer's feeder branches to all {fan} PODs in the set. {lines} feeders per POD.",
       pod_feed_caption_tx: '{feeds} feeders per POD ({topo}) — one feeder leaves each transformer ({fan} POD per transformer)',
       legend_tx_feed_note: 'One feeder leaves each transformer (T) · double-click a transformer to fail just that one',
+      sum_title_rooms: 'Electrical room summary',
+      sum_title_pods: 'POD summary',
+      sum_h_room: 'Room', sum_h_set: 'Set / group', sum_h_state: 'State', sum_h_tx: 'Transformers', sum_h_cap: 'Capacity (kW)',
+      sum_h_load: 'Load (kW)', sum_h_ratio: 'Loading', sum_h_feed: 'Feeds PODs',
+      sum_h_pod: 'POD block', sum_h_podload: 'POD load (kW)', sum_h_podset: 'Set', sum_h_podrooms: 'Feeding rooms', sum_h_lines: 'Feeders (live / total)',
+      sum_total: 'Total',
+      sum_tx_cell: '{n} x {rating}kVA', sum_tx_cell_part: '{live}/{n} x {rating}kVA',
+      sum_pods_many: '{n} PODs', sum_lines: '{n} feeders',
+      sum_mode_note: '* Load and loading follow the {mode} view selected above. Loading is that of the heaviest transformer.',
       pod_feed_caption: '{feeds} feeders per POD ({topo}) — tapped from each electrical room’s distribution bus',
       pod_feed_caption_comb: '2 feeders per POD (combinatorial) — a different pair of rooms carries half each, {pairs} combinations',
       pod_chip: 'POD {n}',
@@ -2081,6 +2099,116 @@
   // 빈 곳을 클릭하면 회선 하이라이트 해제 (드래그로 화면을 옮긴 경우는 제외)
   document.getElementById('diagramSvg').addEventListener('click', () => { clearHighlight(); });
 
+  // ===== ④ 요약표 =====
+  // 도면 아래에 전기실별·POD별 용량과 부하를 표로 정리한다. 값은 도면을 그린 계산 결과를 그대로 쓴다.
+  function renderDiagramTables(d) {
+    const box = document.getElementById('diagramTables');
+    if (!box) return;
+    box.innerHTML = '';
+    const pct = v => fmtN(Math.round(v * 10) / 10) + '%';
+    const mk = (title, heads, rows, foot, note) => {
+      const wrap = document.createElement('div');
+      const h = document.createElement('div');
+      h.className = 'sum-title'; h.textContent = title;
+      wrap.appendChild(h);
+      const scroller = document.createElement('div');
+      scroller.className = 'sets-table-wrap'; scroller.style.marginTop = '6px';
+      const table = document.createElement('table');
+      table.className = 'sets-table';
+      const thead = document.createElement('thead');
+      const hr = document.createElement('tr');
+      heads.forEach((txt, i) => { const th = document.createElement('th'); th.textContent = txt; if (i === 0) th.className = 'left'; hr.appendChild(th); });
+      thead.appendChild(hr); table.appendChild(thead);
+      const tb = document.createElement('tbody');
+      const addRow = (cells, cls) => {
+        const tr = document.createElement('tr');
+        if (cls) tr.className = cls;
+        cells.forEach((cell, i) => {
+          const td = document.createElement('td');
+          if (i === 0) td.className = 'left';
+          if (cell && typeof cell === 'object') {
+            if (cell.html !== undefined) td.innerHTML = cell.html; else td.textContent = cell.text;
+            if (cell.cls) td.className = (td.className + ' ' + cell.cls).trim();
+          } else td.textContent = cell;
+          tr.appendChild(td);
+        });
+        tb.appendChild(tr);
+      };
+      rows.forEach(r => addRow(r));
+      if (foot) addRow(foot, 'total');
+      table.appendChild(tb); scroller.appendChild(table); wrap.appendChild(scroller);
+      if (note) { const n = document.createElement('div'); n.className = 'sum-note'; n.textContent = note; wrap.appendChild(n); }
+      return wrap;
+    };
+
+    // --- 전기실별 ---
+    const podsOfRoom = rooms => rooms.map(() => []);
+    const feedPods = podsOfRoom(d.rooms);
+    const feedLines = d.rooms.map(() => 0);
+    for (let p = 0; p < d.podCount; p++) {
+      d.podFeeds[p].forEach(k => { if (feedPods[k].indexOf(p) < 0) feedPods[k].push(p); });
+    }
+    if (d.txMode) {
+      for (let p = 0; p < d.podCount; p++) d.podSrc[p].forEach(key => { feedLines[Number(key.split(':')[0])]++; });
+    } else {
+      feedPods.forEach((l, k) => { feedLines[k] = l.length; });
+    }
+    let sumTx = 0, sumCap = 0, sumLoad = 0;
+    const roomRows = d.rooms.map((r, k) => {
+      const live = r.tx ? r.tx.filter(x => x.state === 'active').length : r.txCount;
+      const stateKey = r.state === 'offline' ? 'state_offline' : (r.state === 'idle' ? 'state_idle' : 'state_active');
+      const cap = r.state === 'active' ? r.liveCapKW : r.capacityKW;
+      const ratio = r.state === 'active' ? (r.txWorst || 0) : null;
+      sumTx += r.txCount; sumCap += r.capacityKW; sumLoad += r.loadKW;
+      // 도면의 전기실 이름표와 같은 소속 표기 (분산 N그룹 · 대기 Duty/캐쳐 · 완전 트레인)
+      const mi = r.moduleIndex;
+      let owner = currentTopo === 'full' ? t('module_label_train', { n: mi + 1 })
+        : currentTopo === 'standby' ? (r.role === 'catcher' ? t('module_label_catcher', { n: mi - d.N + 1 }) : t('module_label_duty', { n: mi + 1 }))
+        : t('module_label_group', { n: mi + 1 });
+      if (d.sets > 1) owner = t('set_label', { n: r.setIndex + 1 }) + ' · ' + owner;
+      const labels = feedPods[k].map(p => podBlockLabel(p, d.split));
+      const feedText = !labels.length ? '-'
+        : (labels.length > 6 ? t('sum_pods_many', { n: labels.length }) : labels.join(' · '))
+          + (d.txMode ? ' (' + t('sum_lines', { n: feedLines[k] }) + ')' : '');
+      return [
+        { html: '<span class="dot" style="background:' + (r.state === 'offline' ? '#DB8478' : roomColor(k)) + '"></span>' + t('module_label_room', { n: k + 1 }) },
+        owner,
+        { text: t(stateKey), cls: r.state === 'offline' ? 'warn-cell' : (r.state === 'idle' ? 'muted' : '') },
+        live === r.txCount ? t('sum_tx_cell', { n: r.txCount, rating: fmtN(d.rating) })
+          : t('sum_tx_cell_part', { live: live, n: r.txCount, rating: fmtN(d.rating) }),
+        fmtN(Math.round(cap)),
+        r.state === 'active' ? fmtN(Math.round(r.loadKW)) : '-',
+        ratio === null ? '-' : { text: pct(ratio), cls: ratio > 100.05 ? 'warn-cell' : '' },
+        feedText,
+      ];
+    });
+    box.appendChild(mk(t('sum_title_rooms'),
+      [t('sum_h_room'), t('sum_h_set'), t('sum_h_state'), t('sum_h_tx'), t('sum_h_cap'), t('sum_h_load'), t('sum_h_ratio'), t('sum_h_feed')],
+      roomRows,
+      [t('sum_total'), '', '', t('unit_dae', { n: sumTx }), fmtN(Math.round(sumCap)), fmtN(Math.round(sumLoad)), '', ''],
+      t('sum_mode_note', { mode: d.mode === 'normal' ? t('mode_normal') : t('mode_emergency') })));
+
+    // --- POD별 ---
+    let sumPod = 0;
+    const podRows = [];
+    for (let p = 0; p < d.podCount; p++) {
+      const total = d.txMode ? d.podSrc[p].length : d.podFeeds[p].length;
+      const live = d.podCarriers[p].length;
+      sumPod += d.podLoadKW;
+      podRows.push([
+        t('pod_chip', { n: podBlockLabel(p, d.split) }),
+        fmtN(Math.round(d.podLoadKW)),
+        t('set_label', { n: d.podSet[p] + 1 }),
+        d.podFeeds[p].map(k => k + 1).join(' · '),
+        { text: live + ' / ' + total, cls: live === 0 ? 'warn-cell' : '' },
+      ]);
+    }
+    box.appendChild(mk(t('sum_title_pods'),
+      [t('sum_h_pod'), t('sum_h_podload'), t('sum_h_podset'), t('sum_h_podrooms'), t('sum_h_lines')],
+      podRows,
+      [t('sum_total'), fmtN(Math.round(sumPod)), '', '', ''], null));
+  }
+
   function renderDiagram(N, C, perModuleUnits, load, rating, effectiveCap) {
     const svg = document.getElementById('diagramSvg');
     diagramZoom.clear();
@@ -2956,6 +3084,12 @@
 
     const topoLabel = currentTopo === 'distributed' ? t('topoLabel_distributed') : currentTopo === 'standby' ? t('topoLabel_standby') : t('topoLabel_full');
     document.getElementById('diagramDesc').textContent = t('diagramDesc', { topo: topoLabel, mode: diagramMode === 'normal' ? t('mode_normal') : t('mode_emergency') });
+    try {
+      renderDiagramTables({
+        rooms, podCount, podFeeds, podSrc, podCarriers, podSet, podLoadKW, txMode, rating,
+        split: podPlan.split, sets: roomPlan.sets, mode: diagramMode, N,
+      });
+    } catch (e) {}
     diagramZoom.reset();
 
     // ⑥번 SLD 자동 작성 모드는 별도 상태를 갖지 않고, 방금 ④번에서 계산한 modules 배열
