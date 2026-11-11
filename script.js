@@ -575,7 +575,7 @@
       summary_diff: '차이', summary_sumUnits: '전체 변압기 합계',
       unit_gae: '{n}개', unit_dae: '{n}대',
       preset_2oo3: '2oo3 분산', preset_3oo4: '3oo4 분산', preset_4oo5: '4oo5 분산',
-      preset_n1: 'N+1 대기', preset_n2c: 'N+2C 대기', preset_2n: '2N 완전', preset_2n1: '2N+1 완전',
+      preset_n1: 'N+1 대기', preset_n2c: 'N+2C 대기', preset_2n: '2N 완전', preset_2n1: '2N+1 완전', preset_custom: 'N 직접 입력',
     },
     en: {
       pageTitle: 'Transformer Redundancy Sizing Calculator',
@@ -1144,7 +1144,7 @@
       summary_diff: 'Difference', summary_sumUnits: 'Total transformers',
       unit_gae: '{n}', unit_dae: '{n}',
       preset_2oo3: '2oo3 distributed', preset_3oo4: '3oo4 distributed', preset_4oo5: '4oo5 distributed',
-      preset_n1: 'N+1 standby', preset_n2c: 'N+2C standby', preset_2n: '2N full', preset_2n1: '2N+1 full',
+      preset_n1: 'N+1 standby', preset_n2c: 'N+2C standby', preset_2n: '2N full', preset_2n1: '2N+1 full', preset_custom: 'Custom N',
     },
   };
 
@@ -7853,7 +7853,27 @@
     'n+2c':  { topo: 'standby', n: 3, c: 2, labelKey: 'preset_n2c' },
     '2n':    { topo: 'full', n: 1, c: 1, labelKey: 'preset_2n' },
     '2n+1':  { topo: 'full', n: 1, c: 2, labelKey: 'preset_2n1' },
+    // N을 직접 적는다 — 홀마다 방식(분산/대기/완전)과 N·C를 따로 갖는다
+    'custom': { topo: 'distributed', n: 3, c: 1, labelKey: 'preset_custom', custom: true },
   };
+
+  // 홀의 이중화 방식을 { topo, n, c }로 읽는다. 직접 입력이면 홀이 가진 값을 쓴다.
+  function presetOf(st) {
+    const base = TOPO_PRESETS[st && st.presetKey] || TOPO_PRESETS['3oo4'];
+    if (!base.custom) return base;
+    const topo = ['distributed', 'standby', 'full'].indexOf(st.topo) >= 0 ? st.topo : 'distributed';
+    const nRaw = Math.round(Number(st.n));
+    const cRaw = Math.round(Number(st.c));
+    const n = topo === 'full' ? 1 : Math.max(1, Math.min(60, isFinite(nRaw) ? nRaw : 3));
+    const c = Math.max(0, Math.min(60, isFinite(cRaw) ? cRaw : 1));
+    return { topo: topo, n: n, c: c, labelKey: base.labelKey, custom: true };
+  }
+  function presetLabel(preset) {
+    if (!preset.custom) return t(preset.labelKey);
+    if (preset.topo === 'distributed') return preset.n + 'oo' + (preset.n + preset.c) + ' (' + t('topoLabel_distributed') + ')';
+    if (preset.topo === 'standby') return preset.n + '+' + preset.c + 'C (' + t('topoLabel_standby') + ')';
+    return t('topoLabel_full') + ' (1+' + preset.c + ')';
+  }
 
   let sets = []; // { id, loadMW, presetKey }  (데이터홀 목록)
   let setIdCounter = 0;
@@ -7932,9 +7952,9 @@
     const count = sets.length;
     add('avg', t('src_avg', { n: count, mw: fmtN(count ? setsTotalMW() / count : 0, 2) }));
     sets.forEach((st, i) => {
-      const preset = TOPO_PRESETS[st.presetKey] || TOPO_PRESETS['3oo4'];
+      const preset = presetOf(st);
       add('set:' + st.id, t('src_hall', {
-        n: i + 1, mw: fmtN(st.loadMW, 2), topo: t(preset.labelKey),
+        n: i + 1, mw: fmtN(st.loadMW, 2), topo: presetLabel(preset),
       }));
     });
     add('manual', t('src_manual'));
@@ -7975,7 +7995,7 @@
     const podAuto = document.getElementById('podAuto');
     if (podAuto && !podAuto.checked) { podAuto.checked = true; updatePodControls(); }
     // 그 홀에 지정해 둔 이중화 방식까지 함께 가져온다
-    const preset = TOPO_PRESETS[st.presetKey];
+    const preset = presetOf(st);
     if (preset) {
       nInput.value = preset.n;
       cInput.value = preset.c;
@@ -8008,7 +8028,7 @@
   function computeSetResult(set) {
     const rating = parseFloat(ratingInput.value);
     const { pf, upsEff, safety } = getGlobalDeratingFactors();
-    const preset = TOPO_PRESETS[set.presetKey] || TOPO_PRESETS['3oo4'];
+    const preset = presetOf(set);
     const loadKW = set.loadMW * 1000;
     const effectiveCap = computeEffectiveCapacity(rating, pf, safety, upsEff);
     const { topo, n, c } = preset;
@@ -8083,6 +8103,7 @@
         keep = {
           row: Array.prototype.indexOf.call(row.parentNode.children, row),
           cell: Array.prototype.indexOf.call(row.children, cell),
+          ctl: Array.prototype.indexOf.call(cell.querySelectorAll('input, select'), act),   // 한 칸에 입력이 여럿일 때 그중 몇 번째인지
           raw: act.value, start: null, end: null,
         };
         try { keep.start = act.selectionStart; keep.end = act.selectionEnd; } catch (e) {}
@@ -8092,7 +8113,7 @@
     if (!keep || keep.row < 0 || keep.cell < 0) return;
     const row = container.children[keep.row];
     const cell = row && row.children[keep.cell];
-    let el = cell && cell.querySelector('input, select');
+    let el = cell && cell.querySelectorAll('input, select')[Math.max(0, keep.ctl)];
     if (!el) return;
     // 새로 만든 칸은 "16." 같은 입력 중인 글자를 모른다 — 치던 칸 자체를 제자리에 되돌려
     // 글자·커서·선택이 그대로 이어지게 한다 (값은 모델이 이미 같은 값을 갖고 있다)
@@ -8140,7 +8161,7 @@
     setsTbody.innerHTML = '';
 
     sets.forEach((set, idx) => {
-      const preset = TOPO_PRESETS[set.presetKey];
+      const preset = presetOf(set);
       const result = computeSetResult(set);
       const overload = result.emergencyPct > 100;
 
@@ -8176,8 +8197,48 @@
         if (key === set.presetKey) opt.selected = true;
         sel.appendChild(opt);
       });
-      sel.addEventListener('change', () => { set.presetKey = sel.value; renderSets(); });
+      sel.addEventListener('change', () => {
+        // 직접 입력으로 바꾸면 지금 쓰던 방식의 N·C를 그대로 시작값으로 가져온다
+        if (sel.value === 'custom' && set.presetKey !== 'custom') {
+          const cur = presetOf(set);
+          set.topo = cur.topo; set.n = cur.n; set.c = cur.c;
+        }
+        set.presetKey = sel.value;
+        renderSets();
+      });
       tdTopo.appendChild(sel);
+      if (set.presetKey === 'custom') {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'display:flex; gap:4px; margin-top:5px; align-items:center; flex-wrap:wrap;';
+        const kind = document.createElement('select');
+        kind.style.cssText = 'width:auto; padding:5px 6px; font-size:12px;';
+        [['distributed', 'tag_distributed'], ['standby', 'tag_standby'], ['full', 'tag_full']].forEach(([v, k]) => {
+          const o = document.createElement('option');
+          o.value = v; o.textContent = t(k);
+          if (v === preset.topo) o.selected = true;
+          kind.appendChild(o);
+        });
+        kind.addEventListener('change', () => { set.topo = kind.value; renderSets(); });
+        wrap.appendChild(kind);
+        [['n', 'N', 1], ['c', 'C', 0]].forEach(([key, label, min]) => {
+          const box = document.createElement('label');
+          box.style.cssText = 'display:inline-flex; align-items:center; gap:3px; font-size:12px; font-weight:700; color:var(--primary);';
+          box.appendChild(document.createTextNode(label));
+          const inp = document.createElement('input');
+          inp.type = 'number'; inp.min = String(min); inp.step = '1'; inp.value = preset[key];
+          inp.style.cssText = 'width:52px; padding:5px 6px; font-size:12px;';
+          if (key === 'n' && preset.topo === 'full') inp.disabled = true;   // 완전이중화는 트레인 1개가 100%
+          inp.addEventListener('input', () => {
+            if (midTyping(inp)) return;
+            const v = parseInt(inp.value, 10);
+            set[key] = isFinite(v) ? Math.max(min, v) : preset[key];
+            renderSets();
+          });
+          box.appendChild(inp);
+          wrap.appendChild(box);
+        });
+        tdTopo.appendChild(wrap);
+      }
       tr.appendChild(tdTopo);
 
       const tdPerModule = document.createElement('td');
@@ -8324,7 +8385,7 @@
     return {
       v: 1, fields, checks, topo: currentTopo, opt: activeOpt, dist: distMode, feedUnit,
       podSet: Object.assign({}, podSetOverride), loadSource,
-      sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey })),
+      sets: sets.map(st => ({ loadMW: st.loadMW, presetKey: st.presetKey, topo: st.topo, n: st.n, c: st.c })),
     };
   }
   function restoreSettings(snap) {
@@ -8344,7 +8405,7 @@
       if (el) el.checked = !!snap.checks[id];
     });
     if (Array.isArray(snap.sets)) {
-      sets = snap.sets.map(st => ({ id: setIdCounter++, loadMW: st.loadMW, presetKey: st.presetKey }));
+      sets = snap.sets.map(st => ({ id: setIdCounter++, loadMW: st.loadMW, presetKey: st.presetKey, topo: st.topo, n: st.n, c: st.c }));
     }
     manualFail4.clear(); manualFailTx.clear();
     podSetOverride = Object.assign({}, snap.podSet || {});
