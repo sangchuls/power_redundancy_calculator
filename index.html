@@ -696,7 +696,8 @@
     <h2>⑦ <span data-i18n="h6_title">SLD (단선결선도)</span> <span class="desc" data-i18n="h6_desc">한전 수전 → 비상발전기 → 주모선 → 모듈별 변압기·UPS → PDU → 랙 POD — ④번과 같은 평상시/비상시 상태를 그대로 반영</span></h2>
     <div class="mode-toggle">
       <button class="mode-btn active normal" id="sldAutoBtn" data-i18n="sld_mode_auto">자동 작성</button>
-      <button class="mode-btn" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
+      <button class="mode-btn normal" id="sldManualBtn" data-i18n="sld_mode_manual">수동 작성</button>
+      <button class="mode-btn normal" id="sldWizBtn" data-i18n="sld_mode_wiz">SLD 작성하기</button>
     </div>
     <div id="sldManualUI" style="display:none;">
       <div class="sld-palette-label" data-i18n="sld_palette_title">장비 팔레트 — 클릭해서 추가</div>
@@ -709,6 +710,8 @@
         <span class="hint" id="sldStatus" style="margin:0;"></span>
       </div>
     </div>
+    <div class="sld-stage" id="sldStage">
+    <div id="sldWizUI" class="sldw" style="display:none;"></div>
     <div class="diagram-wrap">
       <div class="zoom-controls">
         <span class="hint" style="margin:4px 8px 0 0;" id="sldHint" data-i18n="hint_sld">휠로 확대/축소 · 드래그로 이동 · ④번 구성 다이어그램과 동일한 평상시/비상시 상태가 자동 반영됩니다</span>
@@ -718,6 +721,7 @@
         <button class="zoom-btn expand-btn" id="sldExpandBtn" title="확대" data-i18n-title="btn_expand">⤢</button>
       </div>
       <svg id="sldSvg" width="760" height="360"></svg>
+    </div>
     </div>
     <div class="diagram-legend" id="sldLegend"></div>
   </div>
@@ -811,6 +815,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="sld-wizard.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

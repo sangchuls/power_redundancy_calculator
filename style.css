@@ -907,3 +907,57 @@
   .sum-tables .sets-table td.warn-cell { color: var(--warn); font-weight: 800; }
   .sum-tables .sets-table td.muted { color: var(--text-muted); }
   .sum-tables .sum-note { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+
+  /* ⑦ SLD 작성하기 — 왼쪽 질문지, 오른쪽 SLD (좁으면 위아래로) */
+  .sld-stage.wiz { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+  .sld-stage.wiz > .sldw { flex: 1 1 300px; max-width: 100%; position: sticky; top: 8px; max-height: calc(100vh - 16px); overflow: auto; }
+  .sld-stage.wiz > .diagram-wrap { flex: 999 1 440px; min-width: 0; }
+  .diagram-wrap svg.sld-wide { max-width: none; }
+  .diagram-wrap:has(svg.sld-wide) { overflow: auto; max-height: 80vh; }
+  .sldw { border: 1.5px solid var(--border); border-radius: 18px; background: var(--bg-color); padding: 12px 14px 14px; font-size: 13px; }
+  .sldw-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .sldw-prog { font-size: 11.5px; font-weight: 700; color: var(--text-muted); }
+  .sldw-link { border: none; background: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline; font-family: inherit; padding: 0; }
+  .sldw-bar { height: 5px; background: var(--surface); border-radius: 99px; margin: 6px 0 8px; overflow: hidden; }
+  .sldw-bar span { display: block; height: 100%; background: var(--primary); border-radius: 99px; transition: width .25s; }
+  .sldw-dots { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .sldw-dot { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--border); background: var(--bg-color); font-size: 10px; font-weight: 700; color: var(--text-muted); cursor: pointer; padding: 0; font-family: inherit; }
+  .sldw-dot.set { background: var(--primary-bg); border-color: var(--primary-light); color: var(--primary); }
+  .sldw-dot.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .sldw-dot.fin { color: #2F8F4E; }
+  .sldw-sec { display: inline-block; font-size: 10.5px; font-weight: 800; color: var(--primary); background: var(--primary-bg); border-radius: 99px; padding: 2px 10px; }
+  .sldw-title { font-size: 15px; margin: 6px 0 10px; line-height: 1.4; }
+  .sldw-opts { display: flex; flex-direction: column; gap: 6px; }
+  .sldw-opt { display: flex; gap: 9px; align-items: flex-start; text-align: left; padding: 8px 10px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg-color); cursor: pointer; font-family: inherit; color: var(--text-main); transition: border-color .15s, background .15s; }
+  .sldw-opt:hover { border-color: var(--primary-light); }
+  .sldw-opt.sel { border-color: var(--primary); background: var(--primary-bg); }
+  .sldw-radio { flex: 0 0 14px; height: 14px; margin-top: 2px; border-radius: 50%; border: 2px solid var(--border); }
+  .sldw-opt.sel .sldw-radio { border-color: var(--primary); background: radial-gradient(circle, var(--primary) 45%, transparent 50%); }
+  .sldw-opt-body { display: flex; flex-direction: column; gap: 2px; }
+  .sldw-opt-label { font-weight: 700; font-size: 12.5px; }
+  .sldw-opt-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.45; }
+  .sldw-rec { margin-left: 6px; font-size: 9.5px; font-weight: 800; color: #2F8F4E; background: #E4F3E8; border-radius: 99px; padding: 1px 7px; white-space: nowrap; }
+  .sldw-num { display: flex; align-items: center; gap: 8px; }
+  .sldw-num input { width: 120px; padding: 6px 12px; border-radius: 10px; border: 1.5px solid var(--border); font-size: 15px; font-weight: 700; font-family: inherit; color: var(--primary); background: var(--bg-color); }
+  .sldw-unit { font-weight: 700; color: var(--text-muted); }
+  .sldw-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .sldw-chip { border: 1.5px solid var(--border); background: var(--bg-color); border-radius: 99px; padding: 2px 10px; font-size: 11.5px; cursor: pointer; font-family: inherit; color: var(--text-main); }
+  .sldw-chip.sel { border-color: var(--primary); background: var(--primary-bg); color: var(--primary); font-weight: 700; }
+  .sldw-info { margin-top: 10px; font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-bg); border-radius: 10px; padding: 6px 10px; }
+  .sldw-warn { margin-top: 8px; font-size: 12px; color: var(--warn); background: var(--warn-bg); border-radius: 10px; padding: 6px 10px; line-height: 1.5; }
+  .sldw-explain, .sldw-terms { margin-top: 10px; background: var(--surface); border-radius: 12px; padding: 8px 11px; font-size: 12.5px; line-height: 1.6; }
+  .sldw-explain-h { font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 3px; }
+  .sldw-term { font-size: 12px; margin-top: 3px; line-height: 1.5; }
+  .sldw-term b { color: var(--primary); }
+  .sldw-src { margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+  .sldw-nav { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
+  .sldw-nav .quick-btn:disabled { opacity: .4; cursor: default; }
+  .sldw-next { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .sldw-figs { margin: 10px 0; display: flex; flex-direction: column; gap: 4px; }
+  .sldw-fig { font-size: 12px; font-weight: 700; color: var(--primary); background: var(--primary-bg); border-radius: 8px; padding: 4px 9px; }
+  .sldw-sum { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .sldw-sum tr { cursor: pointer; border-top: 1px solid var(--border); }
+  .sldw-sum td { padding: 5px 4px; vertical-align: top; }
+  .sldw-sum-n { width: 22px; color: var(--text-muted); font-weight: 700; }
+  .sldw-sum-q { color: var(--text-muted); font-size: 11px; }
+  .sldw-sum-a { font-weight: 700; }

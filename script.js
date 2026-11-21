@@ -396,6 +396,21 @@
       sldb_bus: '모선', sldb_gen: '비상발전기', sldb_gcp: '발전기 제어반', sldb_syn: '동기 병렬반',
       sldb_ctts: '무순단 절체기', sldb_sts: '정지형 절체기', sldb_ups: '무정전전원장치', sldb_bat: '축전지',
       sldb_pdu: '전력분배반', sldb_pod: '랙 그룹(POD)', sldb_rack: '서버랙', sldb_load: '일반 부하', sldb_junction: '분기점',
+      sldb_ats: '자동 절체기', sldb_mbp: '외장 바이패스', sldb_lbank: '로드뱅크',
+      sld_mode_wiz: 'SLD 작성하기',
+      hint_sld_wiz: '질문에 답할 때마다 SLD가 바로 바뀝니다 · 노란 표시 = 지금 질문과 관련된 장비 · 휠 확대/드래그 이동',
+      sld_legend_wiz: '실선=평소 전기가 흐르는 길 · 점선=예비(평소 대기) 길 · 회색 점선 블럭=대기·무가압 · 노란 바탕=지금 질문의 장비',
+      sldw_progress: '질문 {i} / {n}', sldw_done_prog: '질문 {n}개 완료', sldw_restart: '처음부터',
+      sldw_restart_confirm: '답을 모두 지우고 처음부터 다시 할까요?',
+      sldw_rec: '요건정의서 권장', sldw_app: '앱 값', sldw_explain: '쉬운 해설', sldw_terms: '용어 풀이', sldw_src: '근거',
+      sldw_prev: '이전', sldw_next: '다음', sldw_finish: '완료',
+      sldw_done_title: 'SLD 구성 완료', sldw_done_desc: '답을 바꾸려면 아래 표나 위의 번호를 누르세요. 수동 작성으로 보내면 블럭을 직접 옮기고 이어 붙일 수 있습니다.',
+      sldw_fig_load: 'IT {it}MW × PUE 1.5 = 건물 {total}MW · 랙 {racks}개 ({kw}kW/랙)',
+      sldw_fig_mtr: '주변압기 {n}대 × {mva}MVA ({kv}kV → {mv})', sldw_fig_1step: '{kv}kV 수전 → 모듈 변압기에서 380V (1-Step)',
+      sldw_fig_mod: 'IT 모듈 {n}개{ab} · TR {kva}kVA · UPS {ups}kW · {topo}',
+      sldw_fig_gen: '발전기 {n}대 × {kw}kW ({red}) · 필요 {need}MW · 연료 ≈ {kl}kL',
+      sldw_dr: '분산 이중화', sldw_sum_jump: '눌러서 이 질문으로 이동',
+      sldw_to_manual: '수동 작성으로 보내 다듬기', sldw_overwrite: '지금 수동 작성 화면의 SLD를 이 결과로 바꿉니다. 계속할까요?',
       h_plan_title: '건축 평·단면 블럭 다이어그램',
       h_plan_desc: '전기실·기계실·데이터홀 등을 블럭으로 배치하고, 층별 탭으로 나눠 한눈에 비교합니다',
       h_fp_title: '기준층 평면 스터디',
@@ -980,6 +995,21 @@
       sldb_bus: 'Bus bar', sldb_gen: 'Emergency generator', sldb_gcp: 'Gen. control panel', sldb_syn: 'Synchronizing panel',
       sldb_ctts: 'Closed transition TS', sldb_sts: 'Static transfer switch', sldb_ups: 'Uninterruptible PS', sldb_bat: 'Battery',
       sldb_pdu: 'Power distribution unit', sldb_pod: 'Rack group (POD)', sldb_rack: 'Server rack', sldb_load: 'General load', sldb_junction: 'Junction',
+      sldb_ats: 'Automatic transfer sw.', sldb_mbp: 'Maintenance bypass', sldb_lbank: 'Load bank',
+      sld_mode_wiz: 'SLD wizard',
+      hint_sld_wiz: 'The SLD updates with every answer · yellow = equipment for the current question · wheel to zoom, drag to pan',
+      sld_legend_wiz: 'Solid = normal power path · dashed = standby path · grey dashed block = standby / de-energised · yellow = current question',
+      sldw_progress: 'Question {i} / {n}', sldw_done_prog: 'All {n} questions answered', sldw_restart: 'Start over',
+      sldw_restart_confirm: 'Clear every answer and start over?',
+      sldw_rec: 'requirements pick', sldw_app: 'app value', sldw_explain: 'In plain words', sldw_terms: 'Terms', sldw_src: 'Source',
+      sldw_prev: 'Back', sldw_next: 'Next', sldw_finish: 'Finish',
+      sldw_done_title: 'SLD complete', sldw_done_desc: 'Click a row below or a number above to change an answer. Send it to manual drawing to move and rewire blocks yourself.',
+      sldw_fig_load: 'IT {it} MW × PUE 1.5 = site {total} MW · {racks} racks at {kw} kW',
+      sldw_fig_mtr: '{n} main transformer(s) × {mva} MVA ({kv} kV → {mv})', sldw_fig_1step: '{kv} kV supply → 380 V at the module transformers (1-step)',
+      sldw_fig_mod: '{n} IT modules{ab} · TR {kva} kVA · UPS {ups} kW · {topo}',
+      sldw_fig_gen: '{n} generators × {kw} kW ({red}) · need {need} MW · fuel ≈ {kl} kL',
+      sldw_dr: 'distributed redundant', sldw_sum_jump: 'Click to go to this question',
+      sldw_to_manual: 'Send to manual drawing', sldw_overwrite: 'This replaces the SLD in manual drawing. Continue?',
       h_plan_title: 'Plan & section block diagram',
       h_plan_desc: 'Lay out electrical, mechanical and data hall spaces as blocks, one tab per floor, and compare them side by side',
       h_fp_title: 'Typical floor study',
@@ -7219,13 +7249,16 @@
     { key: 'gcp', abbr: 'GCP', cat: 'gen' },
     { key: 'syn', abbr: 'SYN', cat: 'gen' },
     { key: 'ctts', abbr: 'CTTS', cat: 'transfer' },
+    { key: 'ats', abbr: 'ATS', cat: 'transfer' },
     { key: 'sts', abbr: 'STS', cat: 'transfer' },
+    { key: 'mbp', abbr: 'MBP', cat: 'switch' },
     { key: 'ups', abbr: 'UPS', cat: 'ups' },
     { key: 'bat', abbr: 'BAT', cat: 'ups' },
     { key: 'pdu', abbr: 'PDU', cat: 'load' },
     { key: 'pod', abbr: 'POD', cat: 'pod' },
     { key: 'rack', abbr: 'RACK', cat: 'load' },
     { key: 'load', abbr: 'LOAD', cat: 'load' },
+    { key: 'lbank', abbr: 'L/B', cat: 'load' },
   ];
   const SLD_TYPE_MAP = {};
   SLD_BLOCK_TYPES.forEach(b => { SLD_TYPE_MAP[b.key] = b; });
@@ -7233,8 +7266,10 @@
   // 블럭끼리가 아니라 기존 선에서 따내야 하는 장비를 연결하기 위한 노드).
   SLD_TYPE_MAP.junction = { key: 'junction', abbr: '', cat: 'bus' };
 
-  let sldMode = lsGet('prc_sld_mode') === 'manual' ? 'manual' : 'auto';
+  let sldMode = ['manual', 'wizard'].includes(lsGet('prc_sld_mode')) ? lsGet('prc_sld_mode') : 'auto';
   let sldAutoGraph = { nodes: [], edges: [], notes: [] };
+  // SLD 작성하기(질문지)가 만든 그래프 — 답할 때마다 새로 만든다 (읽기 전용)
+  let sldWizGraph = { nodes: [], edges: [], notes: [], frames: [] };
   let sldSelectedId = null;
   let sldSeq = 0;
   let sldDrag = null;
@@ -7247,19 +7282,20 @@
           const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
           if (isFinite(num) && num > sldSeq) sldSeq = num;
         });
-        return { nodes: g.nodes, edges: g.edges, notes: [] };
+        return { nodes: g.nodes, edges: g.edges, notes: Array.isArray(g.notes) ? g.notes : [], frames: Array.isArray(g.frames) ? g.frames : [] };
       }
     } catch (e) {}
-    return { nodes: [], edges: [], notes: [] };
+    return { nodes: [], edges: [], notes: [], frames: [] };
   }
   let sldManualGraph = loadSldManualGraph();
 
   function saveSldManualGraph() {
     try {
-      lsSet('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges }));
+      lsSet('prc_sld_graph', JSON.stringify({ nodes: sldManualGraph.nodes, edges: sldManualGraph.edges,
+        notes: sldManualGraph.notes || [], frames: sldManualGraph.frames || [] }));
     } catch (e) {}
   }
-  function sldGraph() { return sldMode === 'manual' ? sldManualGraph : sldAutoGraph; }
+  function sldGraph() { return sldMode === 'manual' ? sldManualGraph : sldMode === 'wizard' ? sldWizGraph : sldAutoGraph; }
 
   function makeSldNode(typeKey, x, y, opts) {
     opts = opts || {};
@@ -7276,6 +7312,7 @@
     if (node.type === 'junction') return SLD_EDGE_COLORS.main;
     if (node.state === 'offline') return SLD_EDGE_COLORS.lost;
     if (node.state === 'idle') return '#9A90BB';
+    if (node.color) return node.color;          // 질문지가 지정한 색 (예: Catcher = 초록)
     return SLD_CATS[(SLD_TYPE_MAP[node.type] || {}).cat] || SLD_CATS.load;
   }
   function sldNodeSub(node) {
@@ -7364,23 +7401,35 @@
     if (sldMode === 'auto') drawSLD();
   }
 
-  function sldEdgePath(a, b) {
+  // 선 모양. edge.ex / edge.en 은 출발·도착 블럭 왼쪽 끝에서 잰 가로 위치(블럭을 옮겨도 따라간다),
+  // edge.via 는 가로 구간의 높이(여러 선이 한 높이에서 겹치지 않게 '차선'을 나눌 때)다.
+  // 모선(BUS)에 붙는 선은 모선 가운데가 아니라 상대 블럭 바로 위·아래에서 수직으로 떨어진다.
+  function sldEdgeGeom(a, b, e) {
+    e = e || {};
+    const isBus = n => n.type === 'bus';
+    const clampX = (n, x) => Math.max(n.x + 6, Math.min(n.x + n.w - 6, x));
+    const exX = e.ex !== undefined ? a.x + e.ex : null;
+    const enX = e.en !== undefined ? b.x + e.en : null;
     const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
     const aTop = a.y, aBot = a.y + a.h, bTop = b.y, bBot = b.y + b.h;
-    if (bTop >= aBot - 4) {
-      const midY = (aBot + bTop) / 2;
-      return `M${acx},${aBot} L${acx},${midY} L${bcx},${midY} L${bcx},${bTop}`;
-    }
-    if (aTop >= bBot - 4) {
-      const midY = (aTop + bBot) / 2;
-      return `M${acx},${aTop} L${acx},${midY} L${bcx},${midY} L${bcx},${bBot}`;
-    }
+    const vertical = (y1, y2) => {
+      let x2 = enX !== null ? enX : bcx;
+      const x1 = exX !== null ? exX : (isBus(a) ? clampX(a, x2) : acx);
+      if (isBus(b) && enX === null) x2 = clampX(b, x1);
+      const lo = Math.min(y1, y2), hi = Math.max(y1, y2);
+      const midY = (e.via !== undefined && e.via > lo && e.via < hi) ? e.via : (y1 + y2) / 2;
+      if (Math.abs(x1 - x2) < 0.5) return { d: `M${x1},${y1} L${x2},${y2}`, mx: x1, my: midY };
+      return { d: `M${x1},${y1} L${x1},${midY} L${x2},${midY} L${x2},${y2}`, mx: (x1 + x2) / 2, my: midY };
+    };
+    if (bTop >= aBot - 4) return vertical(aBot, bTop);
+    if (aTop >= bBot - 4) return vertical(aTop, bBot);
     const acy = a.y + a.h / 2, bcy = b.y + b.h / 2;
     const ax = bcx > acx ? a.x + a.w : a.x;
     const bx = bcx > acx ? b.x : b.x + b.w;
     const midX = (ax + bx) / 2;
-    return `M${ax},${acy} L${midX},${acy} L${midX},${bcy} L${bx},${bcy}`;
+    return { d: `M${ax},${acy} L${midX},${acy} L${midX},${bcy} L${bx},${bcy}`, mx: midX, my: (acy + bcy) / 2 };
   }
+  function sldEdgePath(a, b, e) { return sldEdgeGeom(a, b, e).d; }
 
   function sldClientToGraph(evt) {
     const svg = document.getElementById('sldSvg');
@@ -7402,34 +7451,54 @@
     let maxX = 700, maxY = 260;
     g.nodes.forEach(n => { maxX = Math.max(maxX, n.x + n.w); maxY = Math.max(maxY, n.y + n.h); });
     (g.notes || []).forEach(nt => { maxX = Math.max(maxX, nt.x + 60); maxY = Math.max(maxY, nt.y); });
+    (g.frames || []).forEach(f => { maxX = Math.max(maxX, f.x + f.w); maxY = Math.max(maxY, f.y + f.h); });
     const svgW = Math.max(760, maxX + 40);
     const svgH = Math.max(manual ? 440 : 300, maxY + 40);
     svg.setAttribute('width', svgW);
     svg.setAttribute('height', svgH);
     svg.setAttribute('viewBox', `0 0 ${svgW} ${svgH}`);
     svg.classList.toggle('sld-editing', manual);
+    svg.classList.toggle('sld-wide', sldMode === 'wizard');
 
     const byId = {};
     g.nodes.forEach(n => { byId[n.id] = n; });
+
+    // ----- 묶음 테두리 (모듈·발전기·GIS 등) — 맨 아래에 깐다 -----
+    (g.frames || []).forEach(f => {
+      target.appendChild(svgEl('rect', {
+        x: f.x, y: f.y, width: f.w, height: f.h, rx: 10,
+        fill: f.fill || 'none', stroke: f.color || '#B9AE98', 'stroke-width': 1.2, 'stroke-dasharray': '6,4',
+      }));
+      if (f.label) {
+        const ft = svgEl('text', {
+          x: f.x + 8, y: f.y + 13, 'font-size': 9.5, 'font-weight': 800, fill: f.color || '#8A8072',
+          'font-family': 'sans-serif', stroke: '#FFFDF7', 'stroke-width': 3, 'paint-order': 'stroke',
+        });
+        ft.textContent = f.label;
+        target.appendChild(ft);
+      }
+    });
 
     // ----- 연결선 -----
     g.edges.forEach(edge => {
       const a = byId[edge.from], b = byId[edge.to];
       if (!a || !b) return;
-      const d = sldEdgePath(a, b);
+      const geom = sldEdgeGeom(a, b, edge);
+      const d = geom.d;
       const color = SLD_EDGE_COLORS[edge.kind] || SLD_EDGE_COLORS.main;
       target.appendChild(svgEl('path', {
         d, fill: 'none', stroke: color,
         'stroke-width': edge.kind === 'main' ? 2 : 1.6,
         'stroke-dasharray': edge.kind === 'main' ? 'none' : '5,4',
       }));
-      if (edge.kind !== 'main') {
-        const mid = sldEdgeMidpoint(a, b);
+      // 선 이름: edge.label 이 있으면 그것(빈 문자열이면 표시 안 함), 없으면 예비 선에만 '예비'
+      const edgeText = edge.label !== undefined ? edge.label : (edge.kind !== 'main' ? t('sld_edge_standby') : '');
+      if (edgeText) {
         const lbl = svgEl('text', {
-          x: mid.x, y: mid.y - 3, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 700,
+          x: geom.mx, y: geom.my - 3, 'text-anchor': 'middle', 'font-size': 8, 'font-weight': 700,
           fill: color, 'font-family': 'sans-serif', stroke: '#FFFFFF', 'stroke-width': 2.4, 'paint-order': 'stroke',
         });
-        lbl.textContent = t('sld_edge_standby');
+        lbl.textContent = edgeText;
         target.appendChild(lbl);
       }
       if (manual) {
@@ -7461,7 +7530,7 @@
     // ----- 주석(자동 작성 모드의 모듈 명칭/상태) -----
     (g.notes || []).forEach(nt => {
       const el = svgEl('text', {
-        x: nt.x, y: nt.y, 'text-anchor': 'middle', 'font-size': nt.size || 10,
+        x: nt.x, y: nt.y, 'text-anchor': nt.anchor || 'middle', 'font-size': nt.size || 10,
         'font-weight': nt.weight || 700, fill: nt.color || '#8A8072', 'font-family': 'sans-serif',
       });
       el.textContent = nt.text;
@@ -7474,6 +7543,13 @@
       const selected = manual && node.id === sldSelectedId;
       const grp = svgEl('g', manual ? { cursor: 'move' } : {});
       const dashed = node.state !== 'active';
+      // 질문지: 지금 질문과 관련된 장비를 노란 바탕으로 짚어 준다
+      if (node.hl) {
+        grp.appendChild(svgEl('rect', {
+          x: node.x - 5, y: node.y - 5, width: node.w + 10, height: node.h + 10, rx: 11,
+          fill: '#FFD84D', 'fill-opacity': 0.42, stroke: '#E0A800', 'stroke-width': 1.2,
+        }));
+      }
       if (node.type === 'junction') {
         // 분기점은 선 위의 점으로만 표시 (라벨 없음)
         const cxj = node.x + node.w / 2, cyj = node.y + node.h / 2;
@@ -7523,13 +7599,6 @@
     sldZoom.reset();
   }
 
-  function sldEdgeMidpoint(a, b) {
-    const acx = a.x + a.w / 2, bcx = b.x + b.w / 2;
-    const aBot = a.y + a.h, bTop = b.y;
-    if (bTop >= aBot - 4) return { x: (acx + bcx) / 2, y: (aBot + bTop) / 2 };
-    return { x: (acx + bcx) / 2, y: (a.y + a.h / 2 + b.y + b.h / 2) / 2 };
-  }
-
   function renderSldLegend(g, manual) {
     const legend = document.getElementById('sldLegend');
     if (!legend) return;
@@ -7563,7 +7632,7 @@
     note.className = 'item';
     note.style.width = '100%';
     note.style.marginTop = '4px';
-    note.textContent = t('sld_legend_note');
+    note.textContent = t(sldMode === 'wizard' ? 'sld_legend_wiz' : 'sld_legend_note');
     legend.appendChild(note);
   }
 
@@ -7694,42 +7763,49 @@
     });
   }
 
+  function sldHintKey() { return sldMode === 'manual' ? 'hint_sld_manual' : sldMode === 'wizard' ? 'hint_sld_wiz' : 'hint_sld'; }
   function setSldMode(mode) {
-    sldMode = mode === 'manual' ? 'manual' : 'auto';
+    sldMode = ['manual', 'wizard'].includes(mode) ? mode : 'auto';
     lsSet('prc_sld_mode', sldMode);
     document.getElementById('sldAutoBtn').classList.toggle('active', sldMode === 'auto');
     document.getElementById('sldManualBtn').classList.toggle('active', sldMode === 'manual');
+    document.getElementById('sldWizBtn').classList.toggle('active', sldMode === 'wizard');
     document.getElementById('sldManualUI').style.display = sldMode === 'manual' ? 'block' : 'none';
+    document.getElementById('sldWizUI').style.display = sldMode === 'wizard' ? 'block' : 'none';
+    document.getElementById('sldStage').classList.toggle('wiz', sldMode === 'wizard');
     const hintEl = document.getElementById('sldHint');
-    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
+    if (hintEl) hintEl.textContent = t(sldHintKey());
     sldSelectedId = null;
     sldDrag = null;
-    drawSLD();
+    if (sldMode === 'wizard') wizRebuild(true);
+    else drawSLD();
     updateSldStatus();
   }
 
   function refreshSldTexts() {
     renderSldPalette();
     const hintEl = document.getElementById('sldHint');
-    if (hintEl) hintEl.textContent = t(sldMode === 'manual' ? 'hint_sld_manual' : 'hint_sld');
-    drawSLD();
+    if (hintEl) hintEl.textContent = t(sldHintKey());
+    if (sldMode === 'wizard') wizRebuild(true);
+    else drawSLD();
     updateSldStatus();
   }
 
   document.getElementById('sldAutoBtn').addEventListener('click', () => setSldMode('auto'));
   document.getElementById('sldManualBtn').addEventListener('click', () => setSldMode('manual'));
+  document.getElementById('sldWizBtn').addEventListener('click', () => setSldMode('wizard'));
   document.getElementById('sldSeedBtn').addEventListener('click', () => {
     const clone = JSON.parse(JSON.stringify({ nodes: sldAutoGraph.nodes, edges: sldAutoGraph.edges }));
     clone.nodes.forEach(n => { n.state = 'active'; });
     clone.edges.forEach(e => { if (e.kind === 'lost') e.kind = 'standby'; });
-    sldManualGraph = { nodes: clone.nodes, edges: clone.edges, notes: [] };
+    sldManualGraph = { nodes: clone.nodes, edges: clone.edges, notes: [], frames: [] };
     sldSelectedId = null;
     saveSldManualGraph();
     drawSLD();
     updateSldStatus();
   });
   document.getElementById('sldClearBtn').addEventListener('click', () => {
-    sldManualGraph = { nodes: [], edges: [], notes: [] };
+    sldManualGraph = { nodes: [], edges: [], notes: [], frames: [] };
     sldSelectedId = null;
     saveSldManualGraph();
     drawSLD();
@@ -7742,6 +7818,716 @@
       updateSldStatus();
     }
   });
+
+
+  // ===== ⑦ SLD 작성하기 — 질문에 하나씩 답하며 단선결선도를 쌓아 올린다 =====
+  // 질문지 본문(질문·보기·해설·근거)은 sld-wizard.js(window.SLD_WIZ)에 있고,
+  // 여기서는 답 → 계산(wizCalc) → 그래프(buildWizardSLD) → 화면(renderWizPanel)만 맡는다.
+  const WIZ = window.SLD_WIZ || { questions: [], gloss: {} };
+  const wl = o => (o ? (o[currentLang] || o.ko || '') : '');
+  const wizState = (() => {
+    try {
+      const raw = JSON.parse(lsGet('prc_sld_wiz') || 'null');
+      if (raw && raw.a && typeof raw.a === 'object') {
+        const a = Object.assign({}, raw.a);
+        if (!a._set || typeof a._set !== 'object') a._set = {};
+        return { a, qid: raw.qid || null };
+      }
+    } catch (e) {}
+    return { a: { _set: {} }, qid: null };
+  })();
+  function wizSave() {
+    try { lsSet('prc_sld_wiz', JSON.stringify({ a: wizState.a, qid: wizState.qid })); } catch (e) {}
+  }
+  function wizAppMW() {
+    const el = document.getElementById('load');
+    const v = el ? parseFloat(el.value) : NaN;
+    return isFinite(v) && v > 0 ? v : 0;
+  }
+
+  // 답 → 설비 용량. 어림 계수는 질문지 해설에 적은 것과 같다.
+  const MTR_STD = [10, 15, 20, 30, 40, 45, 60, 80, 100, 120];
+  const ACB_STD = [1600, 2000, 2500, 3200, 4000, 5000, 6300];
+  function stdUp(list, v) { for (const x of list) if (x >= v - 1e-9) return x; return list[list.length - 1]; }
+  function wizCalc(a) {
+    const c = {};
+    c.appMW = wizAppMW();
+    c.itMW = Math.max(0.1, parseFloat(a.itMW) || c.appMW || 20);
+    c.rackKW = parseFloat(a.rackKW) || 15;
+    c.totalMW = c.itMW * 1.5;                                   // PUE 1.5
+    c.racks = Math.ceil(c.itMW * 1000 / c.rackKW);
+    c.needMVA = c.totalMW / 0.9;                                // 역률 0.9
+    c.mtrSets = Math.max(1, Math.ceil(c.needMVA / 120));
+    c.mtrMVA = stdUp(MTR_STD, c.needMVA / c.mtrSets);
+    c.mechMW = c.itMW * 0.45;                                   // 공조 ≈ IT × 0.45
+    c.bldgMW = c.itMW * 0.05;
+    const scope = a.genScope || 'itcool';
+    c.genNeedMW = (c.itMW + (scope !== 'it' ? c.mechMW : 0) + (scope === 'all' ? c.bldgMW : 0)) * 1.1;
+    c.trKVA = parseFloat(a.trKVA) || 4000;
+    c.modKW = Math.round(c.trKVA * 0.65 / 10) * 10;             // 2,500kVA → 1,630kW (참고 SLD 1.63MW)
+    c.nMod = Math.max(1, Math.ceil(c.itMW * 1000 / c.modKW));
+    c.nModDraw = c.nMod + (a.ups === 'dr' ? 1 : 0);
+    c.sides = (a.ups === '2n' || a.ups === '2n1') ? 2 : 1;
+    c.upsKW = c.modKW;
+    c.acbA = stdUp(ACB_STD, c.trKVA / (Math.sqrt(3) * 0.38));
+    c.utKVA = c.trKVA;
+    c.utN = Math.max(1, Math.ceil(c.mechMW * 1000 / 0.85 / (c.utKVA * 0.8)));
+    c.bldgKVA = Math.max(500, Math.ceil(c.bldgMW * 1000 / 0.85 / 0.8 / 500) * 500);
+    c.mv = a.step === '2step66' ? '6.6kV' : '22.9kV';
+    if (a.genType === 'hv') {
+      c.genUnitKW = 3000;
+      c.genN = Math.max(1, Math.ceil(c.genNeedMW * 1000 / c.genUnitKW));
+    } else {
+      c.genUnitKW = c.trKVA;                                    // 참고 SLD: TR 2,500kVA ↔ GEN 2,500kW
+      c.genN = c.nModDraw * c.sides + (a.ups === 'catcher' ? 1 : 0) + (scope !== 'it' ? c.utN : 0) + (scope === 'all' ? 1 : 0);
+    }
+    c.genTotal = a.genRed === '2n' ? c.genN * 2 : a.genRed === 'n1' ? c.genN + 1 : c.genN;
+    c.fuelKL = c.genNeedMW * (parseFloat(a.fuel) || 12) * 0.25;
+    return c;
+  }
+
+  function wizValidOpts(q, a) { return (q.options || []).filter(o => !o.when || o.when(a)); }
+  // 아직 직접 고르지 않은 질문은 '앞의 답에 맞는 권장안'으로 채운다 — 앞 답을 바꾸면 뒤 권장도 따라간다
+  function wizFill(a) {
+    WIZ.questions.forEach(q => {
+      const c = wizCalc(a);
+      let rec = q.rec ? q.rec(a, c) : undefined;
+      if (q.type === 'number') {
+        const v = parseFloat(a[q.id]);
+        if (!a._set[q.id] || !isFinite(v)) { a[q.id] = rec; delete a._set[q.id]; }
+        else a[q.id] = Math.min(q.max, Math.max(q.min, v));
+        return;
+      }
+      const opts = wizValidOpts(q, a);
+      if (!opts.some(o => o.v === rec)) rec = opts.length ? opts[0].v : undefined;
+      if (!opts.some(o => o.v === a[q.id])) { a[q.id] = rec; delete a._set[q.id]; }
+      else if (!a._set[q.id]) a[q.id] = rec;
+    });
+  }
+  function wizVisible(a) { return WIZ.questions.filter(q => !(q.skip && q.skip(a))); }
+  function wizRec(q, a) {
+    const c = wizCalc(a);
+    let rec = q.rec ? q.rec(a, c) : undefined;
+    if (q.type !== 'number') {
+      const opts = wizValidOpts(q, a);
+      if (!opts.some(o => o.v === rec)) rec = opts.length ? opts[0].v : undefined;
+    }
+    return rec;
+  }
+
+  // 답 → 단선결선도. 위에서 아래로: 한전 → 단로기·차단기 → (수전 모선) → 주변압기 → 고압 모선(A/B·TIE)
+  // → 모듈별 절체·변압·UPS·분배 → 랙. 공조(UT)·건물은 오른쪽 열, 고압 발전기는 맨 오른쪽에 둔다.
+  // 같은 높이를 지나는 선이 겹치지 않도록 가로 구간마다 '차선(via)'을 따로 준다.
+  function buildWizardSLD(a, c, hlSecs) {
+    const nodes = [], edges = [], notes = [], frames = [];
+    const T = (ko, en) => (currentLang === 'ko' ? ko : en);
+    const add = (type, x, y, o) => {
+      o = o || {};
+      const nd = makeSldNode(type, x, y, o);
+      nd.sec = o.sec || '';
+      if (o.color) nd.color = o.color;
+      if (hlSecs.indexOf(nd.sec) >= 0) nd.hl = true;
+      nodes.push(nd);
+      return nd;
+    };
+    const link = (p, q, o) => {
+      o = o || {};
+      const kind = o.kind || ((p.state !== 'active' || q.state !== 'active') ? 'standby' : 'main');
+      const e = { id: 'e' + p.id + '-' + q.id + '-' + (++sldSeq), from: p.id, to: q.id, kind, label: o.label === undefined ? '' : o.label };
+      if (o.ex !== undefined) e.ex = o.ex;
+      if (o.en !== undefined) e.en = o.en;
+      if (o.via !== undefined) e.via = o.via;
+      edges.push(e);
+      return e;
+    };
+    const mwTxt = v => (v >= 1000 ? fmtN(Math.round(v / 10) / 100, 2) + 'MW' : fmtN(Math.round(v)) + 'kW');
+    const sl = (y, ko, en) => notes.push({ x: 10, y, text: T(ko, en), size: 10, weight: 800, color: '#8A8072', anchor: 'start' });
+
+    const CW = 106, NH = 38, RH = 58, SLOT = 50, SW = SLOT + 6 + CW + 6 + SLOT, SGAP = 10, MGAP = 34, X0 = 130;
+    const CATCH = '#2F8F4E';
+    const hvGen = a.genType === 'hv';
+    const step1 = a.step === '1step';
+    const dual = a.bus !== 'single';
+    const sides = c.sides;
+    const topo = a.ups;
+    const scopeCool = a.genScope !== 'it', scopeAll = a.genScope === 'all';
+    const mvNum = c.mv, mvShort = c.mv.replace('kV', '');
+
+    // 1) 열 배치 — 모듈(최대 3열만 그리고 나머지는 ⋯), Catcher, 공조(UT), 건물
+    const n = c.nModDraw;
+    const shown = n <= 3 ? Array.from({ length: n }, (_, i) => i) : [0, 1, n - 1];
+    const cols = [];
+    let x = X0;
+    shown.forEach((m, i) => {
+      const w = sides * SW + (sides - 1) * SGAP;
+      cols.push({ kind: 'mod', m, x, w });
+      x += w + MGAP;
+      if (n > 3 && i === 1) { cols.push({ kind: 'gap', x, w: 70 }); x += 70 + MGAP; }
+    });
+    if (topo === 'catcher') { cols.push({ kind: 'catcher', m: n, x, w: SW }); x += SW + MGAP; }
+    if (a.mech !== 'shared') { cols.push({ kind: 'ut', x, w: 246 }); x += 246 + MGAP; }
+    cols.push({ kind: 'bldg', x, w: 176 }); x += 176 + MGAP;
+    const rightEnd = x - MGAP;
+
+    // 2) 고압(또는 22.9kV 수전) 모선 — 앞쪽 절반 모듈은 A, 나머지는 B
+    const busY = step1 ? 236 : 356, busH = 22;
+    const halfM = Math.ceil(n / 2);
+    let splitAfter = 0;
+    cols.forEach((col, i) => { if (col.kind === 'mod' && col.m < halfM) splitAfter = i; });
+    if (splitAfter >= cols.length - 1) splitAfter = cols.length - 2;
+    const splitX = (cols[splitAfter].x + cols[splitAfter].w + cols[splitAfter + 1].x) / 2;
+    const busLabel = step1 ? `${a.kv}kV ${T('수전 모선', 'incoming bus')}` : `${T('고압 모선', 'MV bus')} (${mvNum})`;
+    const lines = a.supply === 'single' ? 1 : 2;
+    const mtrCount = step1 ? 0 : (a.mtr === 'one' ? 1 : 2);
+    // B 모선에 평소 살아 있는 자기 전원이 있나 — 없으면 TIE로만 받는다
+    const bOwnLive = step1 ? (lines === 2 && a.supply === 'parallel') : (mtrCount === 2 && a.mtr === 'share');
+    let busA, busB = null;
+    if (dual) {
+      busA = add('bus', X0 - 14, busY, { w: splitX - 34 - (X0 - 14), h: busH, label: busLabel + ' A', sub: '', sec: 'bus' });
+      busB = add('bus', splitX + 34, busY, { w: rightEnd + 14 - (splitX + 34), h: busH, label: busLabel + ' B', sub: '', sec: 'bus',
+        state: (!bOwnLive && a.bus === 'dual_no') ? 'idle' : 'active' });
+      const nc = a.bus === 'dual_nc';
+      const tie = add('vcb', splitX - 24, busY - 8, { w: 48, h: busH + 16, label: 'TIE', sub: nc ? 'N.C.' : 'N.O.', sec: 'bus', state: nc ? 'active' : 'idle' });
+      link(busA, tie, { kind: nc ? 'main' : 'standby' });
+      link(tie, busB, { kind: nc ? 'main' : 'standby' });
+    } else {
+      busA = add('bus', X0 - 14, busY, { w: rightEnd + 28 - X0, h: busH, label: busLabel, sub: '', sec: 'bus' });
+    }
+    const colBus = col => (!dual ? busA : (cols.indexOf(col) <= splitAfter ? busA : busB));
+
+    // 3) 수전 — 한전 → DS → GCB(154kV)/VCB(22.9kV) → (수전 모선) → MTR → VCB → 모선
+    const px = dual ? [busA.x + 40, busB.x + 40] : [X0 + 30, X0 + 30 + CW + 80];
+    const asb = a.supply === 'dual_same' || a.supply === 'dual_sub';
+    const brkType = a.kv === '154' ? 'gcb' : 'vcb';
+    const lineEnd = [];
+    for (let i = 0; i < lines; i++) {
+      const st = asb && i === 1 ? 'idle' : 'active';
+      const tag = a.supply === 'dual_sub' ? T(i ? 'B 변전소·예비' : 'A 변전소·상시', i ? 'sub. B, standby' : 'sub. A, duty')
+        : a.supply === 'dual_same' ? T(i ? '예비선' : '본선', i ? 'standby line' : 'main line')
+        : a.supply === 'parallel' ? T('상시 병렬', 'both active') : T('단일 회선', 'single line');
+      const k = add('kepco', px[i] - 7, 20, { w: CW + 14, h: NH, label: 'KEPCO' + (lines > 1 ? '-' + 'AB'[i] : ''), sub: `${a.kv}kV · ${tag}`, sec: 'utility', state: st });
+      const ds = add('ds', px[i], 82, { w: CW, h: NH, label: 'DS', sec: 'hv', state: st });
+      const br = add(brkType, px[i], 140, { w: CW, h: NH, label: brkType.toUpperCase(),
+        sub: st === 'idle' ? 'N.O.' : (brkType === 'gcb' ? T('가스차단기', 'gas CB') : T('진공차단기', 'vacuum CB')), sec: 'hv', state: st });
+      link(k, ds); link(ds, br);
+      lineEnd.push(br);
+    }
+    if (a.kv === '154' && a.swgr === 'gis') {
+      const fx = px[0] - 40, fx2 = px[lines - 1] + CW + 12;
+      frames.push({ x: fx, y: 72, w: fx2 - fx, h: 116, label: 'GIS', color: '#6759B0' });
+    }
+    if (step1) {
+      lineEnd.forEach((br, i) => link(br, i === 0 || !dual ? busA : busB));
+    } else {
+      const rbNeeded = !(lines === mtrCount && (lines === 1 || a.supply === 'parallel'));
+      let rb = null;
+      if (rbNeeded) {
+        const span = Math.max(lines, mtrCount);
+        const rx = px[0] - 10, rx2 = px[span - 1] + CW + 24;
+        rb = add('bus', rx, 198, { w: rx2 - rx, h: 18, label: `${a.kv}kV ${T('수전 모선', 'incoming bus')}`, sub: '', sec: 'utility' });
+        lineEnd.forEach(br => link(br, rb));
+      }
+      for (let k = 0; k < mtrCount; k++) {
+        const st = a.mtr === 'standby' && k === 1 ? 'idle' : 'active';
+        const mtr = add('mtr', px[k] - 7, 238, { w: CW + 14, h: NH, label: `MTR #${k + 1}`,
+          sub: `${c.mtrMVA}MVA${c.mtrSets > 1 ? '×' + c.mtrSets : ''} · ${a.kv}/${mvShort}kV`, sec: 'mtr', state: st });
+        link(rb || lineEnd[k], mtr);
+        const v = add('vcb', px[k], 298, { w: CW, h: NH, label: 'VCB',
+          sub: st === 'idle' ? T('대기·무가압', 'standby, dead') : T('주차단기', 'main breaker'), sec: 'mtr', state: st });
+        link(mtr, v);
+        link(v, k === 0 || !dual ? busA : busB);
+      }
+    }
+
+    // 4) 고압 발전기 — 맨 오른쪽: G1..Gn → GEN VCB → SYN 모선 (+ 로드뱅크)
+    let synBus = null;
+    if (hvGen) {
+      const total = c.genTotal;
+      const idxs = total <= 5 ? Array.from({ length: total }, (_, i) => i) : [0, 1, 2, -1, total - 1];
+      const gx0 = rightEnd + 90, GW = 92, GG = 14;
+      const synNode = add('syn', gx0, busY - 118, { w: 80, h: NH, label: 'SYN', sub: T('동기 병렬반', 'sync panel'), sec: 'gen' });
+      let gx = gx0 + 80 + 24;
+      const genVcbs = [];
+      idxs.forEach(gi => {
+        if (gi < 0) {
+          notes.push({ x: gx + 16, y: busY - 74, text: '⋯', size: 20, weight: 800, color: '#993C1D' });
+          gx += 32 + GG;
+          return;
+        }
+        const g = add('gen', gx, busY - 118, { w: GW, h: NH, label: 'G' + (gi + 1), sub: `${fmtN(c.genUnitKW)}kW ${mvNum}`, sec: 'gen' });
+        const gv = add('vcb', gx, busY - 60, { w: GW, h: NH, label: 'GEN VCB', sub: 'GCP', sec: 'gen' });
+        link(g, gv);
+        genVcbs.push(gv);
+        gx += GW + GG;
+      });
+      let lb = null, lbv = null;
+      if (a.loadTest === 'lb') {
+        lb = add('lbank', gx + 10, busY - 118, { w: GW, h: NH, label: 'LOAD BANK', sub: T('부하시험', 'load test'), sec: 'gen' });
+        lbv = add('vcb', gx + 10, busY - 60, { w: GW, h: NH, label: 'LOAD TEST', sub: 'VCB', sec: 'gen' });
+        gx += 10 + GW + GG;
+      }
+      synBus = add('bus', gx0, busY, { w: gx - GG - gx0, h: busH, label: `SYN ${T('모선', 'bus')} (${mvNum})`, sub: '', sec: 'gen' });
+      genVcbs.forEach(gv => link(gv, synBus));
+      link(synNode, synBus, { kind: 'standby', label: T('동기', 'sync') });
+      if (lb) { link(synBus, lbv, { kind: 'standby' }); link(lbv, lb, { kind: 'standby' }); }
+      const red = { n: 'N', n1: 'N+1', '2n': '2N' }[a.genRed] || '';
+      frames.push({ x: gx0 - 12, y: busY - 142, w: gx - GG - gx0 + 24, h: 142 + busH + 12, color: '#993C1D',
+        label: `${T('비상발전기', 'Generators')} ${red} · ${total}${T('대', ' sets')} · ${T('연료', 'fuel')} ${a.fuel}h ≈ ${fmtN(Math.round(c.fuelKL))}kL` });
+    }
+
+    // 5) 모선 → 각 열 첫 장비. 모선 구간 밖으로 가는 선과 발전기 예비선은 차선을 나눠 쓴다
+    const feeds = [];
+    cols.forEach(col => {
+      if (col.kind === 'gap') return;
+      const nS = col.kind === 'mod' ? sides : 1;
+      for (let si = 0; si < nS; si++) {
+        const sideX = col.x + si * (SW + SGAP);
+        const chainX = col.kind === 'ut' ? col.x + (col.w - CW) / 2 : col.kind === 'bldg' ? col.x + 10 : sideX + SLOT + 6;
+        const bus = !dual ? busA : (col.kind === 'mod' && sides === 2) ? (si === 0 ? busA : busB) : colBus(col);
+        const hasGen = hvGen && (col.kind === 'mod' || col.kind === 'catcher' || (col.kind === 'ut' && scopeCool) || (col.kind === 'bldg' && scopeAll));
+        const en = hasGen ? CW * 0.3 : CW / 2;
+        const ex = chainX + en;
+        feeds.push({ col, s: si, chainX, bus, hasGen, en, inSpan: ex >= bus.x + 6 && ex <= bus.x + bus.w - 6 });
+      }
+    });
+    let lane = 0;
+    const laneY0 = busY + busH + 14;
+    const laneOf = () => laneY0 + (lane++) * 7;
+    // 같은 방향으로 가는 선끼리는 '먼 목표 = 바깥 출구 = 위 차선'으로 맞춰야 서로 엇갈리지 않는다
+    feeds.filter(f => !f.inSpan && f.bus === busA).sort((p, q) => q.chainX - p.chainX)
+      .forEach((f, j) => { f.ex = f.bus.w - 8 - j * 7; f.via = laneOf(); });
+    if (busB) feeds.filter(f => !f.inSpan && f.bus === busB).sort((p, q) => p.chainX - q.chainX)
+      .forEach((f, j) => { f.ex = 8 + j * 7; f.via = laneOf(); });
+    feeds.filter(f => f.hasGen).sort((p, q) => p.chainX - q.chainX)
+      .forEach((f, j) => { f.gex = 8 + j * 7; f.gvia = laneOf(); });
+    const yMod = lane ? laneY0 + lane * 7 + 22 : busY + busH + 40;
+    const rowY = r => yMod + r * RH;
+    const genLinks = [];
+
+    // 6) IT 모듈 (A/B 측 또는 단일) + Catcher
+    const xferType = a.xfer === 'ctts' ? 'ctts' : a.xfer === 'ats' ? 'ats' : (hvGen ? 'vcb' : 'acb');
+    const xferLbl = a.xfer === 'interlock' ? T('인터록', 'ILK') : xferType.toUpperCase();
+    const batTxt = { lib10: T('LiB 10분', 'Li 10 min'), vrla15: T('납 15분', 'Pb 15 min'), fly: T('휠 30초', 'FW 30 s') }[a.battery] || '';
+    const genSub = `${fmtN(c.genUnitKW)}kW${a.genRed === '2n' ? '×2' : ''}`;
+    const upsSub = (col, si) => {
+      if (col.kind === 'catcher') return 'Catcher UPS (N)';
+      if (topo === '2n') return T(si ? 'B 계통' : 'A 계통', si ? 'B side' : 'A side');
+      if (topo === '2n1') return `(N+1) ${si ? 'B' : 'A'}`;
+      if (topo === 'catcher') return 'UPS (N+1)';
+      if (topo === 'dr') return T('분산 N+1', 'distrib. N+1');
+      return T('N+1 모듈형', 'N+1 modular');
+    };
+    const mods = [];
+    feeds.forEach(f => {
+      const col = f.col;
+      if (col.kind !== 'mod' && col.kind !== 'catcher') return;
+      const color = col.kind === 'catcher' ? CATCH : undefined;
+      const name = col.kind === 'catcher' ? 'C' : String(col.m + 1) + (sides === 2 ? 'AB'[f.s] : '');
+      const X = f.chainX;
+      const order = hvGen ? ['xfer', 'vcb', 'tr', 'acb', 'ups', 'pdu'] : ['vcb', 'tr', 'xfer', 'acb', 'ups', 'pdu'];
+      const r = k => order.indexOf(k);
+      const o = (sec, extra) => Object.assign({ w: CW, h: NH, sec, color }, extra);
+      const xfer = add(xferType, X, rowY(r('xfer')), o('xfer', { label: `${xferLbl}-${name}`,
+        sub: a.xfer === 'interlock' ? (hvGen ? 'VCB ×2' : 'ACB ×2') : a.xfer === 'ctts' ? T('무순단 절체', 'closed trans.') : T('순간정전 절체', 'open trans.') }));
+      const vcb = add('vcb', X, rowY(r('vcb')), o('module', { label: 'VCB', sub: mvNum }));
+      const tr = add('tr', X, rowY(r('tr')), o('module', { label: `TR-${name}`, sub: `${fmtN(c.trKVA)}kVA ${mvShort}kV/380V` }));
+      const acb = add('acb', X, rowY(r('acb')), o('module', { label: 'ACB', sub: `${fmtN(c.acbA)}A` }));
+      const ups = add('ups', X, rowY(r('ups')), o('ups', { label: `UPS ${mwTxt(c.upsKW)}`, sub: upsSub(col, f.s) }));
+      const pdu = add('pdu', X, rowY(r('pdu')), o('rack', a.distrib === 'busway'
+        ? { label: 'BUSWAY', sub: T('플러그인 MCCB', 'plug-in MCCB') } : { label: 'PDU', sub: T('분전반 MCCB', 'panel MCCB') }));
+      link(f.bus, hvGen ? xfer : vcb, { en: f.en, ex: f.ex, via: f.via });
+      if (hvGen) { link(xfer, vcb); link(vcb, tr); link(tr, acb); }
+      else { link(vcb, tr); link(tr, xfer); link(xfer, acb); }
+      link(acb, ups); link(ups, pdu);
+      if (f.hasGen) genLinks.push({ f, node: xfer });
+      if (!hvGen) {
+        const g = add('gen', X + CW + 6, xfer.y, { w: SLOT, h: NH, label: 'GEN', sub: genSub, sec: 'gen', color });
+        link(g, xfer, { kind: 'standby' });
+      }
+      const bat = add('bat', X + CW + 6, ups.y, { w: SLOT, h: NH, label: 'BAT', sub: batTxt, sec: 'ups', color });
+      link(bat, ups, { kind: 'standby' });
+      if (a.bypass === 'mbp') {
+        const mb = add('mbp', X - SLOT - 6, ups.y, { w: SLOT, h: NH, label: 'MBP', sub: T('바이패스', 'bypass'), sec: 'ups', color });
+        link(acb, mb, { kind: 'standby', ex: 12 });
+        link(mb, pdu, { kind: 'standby', en: 12 });
+      }
+      if (a.mech === 'shared' && col === cols[0] && f.s === 0) {
+        const ld = add('load', X + CW + 6, acb.y, { w: SLOT, h: NH, label: T('공조', 'HVAC'), sub: T('부하', 'load'), sec: 'mech' });
+        link(acb, ld);
+      }
+      mods.push({ col, s: f.s, pdu });
+    });
+
+    // 7) 랙 — 이중화 방식에 따라 두 번째 코드가 어디서 오는지가 달라진다
+    const modCols = cols.filter(cc => cc.kind === 'mod');
+    const pduOf = (col, si) => (mods.find(mm => mm.col === col && mm.s === si) || {}).pdu;
+    const catcherPdu = (mods.find(mm => mm.col.kind === 'catcher') || {}).pdu;
+    const sts = a.rackFeed === 'sts', single = a.rackFeed === 'single';
+    const tw = sts ? CW : (sides === 2 ? 180 : 150);
+    const plan = [];
+    modCols.forEach((col, i) => {
+      const pA = pduOf(col, 0);
+      plan.push({ from: pA, col, en: single ? 0.5 : 0.3, kind: 'main' });
+      if (single) return;
+      let p2 = null, ex2;
+      if (sides === 2) p2 = pduOf(col, 1);
+      else if (topo === 'catcher') { p2 = catcherPdu; ex2 = 10 + i * 9; }
+      else if (topo === 'dr') { const nx = modCols[(i + 1) % modCols.length]; p2 = nx === col ? null : pduOf(nx, 0); ex2 = CW * 0.82; }
+      else { p2 = pA; ex2 = CW * 0.82; }
+      if (p2) plan.push({ from: p2, col, en: 0.7, kind: sts ? 'standby' : 'main', ex: ex2 });
+    });
+    const pduBottom = rowY(5) + NH;
+    let rl = 0;
+    plan.forEach(pl => {
+      const exX = pl.from.x + (pl.ex !== undefined ? pl.ex : CW / 2);
+      const enX = pl.col.x + (pl.col.w - tw) / 2 + pl.en * tw;
+      if (Math.abs(exX - enX) > 0.5) pl.via = pduBottom + 12 + (rl++) * 7;
+    });
+    const yTarget = pduBottom + 12 + rl * 7 + 14;
+    const racksPer = Math.ceil(c.racks / (topo === 'dr' ? c.nModDraw : c.nMod));
+    const cord = single ? T('단일 코드', 'single cord') : sts ? T('단일 코드+STS', 'single cord + STS') : T('A/B 듀얼 코드', 'A/B dual cord');
+    const targets = new Map();
+    modCols.forEach(col => {
+      const tx = col.x + (col.w - tw) / 2;
+      const rackOpt = { h: NH, label: `IT Rack ×${fmtN(racksPer)}`, sub: `${fmtN(c.rackKW)}kW · ${cord}`, sec: 'rack' };
+      if (sts) {
+        const st = add('sts', tx, yTarget, { w: CW, h: NH, label: 'STS', sub: T('랙별 절체', 'per-rack transfer'), sec: 'rack' });
+        const rk = add('rack', col.x + (col.w - 150) / 2, yTarget + RH, Object.assign({ w: 150 }, rackOpt));
+        link(st, rk);
+        targets.set(col, st);
+      } else {
+        targets.set(col, add('rack', tx, yTarget, Object.assign({ w: tw }, rackOpt)));
+      }
+    });
+    plan.forEach(pl => {
+      const tg = targets.get(pl.col);
+      if (pl.from && tg) link(pl.from, tg, { kind: pl.kind, ex: pl.ex, en: pl.en * tg.w, via: pl.via });
+    });
+    const rackBottom = yTarget + (sts ? RH : 0) + NH;
+
+    // 8) 공조(UT)·건물 열 — 발전기가 받쳐 주면 ATS를 둔다 (요건정의서: UPS 경로만 CTTS, 나머지는 ATCB)
+    const sideChain = (f, label, items) => {
+      const X = f.chainX;
+      const seq = [];
+      items.forEach(it => {
+        const nd = add(it.type, X, rowY(seq.length), Object.assign({ w: CW, h: NH, sec: 'mech' }, it.o));
+        if (it.gen) link(add('gen', X + CW + 6, nd.y, { w: SLOT, h: NH, label: 'GEN', sub: it.gen, sec: 'gen' }), nd, { kind: 'standby' });
+        if (it.genLink) genLinks.push({ f, node: nd });
+        seq.push(nd);
+      });
+      for (let i = 1; i < seq.length; i++) link(seq[i - 1], seq[i]);
+      link(f.bus, seq[0], { en: f.en, ex: f.ex, via: f.via });
+      return seq;
+    };
+    const atsO = name => ({ label: 'ATS-' + name, sub: T('순간정전 허용', 'open transition') });
+    let mechBottom = 0;
+    const utF = feeds.find(f => f.col.kind === 'ut');
+    if (utF) {
+      const col = utF.col;
+      const items = [];
+      if (hvGen && scopeCool) items.push({ type: 'ats', o: atsO('UT'), genLink: true });
+      items.push({ type: 'vcb', o: { label: 'VCB', sub: mvNum } });
+      items.push({ type: 'tr', o: { label: `TR-UT ×${c.utN}`, sub: `${fmtN(c.utKVA)}kVA ${mvShort}kV/380V` } });
+      if (!hvGen && scopeCool) items.push({ type: 'ats', o: atsO('UT'), gen: `×${c.utN}` });
+      items.push({ type: 'acb', o: { label: 'ACB', sub: `${fmtN(c.acbA)}A` } });
+      const seq = sideChain(utF, 'UT', items);
+      const ubY = rowY(seq.length);
+      const ub = add('bus', col.x, ubY, { w: col.w, h: 18, label: T('UT 모선 (380V)', 'UT bus (380 V)'), sub: '', sec: 'mech' });
+      link(seq[seq.length - 1], ub);
+      const LW = 76, ly = ubY + 18 + 30;
+      const ch = add('load', col.x, ly, { w: LW, h: NH, label: T('냉동기', 'Chiller'), sub: T('축냉 10분', '10-min storage'), sec: 'mech' });
+      link(ub, ch);
+      if (a.mech === 'sepups') {
+        const mu = add('ups', col.x + LW + 8, ly, { w: col.w - LW - 8, h: NH, label: T('공조 UPS', 'HVAC UPS'), sub: T('팬·펌프 전용 (단일)', 'fans & pumps, single'), sec: 'mech' });
+        link(ub, mu);
+        const half = (col.w - LW - 16) / 2;
+        const fw = add('load', col.x + LW + 8, ly + RH, { w: half, h: NH, label: 'FWU/CRAH', sub: T('팬', 'fans'), sec: 'mech' });
+        const pm = add('load', col.x + LW + 16 + half, ly + RH, { w: half, h: NH, label: 'Pump', sub: T('냉수', 'CHW'), sec: 'mech' });
+        link(mu, fw); link(mu, pm);
+        mechBottom = ly + RH + NH;
+      } else {
+        const fw = add('load', col.x + LW + 9, ly, { w: LW, h: NH, label: 'FWU/CRAH', sub: T('팬', 'fans'), sec: 'mech' });
+        const pm = add('load', col.x + 2 * (LW + 9), ly, { w: LW, h: NH, label: 'Pump', sub: T('냉수', 'CHW'), sec: 'mech' });
+        link(ub, fw); link(ub, pm);
+        mechBottom = ly + NH;
+      }
+      frames.push({ x: col.x - 8, y: yMod - 24, w: col.w + 16, h: mechBottom - yMod + 34, label: T('공조 전원 (UT)', 'Cooling power (UT)'), color: '#993556' });
+    }
+    const bF = feeds.find(f => f.col.kind === 'bldg');
+    if (bF) {
+      const items = [];
+      if (hvGen && scopeAll) items.push({ type: 'ats', o: atsO('B'), genLink: true });
+      items.push({ type: 'vcb', o: { label: 'VCB', sub: mvNum } });
+      items.push({ type: 'tr', o: { label: `TR-B ${fmtN(c.bldgKVA)}kVA`, sub: `${mvShort}kV/380-220V` } });
+      if (!hvGen && scopeAll) items.push({ type: 'ats', o: atsO('B'), gen: 'B' });
+      items.push({ type: 'acb', o: { label: 'ACB', sub: T('저압 분전', 'LV panel') } });
+      items.push({ type: 'load', o: { label: T('건물 일반', 'Building'), sub: T('전등·전열·동력', 'lights · sockets · motors') } });
+      const seq = sideChain(bF, 'B', items);
+      const bBottom = seq[seq.length - 1].y + NH;
+      mechBottom = Math.max(mechBottom, bBottom);
+      frames.push({ x: bF.col.x - 8, y: yMod - 24, w: bF.col.w + 16, h: bBottom - yMod + 34, label: T('건물 전원', 'Building power'), color: '#993556' });
+    }
+    if (synBus) genLinks.forEach(gl => link(synBus, gl.node, { kind: 'standby', ex: gl.f.gex, en: CW * 0.72, via: gl.f.gvia }));
+
+    // 9) 묶음 테두리·구간 이름
+    cols.forEach(col => {
+      if (col.kind === 'mod') {
+        frames.push({ x: col.x - 8, y: yMod - 24, w: col.w + 16, h: rackBottom - yMod + 34,
+          label: `IT ${T('모듈', 'module')} #${col.m + 1}${topo === 'dr' ? ' (N+1)' : ''}` });
+      } else if (col.kind === 'catcher') {
+        frames.push({ x: col.x - 8, y: yMod - 24, w: col.w + 16, h: pduBottom - yMod + 34, label: 'Catcher (N+1C)', color: CATCH });
+      } else if (col.kind === 'gap') {
+        notes.push({ x: col.x + col.w / 2, y: yMod + 2.5 * RH, text: '⋯', size: 22, weight: 800, color: '#8A8072' });
+        notes.push({ x: col.x + col.w / 2, y: yMod + 2.5 * RH + 18, text: T(`외 ${n - 3}개 모듈`, `+${n - 3} more`), size: 9, weight: 700, color: '#8A8072' });
+      }
+    });
+    sl(44, '① 수전', '① Utility');
+    sl(164, '② 수전 개폐', '② Switching');
+    if (!step1) sl(262, '③ 주변압기', '③ Main TR');
+    sl(busY + 15, step1 ? '③ 수전 모선' : '④ 고압 모선', step1 ? '③ Incoming bus' : '④ MV bus');
+    sl(yMod + 22, '⑤ 절체·변압', '⑤ Transfer · TR');
+    sl(rowY(4) + 22, '⑥ UPS', '⑥ UPS');
+    sl(yTarget + 22, '⑦ 랙 배전', '⑦ Rack power');
+    return { nodes, edges, notes, frames };
+  }
+
+  // 지금 질문과 관련된 장비(노란 표시)가 화면 가운데 오도록 스크롤
+  function wizFocus() {
+    const svg = document.getElementById('sldSvg');
+    const wrap = svg && svg.parentElement;
+    if (!wrap || !wrap.classList.contains('diagram-wrap')) return;
+    const hl = sldWizGraph.nodes.filter(nd => nd.hl);
+    if (!hl.length) return;
+    const cx = (Math.min(...hl.map(nd => nd.x)) + Math.max(...hl.map(nd => nd.x + nd.w))) / 2;
+    const cy = (Math.min(...hl.map(nd => nd.y)) + Math.max(...hl.map(nd => nd.y + nd.h))) / 2;
+    // SVG 요소에는 offsetLeft가 없어서 화면 좌표 차이로 래퍼 안 위치를 구한다
+    const sr = svg.getBoundingClientRect(), wr = wrap.getBoundingClientRect();
+    const ox = sr.left - wr.left + wrap.scrollLeft, oy = sr.top - wr.top + wrap.scrollTop;
+    try {
+      wrap.scrollTo({ left: Math.max(0, ox + cx - wrap.clientWidth / 2), top: Math.max(0, oy + cy - wrap.clientHeight / 2), behavior: 'smooth' });
+    } catch (e) {}
+  }
+
+  function wizCurrent() {
+    const vis = wizVisible(wizState.a);
+    return vis.find(q => q.id === wizState.qid) || null;
+  }
+  function wizRebuild(renderPanel) {
+    const a = wizState.a;
+    wizFill(a);
+    const vis = wizVisible(a);
+    if (wizState.qid !== '_done' && !vis.some(q => q.id === wizState.qid)) wizState.qid = vis.length ? vis[0].id : '_done';
+    const q = wizCurrent();
+    sldWizGraph = buildWizardSLD(a, wizCalc(a), q ? (q.hl || []) : []);
+    wizSave();
+    if (renderPanel !== false) renderWizPanel(); else renderWizDynamic();
+    if (sldMode === 'wizard') { drawSLD(); wizFocus(); }
+  }
+  function wizGo(id) { wizState.qid = id; wizRebuild(true); }
+  function wizAnswer(q, v) {
+    wizState.a[q.id] = v;
+    wizState.a._set[q.id] = true;
+    wizRebuild(true);
+  }
+
+  const mk = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
+  function wizAnswerText(q, a) {
+    if (q.type === 'number') return `${fmtN(a[q.id], 2)} ${q.unit || ''}`;
+    const o = (q.options || []).find(x => x.v === a[q.id]);
+    return o ? wl(o.label) : '-';
+  }
+
+  function renderWizPanel() {
+    const box = document.getElementById('sldWizUI');
+    if (!box) return;
+    const a = wizState.a, c = wizCalc(a);
+    const vis = wizVisible(a);
+    const idx = vis.findIndex(q => q.id === wizState.qid);
+    const done = wizState.qid === '_done';
+    box.innerHTML = '';
+
+    // 진행 표시 + 질문 번호 점 (눌러서 이동)
+    const top = mk('div', 'sldw-top');
+    top.appendChild(mk('span', 'sldw-prog', done ? t('sldw_done_prog', { n: vis.length }) : t('sldw_progress', { i: idx + 1, n: vis.length })));
+    const restart = mk('button', 'sldw-link', t('sldw_restart'));
+    restart.addEventListener('click', () => {
+      if (!confirm(t('sldw_restart_confirm'))) return;
+      wizState.a = { _set: {} };
+      wizState.qid = null;
+      wizRebuild(true);
+    });
+    top.appendChild(restart);
+    box.appendChild(top);
+    const bar = mk('div', 'sldw-bar');
+    const fill = mk('span');
+    fill.style.width = (done ? 100 : Math.round((idx / vis.length) * 100)) + '%';
+    bar.appendChild(fill);
+    box.appendChild(bar);
+    const dots = mk('div', 'sldw-dots');
+    vis.forEach((q, i) => {
+      const d = mk('button', 'sldw-dot' + (q.id === wizState.qid ? ' on' : '') + (a._set[q.id] ? ' set' : ''), String(i + 1));
+      d.title = wl(q.secLabel) + ' — ' + wl(q.title) + '\n→ ' + wizAnswerText(q, a);
+      d.addEventListener('click', () => wizGo(q.id));
+      dots.appendChild(d);
+    });
+    const dd = mk('button', 'sldw-dot fin' + (done ? ' on' : ''), '✓');
+    dd.title = t('sldw_done_title');
+    dd.addEventListener('click', () => wizGo('_done'));
+    dots.appendChild(dd);
+    box.appendChild(dots);
+
+    if (done || idx < 0) { renderWizDone(box, a, c, vis); return; }
+    const q = vis[idx];
+    box.appendChild(mk('div', 'sldw-sec', wl(q.secLabel)));
+    box.appendChild(mk('h3', 'sldw-title', wl(q.title)));
+    const rec = wizRec(q, a);
+
+    if (q.type === 'number') {
+      const row = mk('div', 'sldw-num');
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.inputMode = 'decimal';
+      inp.id = 'sldwNum';
+      inp.value = a[q.id];
+      inp.addEventListener('input', () => {
+        const v = parseFloat(inp.value);
+        if (!isFinite(v)) return;
+        a[q.id] = v;
+        a._set[q.id] = true;
+        wizRebuild(false);
+      });
+      row.appendChild(inp);
+      row.appendChild(mk('span', 'sldw-unit', q.unit || ''));
+      box.appendChild(row);
+      const chips = mk('div', 'sldw-chips');
+      const presets = (q.presets || []).slice();
+      if (c.appMW && presets.indexOf(c.appMW) < 0) presets.unshift(c.appMW);
+      presets.forEach(pv => {
+        const ch = mk('button', 'sldw-chip' + (Number(a[q.id]) === pv ? ' sel' : ''), `${fmtN(pv, 2)} ${q.unit || ''}` + (pv === c.appMW ? ' · ' + t('sldw_app') : ''));
+        ch.addEventListener('click', () => wizAnswer(q, pv));
+        chips.appendChild(ch);
+      });
+      box.appendChild(chips);
+    } else {
+      const list = mk('div', 'sldw-opts');
+      wizValidOpts(q, a).forEach((o, oi) => {
+        const b = mk('button', 'sldw-opt' + (a[q.id] === o.v ? ' sel' : ''));
+        b.type = 'button';
+        b.appendChild(mk('span', 'sldw-radio'));
+        const body = mk('span', 'sldw-opt-body');
+        const head = mk('span', 'sldw-opt-label', wl(o.label));
+        if (o.v === rec) head.appendChild(mk('span', 'sldw-rec', t('sldw_rec')));
+        body.appendChild(head);
+        body.appendChild(mk('span', 'sldw-opt-desc', wl(o.desc)));
+        b.appendChild(body);
+        b.addEventListener('click', () => wizAnswer(q, o.v));
+        list.appendChild(b);
+      });
+      box.appendChild(list);
+    }
+
+    const dyn = mk('div', 'sldw-dyn');
+    dyn.id = 'sldwDyn';
+    box.appendChild(dyn);
+
+    const ex = mk('div', 'sldw-explain');
+    ex.appendChild(mk('div', 'sldw-explain-h', '💡 ' + t('sldw_explain')));
+    ex.appendChild(mk('div', '', wl(q.explain)));
+    box.appendChild(ex);
+    if (q.terms && q.terms.length) {
+      const tb = mk('div', 'sldw-terms');
+      tb.appendChild(mk('div', 'sldw-explain-h', '📖 ' + t('sldw_terms')));
+      q.terms.forEach(k => {
+        const g = WIZ.gloss[k];
+        if (!g) return;
+        const row = mk('div', 'sldw-term');
+        row.appendChild(mk('b', '', k === 'LOADBANK' ? 'LOAD BANK' : k));
+        row.appendChild(document.createTextNode(' — ' + wl(g)));
+        tb.appendChild(row);
+      });
+      box.appendChild(tb);
+    }
+    box.appendChild(mk('div', 'sldw-src', '📄 ' + t('sldw_src') + ' · ' + wl(q.src)));
+
+    const nav = mk('div', 'sldw-nav');
+    const prev = mk('button', 'quick-btn', '◀ ' + t('sldw_prev'));
+    prev.disabled = idx === 0;
+    prev.addEventListener('click', () => { if (idx > 0) wizGo(vis[idx - 1].id); });
+    const last = idx === vis.length - 1;
+    const next = mk('button', 'quick-btn sldw-next', last ? t('sldw_finish') + ' ✓' : t('sldw_next') + ' ▶');
+    next.addEventListener('click', () => {
+      a._set[q.id] = true;                                   // 그대로 넘어가면 지금 보이는 답을 고른 것으로 본다
+      wizGo(last ? '_done' : vis[idx + 1].id);
+    });
+    nav.appendChild(prev);
+    nav.appendChild(next);
+    box.appendChild(nav);
+    renderWizDynamic();
+  }
+
+  // 숫자를 치는 동안에는 패널을 통째로 다시 그리지 않고 계산값·주의만 갈아 끼운다 (커서 유지)
+  function renderWizDynamic() {
+    const dyn = document.getElementById('sldwDyn');
+    if (!dyn) return;
+    const q = wizCurrent();
+    dyn.innerHTML = '';
+    if (!q) return;
+    const a = wizState.a, c = wizCalc(a);
+    if (q.info) dyn.appendChild(mk('div', 'sldw-info', '📐 ' + wl(q.info(a, c))));
+    const w = q.warn && q.warn(a, c);
+    if (w) dyn.appendChild(mk('div', 'sldw-warn', '⚠ ' + wl(w)));
+  }
+
+  function renderWizDone(box, a, c, vis) {
+    box.appendChild(mk('h3', 'sldw-title', t('sldw_done_title')));
+    box.appendChild(mk('div', 'sldw-src', t('sldw_done_desc')));
+    const fig = mk('div', 'sldw-figs');
+    const red = { n: 'N', n1: 'N+1', '2n': '2N' }[a.genRed] || '';
+    const upsName = { '2n': '2N', '2n1': '2(N+1)', catcher: 'N+1C (Catcher)', dr: t('sldw_dr'), n1: 'N+1' }[a.ups] || '';
+    [
+      t('sldw_fig_load', { it: fmtN(c.itMW, 2), total: fmtN(c.totalMW, 2), racks: fmtN(c.racks), kw: fmtN(c.rackKW) }),
+      a.step === '1step' ? t('sldw_fig_1step', { kv: a.kv }) : t('sldw_fig_mtr', { n: a.mtr === 'one' ? 1 : 2, mva: c.mtrMVA, kv: a.kv, mv: c.mv }),
+      t('sldw_fig_mod', { n: c.nModDraw, ab: c.sides === 2 ? ' × A/B' : '', kva: fmtN(c.trKVA), ups: fmtN(c.upsKW), topo: upsName }),
+      t('sldw_fig_gen', { n: c.genTotal, kw: fmtN(c.genUnitKW), red, need: fmtN(c.genNeedMW, 1), kl: fmtN(Math.round(c.fuelKL)) }),
+    ].forEach(line => fig.appendChild(mk('div', 'sldw-fig', line)));
+    box.appendChild(fig);
+
+    const tbl = mk('table', 'sldw-sum');
+    vis.forEach((q, i) => {
+      const tr = mk('tr');
+      tr.appendChild(mk('td', 'sldw-sum-n', String(i + 1)));
+      const td = mk('td');
+      td.appendChild(mk('div', 'sldw-sum-q', wl(q.title)));
+      td.appendChild(mk('div', 'sldw-sum-a', wizAnswerText(q, a)));
+      tr.appendChild(td);
+      tr.title = t('sldw_sum_jump');
+      tr.addEventListener('click', () => wizGo(q.id));
+      tbl.appendChild(tr);
+    });
+    box.appendChild(tbl);
+
+    const nav = mk('div', 'sldw-nav');
+    const back = mk('button', 'quick-btn', '◀ ' + t('sldw_prev'));
+    back.addEventListener('click', () => wizGo(vis[vis.length - 1].id));
+    const toManual = mk('button', 'quick-btn sldw-next', t('sldw_to_manual'));
+    toManual.addEventListener('click', () => {
+      if (sldManualGraph.nodes.length && !confirm(t('sldw_overwrite'))) return;
+      const clone = JSON.parse(JSON.stringify(sldWizGraph));
+      clone.nodes.forEach(nd => { delete nd.hl; });
+      sldManualGraph = { nodes: clone.nodes, edges: clone.edges, notes: clone.notes || [], frames: clone.frames || [] };
+      sldSelectedId = null;
+      saveSldManualGraph();
+      setSldMode('manual');
+    });
+    nav.appendChild(back);
+    nav.appendChild(toManual);
+    box.appendChild(nav);
+  }
 
   renderSldPalette();
   setSldMode(sldMode);
@@ -8895,7 +9681,7 @@
       hall, hallChecks,
       plans: { tabs: planTabs },
       feedPlan: fpBlocks,
-      sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges },
+      sld: { nodes: sldManualGraph.nodes, edges: sldManualGraph.edges, notes: sldManualGraph.notes || [], frames: sldManualGraph.frames || [] },
       racks: { list: hallRacks, rows: hallRowsOpt },
       ui: { lang: currentLang, view: document.body.classList.contains('view-dual') ? 'dual' : 'sequential' },
     };
@@ -8920,7 +9706,8 @@
       fpSave();
     }
     if (data.sld && Array.isArray(data.sld.nodes)) {
-      sldManualGraph = { nodes: data.sld.nodes, edges: data.sld.edges || [], notes: [] };
+      sldManualGraph = { nodes: data.sld.nodes, edges: data.sld.edges || [],
+        notes: Array.isArray(data.sld.notes) ? data.sld.notes : [], frames: Array.isArray(data.sld.frames) ? data.sld.frames : [] };
       sldSelectedId = null;
       sldManualGraph.nodes.forEach(n => {
         const num = parseInt(String(n.id).replace(/\D/g, ''), 10);
