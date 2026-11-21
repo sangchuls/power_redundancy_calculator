@@ -318,7 +318,7 @@
       fb_body_ph: "무엇이 불편했고 어떻게 되면 좋을지 적어주세요",
       fb_attach: "현재 설정 요약 첨부",
       fb_add: "＋ 의견 등록",
-      fb_mail: "주간 취합 메일 보내기",
+      fb_mail: "개선 메일 보내기",
       fb_copy: "취합 내용 복사",
       fb_export: "내보내기 (.json)",
       fb_import: "불러오기",
@@ -338,14 +338,20 @@
       fb_need_text: "⚠ 내용을 입력하세요",
       fb_digest_head: "# 개선 의견 취합 (최근 {days}일 · {n}건)",
       fb_mail_subject: "[데이터센터 계산기] 개선 의견 취합 {date}",
-      fb_mail_opened: "✓ 메일 앱을 열었습니다 — 내용 확인 후 보내세요",
+      fb_mail_opened: "✓ 자동 전송을 쓸 수 없어 메일 앱을 열었습니다 — 내용 확인 후 보내세요",
+      fb_sending: "전송 중…",
+      fb_sent: "✓ 개발자에게 {n}건을 전송했습니다",
+      fb_sent_tag: "✉ 전송됨",
+      fb_nothing_new: "⚠ 새로 보낼 의견이 없습니다 (이미 전송했거나 비어 있음)",
+      fb_send_rate: "⚠ 잠시 뒤 다시 눌러 주세요 (요청이 너무 잦습니다)",
+      fb_send_fail: "⚠ 전송하지 못했습니다 ({code}) — [취합 내용 복사]로 직접 보내 주세요",
       fb_mail_long: "⚠ 내용이 길어 메일 앱이 잘라낼 수 있습니다 — [취합 내용 복사]로 붙여넣으세요",
       fb_copied: "✓ 취합 내용을 복사했습니다",
       fb_copy_fail: "⚠ 복사에 실패했습니다 — 내보내기를 사용하세요",
       fb_exported: "✓ {name} 으로 내려받았습니다",
       fb_imported: "✓ {n}건을 불러왔습니다",
       fb_import_bad: "⚠ 의견 파일이 아닙니다",
-      fb_note: "의견은 이 브라우저에 저장됩니다. 메일 버튼은 기본 메일 앱을 열어 본문을 채워 주며, 실제 발송은 직접 확인 후 누르시면 됩니다.",
+      fb_note: "의견은 이 브라우저에 저장됩니다. 개선 메일 보내기를 누르면 아직 안 보낸 의견이 개발자 메일로 바로 전송됩니다. 자동 전송을 쓸 수 없는 환경에서는 메일 앱이 열립니다.",
       preset_file_default: "데이터센터_검토",
       preset_file_saved: "✓ {name} 으로 내려받았습니다",
       preset_file_loaded: "✓ {name} 을 불러왔습니다 — 입력값·평면·SLD까지 복원",
@@ -896,7 +902,7 @@
       fb_body_ph: "What got in the way, and what would be better",
       fb_attach: "Attach the current settings",
       fb_add: "+ Add",
-      fb_mail: "Email the weekly digest",
+      fb_mail: "Send feedback to developer",
       fb_copy: "Copy the digest",
       fb_export: "Export (.json)",
       fb_import: "Import",
@@ -916,14 +922,20 @@
       fb_need_text: "⚠ Write something first",
       fb_digest_head: "# Feedback digest (last {days} days · {n} items)",
       fb_mail_subject: "[DC calculator] Feedback digest {date}",
-      fb_mail_opened: "✓ Opened your mail app — check it, then send",
+      fb_mail_opened: "✓ Automatic sending is unavailable, so your mail app opened — check it, then send",
+      fb_sending: "Sending…",
+      fb_sent: "✓ Sent {n} item(s) to the developer",
+      fb_sent_tag: "✉ sent",
+      fb_nothing_new: "⚠ Nothing new to send (already sent, or empty)",
+      fb_send_rate: "⚠ Please try again in a moment (too many requests)",
+      fb_send_fail: "⚠ Could not send ({code}) — use Copy the digest and send it yourself",
       fb_mail_long: "⚠ Too long for a mail link; use Copy the digest instead",
       fb_copied: "✓ Digest copied",
       fb_copy_fail: "⚠ Copy failed — use Export instead",
       fb_exported: "✓ Downloaded as {name}",
       fb_imported: "✓ Imported {n} items",
       fb_import_bad: "⚠ That is not a feedback file",
-      fb_note: "Feedback is kept in this browser. The mail button opens your mail app with the text filled in; you send it yourself.",
+      fb_note: "Feedback is kept in this browser. Send feedback emails everything not yet sent straight to the developer; where automatic sending is unavailable your mail app opens instead.",
       preset_file_default: "datacentre_study",
       preset_file_saved: "✓ Downloaded as {name}",
       preset_file_loaded: "✓ Loaded {name} — inputs, plans and SLD restored",
@@ -8675,6 +8687,13 @@
       when.className = 'fb-when';
       when.textContent = new Date(f.at).toLocaleDateString(currentLang === 'ko' ? 'ko-KR' : 'en-US');
       head.appendChild(when);
+      if (f.sentAt) {
+        const sent = document.createElement('span');
+        sent.className = 'fb-when';
+        sent.textContent = t('fb_sent_tag');
+        sent.title = new Date(f.sentAt).toLocaleString(currentLang === 'ko' ? 'ko-KR' : 'en-US');
+        head.appendChild(sent);
+      }
       // 상태를 눌러서 바꾼다 — 반영 / 보류 / 미반영
       const states = document.createElement('span');
       states.className = 'fb-states';
@@ -8760,7 +8779,8 @@
     fbFilter = e.target.value; renderFeedback();
   });
 
-  document.getElementById('fbMailBtn').addEventListener('click', () => {
+  // 메일 앱을 여는 예전 방식 — 자동 전송을 쓸 수 없을 때의 대비책
+  function fbMailFallback() {
     const subject = t('fb_mail_subject', { date: new Date().toISOString().slice(0, 10) });
     const url = 'mailto:' + FB_MAIL
       + '?subject=' + encodeURIComponent(subject)
@@ -8769,7 +8789,48 @@
     if (url.length > 1900) { fbSay('fb_mail_long', null, true); return; }
     window.location.href = url;
     fbSay('fb_mail_opened');
-  });
+  }
+
+  // 아직 안 보낸 의견을 개발자 메일(twight2000@gmail.com)로 바로 보낸다.
+  // 서버 함수(/api/feedback)가 대신 메일을 보내며, 보낸 항목에는 sentAt을 찍어 다시 보내지 않는다.
+  let fbSending = false;
+  async function fbSend() {
+    if (fbSending) return;
+    const unsent = feedback.filter(f => !f.sentAt);
+    if (!unsent.length) { fbSay('fb_nothing_new', null, true); return; }
+    fbSending = true;
+    const btn = document.getElementById('fbMailBtn');
+    if (btn) btn.disabled = true;
+    fbSay('fb_sending');
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          app: 'power_redundancy_calculator', kind: 'feedback', lang: currentLang, website: '',
+          items: unsent.map(f => ({ id: f.id, at: f.at, cat: f.cat, title: f.title, body: f.body, ctx: f.ctx })),
+        }),
+      });
+      if (res.ok) {
+        const when = new Date().toISOString();
+        unsent.forEach(f => { f.sentAt = when; });
+        saveFeedback(); renderFeedback();
+        fbSay('fb_sent', { n: unsent.length });
+      } else if (res.status === 404 || res.status === 405 || res.status === 501) {
+        fbMailFallback();                 // 서버 함수가 없거나 메일 키가 설정되지 않은 환경
+      } else if (res.status === 429) {
+        fbSay('fb_send_rate', null, true);
+      } else {
+        fbSay('fb_send_fail', { code: res.status }, true);
+      }
+    } catch (e) {
+      fbMailFallback();                   // 네트워크가 막힌 경우
+    } finally {
+      fbSending = false;
+      if (btn) btn.disabled = false;
+    }
+  }
+  document.getElementById('fbMailBtn').addEventListener('click', fbSend);
   document.getElementById('fbCopyBtn').addEventListener('click', () => {
     const text = fbDigest(7);
     if (navigator.clipboard && navigator.clipboard.writeText) {
